@@ -1,0 +1,22 @@
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases and user sessions
+*.db
+*.sqlite
+*.sqlite3
+session_db.json
+users_db.json
+
+# Large data files
+*.parquet
+*.xlsx
+*.csv
+*.pkl
+
+# Build artifacts
+build/
+dist/
+*.spec
