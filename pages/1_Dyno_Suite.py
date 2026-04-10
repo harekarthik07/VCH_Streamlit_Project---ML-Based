@@ -12,6 +12,7 @@ import io
 import gc
 from contextlib import redirect_stdout, redirect_stderr
 from docxtpl import DocxTemplate    
+from plotly.subplots import make_subplots
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(CURRENT_DIR))
@@ -22,6 +23,10 @@ ROOT_DIR = os.path.dirname(CURRENT_DIR)
 DYNO_DIR = os.path.join(ROOT_DIR, "dyno_backend")
 if DYNO_DIR not in sys.path: sys.path.append(DYNO_DIR)
 import dyno_db_manager as dyno_engine
+
+BIKE_DIR = os.path.join(ROOT_DIR, "bike_backend")
+if BIKE_DIR not in sys.path: sys.path.append(BIKE_DIR)
+import bike_db_manager as bike_engine
 
 st.set_page_config(page_title="Raptee Thermal Suite", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 
@@ -519,7 +524,7 @@ elif app_mode == "Monitor Dashboard":
     if first_deration_comp: st.markdown(f"<div class='deration-banner'>⚠️ First Deration Detected: {first_deration_comp} crossed safety limit at {first_deration_time} s {first_deration_cell_str}</div>", unsafe_allow_html=True)
     st.markdown("---")
 
-    tab_dtdt, tab_delta, tab_custom, tab_power, tab_battery, tab_repo = st.tabs(["⚡ Rise Rate (dT/dt)", "📈 Cumulative Rise (ΔT)", "🗺️ Dynamic 3D Plotter", "🔋 Power Analysis", "🪫 Battery Health", "📋 Test Repository"])
+    tab_dtdt, tab_delta, tab_custom, tab_power, tab_battery, tab_repo, tab_fleet = st.tabs(["⚡ Rise Rate (dT/dt)", "📈 Cumulative Rise (ΔT)", "🗺️ Dynamic 3D Plotter", "🔋 Power Analysis", "🪫 Battery Health", "📋 Test Repository", "🏍️ Fleet Registry"])
 
     with tab_dtdt:
         st.subheader(f"⚡ Rise Rate Snapshot @ {duration_option}", help="Displays the rate of temperature change (dT/dt) over time. Comparing this to the golden statistical envelope helps identify anomalous heating behaviors early in the test.")
@@ -1055,3 +1060,186 @@ elif app_mode == "Monitor Dashboard":
 
         except Exception as e:
             st.error(f"⚠️ Error loading Quality Control repository data: {e}")
+
+    with tab_fleet:
+        st.subheader("🏍️ Fleet Hardware Registry")
+        
+        if "selected_bike" not in st.session_state:
+            st.session_state["selected_bike"] = None
+
+        registry = bike_engine.load_bike_registry()
+
+        if st.session_state["selected_bike"] is None:
+            st.markdown("<p style='color:#00cc96; font-weight:600; font-size:1.1rem; margin-top:-10px; margin-bottom: 20px;'>Select a vehicle below to analyze its complete hardware signature and performance metrics.</p>", unsafe_allow_html=True)
+            
+            c1, c2, c3, c4 = st.columns(4)
+            cols_f = [c1, c2, c3, c4]
+            
+            idx = 0
+            for b_id, b_data in registry.items():
+                current_col = cols_f[idx % 4]
+                try:
+                    bike_num_str = str(int(b_id.split("-")[1]))
+                    bike_tests_df = summary_df[summary_df["Test_Name"].apply(lambda x: get_bike_no(x) == bike_num_str)]
+                    dynamic_tests_done = len(bike_tests_df)
+                except:
+                    bike_tests_df = pd.DataFrame()
+                    dynamic_tests_done = 0
+
+                with current_col:
+                    html_card = f"""
+                    <style>
+                    .fleet-card {{ background: var(--card-bg); backdrop-filter: blur(16px); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; height: 100%; transition: all 0.3s ease-in-out; box-shadow: var(--card-shadow); margin-bottom: 15px; }}
+                    .fleet-icon {{ margin-bottom: 15px; }}
+                    .fleet-vin {{ font-size: 1.1rem; font-weight: 800; color: #FFF; margin-bottom: 5px; }}
+                    .fleet-id {{ font-size: 0.9rem; font-weight: 600; color: #888; }}
+                    </style>
+                    <div class="fleet-card">
+                        <div class="fleet-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00cc96" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="5.5" cy="17.5" r="3.5"></circle>
+                                <circle cx="18.5" cy="17.5" r="3.5"></circle>
+                                <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 5.5l1.5-3 4-1"></path>
+                                <path d="M12 11.5l-3-4-3 1.5"></path>
+                                <path d="M5.5 17.5l2.5-6h4l2.5 6"></path>
+                            </svg>
+                        </div>
+                        <div class="fleet-vin">{b_data.get('vin', 'UNKNOWN_VIN')}</div>
+                        <div class="fleet-id">{b_id} • {dynamic_tests_done} Dyno Tests</div>
+                    </div>
+                    """
+                    st.markdown(html_card, unsafe_allow_html=True)
+                    if st.button(f"Analyze Hardware", use_container_width=True, key=f"btn_{b_id}"):
+                        st.session_state["selected_bike"] = b_id
+                        st.rerun()
+                idx += 1
+        else:
+            b_id = st.session_state["selected_bike"]
+            b_data = registry.get(b_id, {})
+            
+            try:
+                bike_num_str = str(int(b_id.split("-")[1]))
+                bike_tests_df = summary_df[summary_df["Test_Name"].apply(lambda x: get_bike_no(x) == bike_num_str)]
+                dynamic_tests_done = len(bike_tests_df)
+            except:
+                bike_tests_df = pd.DataFrame()
+                dynamic_tests_done = 0
+            
+            if st.button("← Back to Fleet", key="btn_back_fleet"):
+                st.session_state["selected_bike"] = None
+                st.rerun()
+            
+            st.markdown(f"<h2 style='font-weight:900;'>{b_data.get('vin', 'UNKNOWN_VIN')} <span style='color: #888; font-weight:300;'>| {b_id}</span></h2>", unsafe_allow_html=True)
+            
+            st.markdown("### ⚙️ Hardware Registry Details")
+            md_c1, md_c2, md_c3, md_c4 = st.columns(4)
+            box_style = "background: rgba(255, 255, 255, 0.03); border-left: 3px solid #00cc96; padding: 15px; border-radius: 4px; margin-bottom: 15px;"
+            tit_style = "color: #A0A0AB; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;"
+            val_style = "color: #FFF; font-size: 1.1rem; font-weight: 500;"
+            
+            with md_c1:
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Tests Evaluated</div><div style='{val_style}'>{dynamic_tests_done}</div></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Motor ID</div><div style='{val_style}'>{b_data.get('motor_id', 'N/A')}</div></div>", unsafe_allow_html=True)
+            with md_c2:
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Battery Box ID</div><div style='{val_style}'>{b_data.get('battery_box_id', 'N/A')}</div></div>", unsafe_allow_html=True)
+            with md_c3:
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Left Module ID</div><div style='{val_style}'>{b_data.get('left_module_id', 'N/A')}</div></div>", unsafe_allow_html=True)
+            with md_c4:
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Right Module ID</div><div style='{val_style}'>{b_data.get('right_module_id', 'N/A')}</div></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>BMS Firmware ID</div><div style='{val_style}'>{b_data.get('bms_id', 'N/A')}</div></div>", unsafe_allow_html=True)
+
+            st.markdown("---")
+            st.markdown("#### 🔍 Historical Test Inspection")
+            if not bike_tests_df.empty:
+                test_list = bike_tests_df["Test_Name"].sort_values(ascending=False).tolist()
+                selected_test = st.selectbox("Select a historical run to visualize:", test_list)
+                
+                test_row = bike_tests_df[bike_tests_df["Test_Name"] == selected_test].iloc[0]
+                df_viz = load_test_data(test_row["Processed_CSV_Path"])
+                
+                if not df_viz.empty and "Time (s)" in df_viz.columns:
+                    st.markdown("##### 📈 Thermal Profile")
+                    fig_tri = make_subplots(specs=[[{"secondary_y": True}]])
+                    
+                    hc_col = next((c for c in df_viz.columns if "highcell" in c.lower()), "HighCell_Temp") if "HighCell_Temp" not in df_viz.columns else "HighCell_Temp"
+                    igbt_col = next((c for c in df_viz.columns if "igbt" in c.lower()), "IGBT_Temp") if "IGBT_Temp" not in df_viz.columns else "IGBT_Temp"
+                    motor_col = next((c for c in df_viz.columns if "motor" in c.lower()), "Motor_Temp") if "Motor_Temp" not in df_viz.columns else "Motor_Temp"
+                    
+                    if hc_col in df_viz.columns: fig_tri.add_trace(go.Scatter(x=df_viz["Time (s)"], y=df_viz[hc_col], name="HighCell (Primary)", line=dict(color="#FF4B4B", width=2)), secondary_y=False)
+                    if igbt_col in df_viz.columns: fig_tri.add_trace(go.Scatter(x=df_viz["Time (s)"], y=df_viz[igbt_col], name="IGBT (Secondary)", line=dict(color="#00CC96", width=2)), secondary_y=True)
+                    if motor_col in df_viz.columns: fig_tri.add_trace(go.Scatter(x=df_viz["Time (s)"], y=df_viz[motor_col], name="Motor (Secondary)", line=dict(color="cyan", width=2)), secondary_y=True)
+                    
+                    fig_tri.update_layout(
+                        height=500, hovermode="x unified", plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        margin=dict(l=10, r=10, t=10, b=10),
+                        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+                    )
+                    fig_tri.update_xaxes(title_text="Time (s)", showgrid=False, zeroline=False)
+                    fig_tri.update_yaxes(title_text="HighCell Temp (°C)", secondary_y=False, showgrid=True, gridcolor='rgba(128,128,128,0.2)', zeroline=False)
+                    fig_tri.update_yaxes(title_text="Powertrain Temp (°C)", secondary_y=True, showgrid=False, zeroline=False)
+                    
+                    st.plotly_chart(fig_tri, use_container_width=True)
+                    
+                    st.markdown("##### 📋 QC Verdict (120s @ 20% Tolerance)")
+                    
+                    failed = []
+                    passed = True
+                    t_eval = pd.merge_asof(pd.DataFrame({"Time (s)": [120.0]}), df_viz.sort_values("Time (s)"), on="Time (s)", direction="nearest")
+                    
+                    bike_power = test_row.get("Power_Avg_120s", 0)
+                    
+                    golden_powers = []
+                    for _, r in summary_df.iterrows():
+                        if any(gold in r["Test_Name"] for gold in dyno_engine.GOLDEN_BIKES):
+                            p = r.get("Power_Avg_120s", 0)
+                            if 19 <= p <= 20.5: golden_powers.append(p)
+                    mgp = sum(golden_powers)/len(golden_powers) if golden_powers else 19.5
+                    p_up, p_dn = mgp * 1.10, mgp * 0.90
+                    
+                    if not (p_dn <= bike_power <= p_up):
+                        passed = False
+                        failed.append(f"Power={bike_power:.1f}kW")
+
+                    for ch in ["IGBT", "Motor", "HighCell", "AFE"]:
+                        d_time = test_row.get(f"{ch}_Deration_Time", "SAFE")
+                        if str(d_time) != "SAFE" and float(d_time) < 120.0:
+                            passed = False
+                            failed.append(f"Early Deration ({ch})")
+                            
+                        c_dtdt = dtdt_map.get(ch, f"{ch}_dTdt")
+                        c_dt = deltat_map.get(ch, f"{ch}_dT")
+                        if envelope_data and ch in envelope_data:
+                            env_df = envelope_data[ch]
+                            env_row = env_df[env_df["Time (s)"] == 120]
+                            if not env_row.empty and not t_eval.empty:
+                                up_dtdt = env_row["dTdt_Upper_20Pct"].values[0] if "dTdt_Upper_20Pct" in env_row.columns else 999
+                                up_dt = env_row["dT_Upper_20Pct"].values[0] if "dT_Upper_20Pct" in env_row.columns else 999
+                                
+                                val_dtdt = t_eval[c_dtdt].values[0] if c_dtdt in t_eval.columns else 0
+                                val_dt = t_eval[c_dt].values[0] if c_dt in t_eval.columns else 0
+                                
+                                if val_dtdt > up_dtdt: passed = False; failed.append(f"{ch} dT/dt")
+                                if val_dt > up_dt: passed = False; failed.append(f"{ch} ΔT")
+                    
+                    if "Golden" in test_row.get("Type", "Evaluation"): 
+                        passed = True
+                        failed = ["Baseline"]
+                        
+                    verdict_color = "rgba(0, 204, 150, 0.15)" if passed else "rgba(255, 75, 75, 0.15)"
+                    verdict_text_color = "#00CC96" if passed else "#FF4B4B"
+                    verdict_icon = "✅" if passed else "❌"
+                    fail_str = "" if passed else f"<br><span style='font-size:0.9rem; color:#A0A0AB;'>Failed Rules: {', '.join(failed)}</span>"
+                    if "Baseline" in failed:
+                        verdict_color = "rgba(255, 215, 0, 0.15)"
+                        verdict_text_color = "#FFD700"
+                        verdict_icon = "👑"
+                        fail_str = "<br><span style='font-size:0.9rem; color:#A0A0AB;'>Automated pass (Golden Reference Vehicle)</span>"
+                    
+                    st.markdown(f"""
+                    <div style="background: {verdict_color}; border-left: 4px solid {verdict_text_color}; padding: 15px; border-radius: 8px;">
+                        <span style="color: {verdict_text_color}; font-size: 1.2rem; font-weight: 800;">{verdict_icon} {"PASS" if passed else "FAIL"}</span>
+                        {fail_str}
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("No recorded Dyno tests found for this specific vehicle yet.")

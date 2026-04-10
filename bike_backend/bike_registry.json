@@ -1,0 +1,282 @@
+{
+    "BIKE-19": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2601A00001",
+        "left_module_id": "LH251100001",
+        "right_module_id": "RH251100001",
+        "bms_id": "BMS260100001",
+        "motor_id": "A2504200000064",
+        "status": "Offline"
+    },
+    "BIKE-20": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2512A00001",
+        "left_module_id": "LH251200001",
+        "right_module_id": "RH251200001",
+        "bms_id": "BMS260100004",
+        "motor_id": "A2504200000055",
+        "status": "Offline"
+    },
+    "BIKE-21": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2601A00002",
+        "left_module_id": "LH250900006",
+        "right_module_id": "RH250900005",
+        "bms_id": "BMS260100002",
+        "motor_id": "A2504200000076",
+        "status": "Offline"
+    },
+    "BIKE-22": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2601A00003",
+        "left_module_id": "LH251100003",
+        "right_module_id": "RH251100003",
+        "bms_id": "BMS260200008",
+        "motor_id": "A2504200000098",
+        "status": "Offline"
+    },
+    "BIKE-23": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2601A00004",
+        "left_module_id": "LH251100004",
+        "right_module_id": "RH251100004",
+        "bms_id": "BMS260100003",
+        "motor_id": "A2504200000060",
+        "status": "Offline"
+    },
+    "BIKE-24": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00001",
+        "left_module_id": "LH260200012",
+        "right_module_id": "RH260200012",
+        "bms_id": "BMS260200003",
+        "motor_id": "A2504200000096",
+        "status": "Offline"
+    },
+    "BIKE-25": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00002",
+        "left_module_id": "LH260100001",
+        "right_module_id": "RH260100001",
+        "bms_id": "BMS260200001",
+        "motor_id": "A2504200000084",
+        "status": "Offline"
+    },
+    "BIKE-26": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00003",
+        "left_module_id": "LH260200001",
+        "right_module_id": "RH260200001",
+        "bms_id": "BMS260100005",
+        "motor_id": "A2504200000025",
+        "status": "Offline"
+    },
+    "BIKE-27": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00005",
+        "left_module_id": "LH260200003",
+        "right_module_id": "RH260200003",
+        "bms_id": "BMS260200004",
+        "motor_id": "A2504200000024",
+        "status": "Offline"
+    },
+    "BIKE-28": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00006",
+        "left_module_id": "LH260200005",
+        "right_module_id": "RH260200005",
+        "bms_id": "BMS260300006",
+        "motor_id": "A2504200000026",
+        "status": "Offline"
+    },
+    "BIKE-29": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00004",
+        "left_module_id": "LH260200002",
+        "right_module_id": "RH260200002",
+        "bms_id": "BMS260200002",
+        "motor_id": "A2504200000087",
+        "status": "Offline"
+    },
+    "BIKE-30": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00007",
+        "left_module_id": "LH260200004",
+        "right_module_id": "RH260200004",
+        "bms_id": "BMS260200006",
+        "motor_id": "A2504200000056",
+        "status": "Offline"
+    },
+    "BIKE-31": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00008",
+        "left_module_id": "LH260200006",
+        "right_module_id": "RH260200006",
+        "bms_id": "BMS260200007",
+        "motor_id": "A2504200000031",
+        "status": "Offline"
+    },
+    "BIKE-32": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00009",
+        "left_module_id": "LH260200007",
+        "right_module_id": "RH260200007",
+        "bms_id": "BMS260200009",
+        "motor_id": "A2504200000089",
+        "status": "Offline"
+    },
+    "BIKE-33": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2602A00010",
+        "left_module_id": "LH260200008",
+        "right_module_id": "RH260200008",
+        "bms_id": "BMS260200010",
+        "motor_id": "A2504200000032",
+        "status": "Offline"
+    },
+    "BIKE-34": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2603A00001",
+        "left_module_id": "LH260200009",
+        "right_module_id": "RH260200009",
+        "bms_id": "BMS260200011",
+        "motor_id": "A2504200000012",
+        "status": "Offline"
+    },
+    "BIKE-35": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2603A00002",
+        "left_module_id": "LH260200010",
+        "right_module_id": "RH260200010",
+        "bms_id": "BMS260300001",
+        "motor_id": "A2504200000035",
+        "status": "Offline"
+    },
+    "BIKE-36": {
+        "vin": "NVA5P1.PTP0011",
+        "tests_done": 0,
+        "battery_box_id": "BB5k2603A00003",
+        "left_module_id": "LH260200011",
+        "right_module_id": "RH260200011",
+        "bms_id": "BMS260200012",
+        "motor_id": "A2504200000071",
+        "status": "Offline"
+    },
+    "BIKE-37": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00004",
+        "left_module_id": "LH260200013",
+        "right_module_id": "RH260200013",
+        "bms_id": "BMS260300002",
+        "motor_id": "A2504200000086"
+    },
+    "BIKE-38": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00006",
+        "left_module_id": "LH260200015",
+        "right_module_id": "RH260200015",
+        "bms_id": "BMS260300004",
+        "motor_id": "A2504200000085"
+    },
+    "BIKE-39": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00007",
+        "left_module_id": "LH260200016",
+        "right_module_id": "RH260200016",
+        "bms_id": "BMS260300005",
+        "motor_id": "A2504200000066"
+    },
+    "BIKE-45": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00008",
+        "left_module_id": "LH260200017",
+        "right_module_id": "RH260200017",
+        "bms_id": "BMS260300011",
+        "motor_id": "A2504200000061"
+    },
+    "BIKE-40": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00009",
+        "left_module_id": "LH260300001",
+        "right_module_id": "RH260300001",
+        "bms_id": "BMS260300007",
+        "motor_id": "A2504200000083"
+    },
+    "BIKE-41": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00010",
+        "left_module_id": "LH260300002",
+        "right_module_id": "RH260300002",
+        "bms_id": "BMS260300008",
+        "motor_id": "A2504200000091"
+    },
+    "BIKE-42": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00011",
+        "left_module_id": "LH260300003",
+        "right_module_id": "RH260300003",
+        "bms_id": "BMS260300009",
+        "motor_id": "A2504200000050"
+    },
+    "BIKE-43": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00012",
+        "left_module_id": "LH260300005",
+        "right_module_id": "RH260300005",
+        "bms_id": "BMS260300010",
+        "motor_id": "A2504200000074"
+    },
+    "BIKE-44": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00014",
+        "left_module_id": "LH260300007",
+        "right_module_id": "RH260300007",
+        "bms_id": "BMS260300013",
+        "motor_id": "A2504200000023"
+    },
+    "BIKE-47": {
+        "tests_done": 0,
+        "status": "Offline",
+        "vin": "NVA5P1.PTP0011",
+        "battery_box_id": "BB5k2603A00015",
+        "left_module_id": "LH260300008",
+        "right_module_id": "RH260300008",
+        "bms_id": "BMS260300014",
+        "motor_id": "A2504200000062"
+    }
+}
