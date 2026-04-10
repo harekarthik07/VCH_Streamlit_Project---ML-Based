@@ -342,7 +342,7 @@ if app_mode == "Data Engine":
                     st.warning("⚠️ Could not find the original `.xlsx` file in the Evaluation folder. It may have already been moved.")
 
 elif app_mode == "Monitor Dashboard":
-    @st.cache_data
+    @st.cache_data(max_entries=3, ttl=1800)
     def load_db_summary():
         if not os.path.exists(DB_PATH): return pd.DataFrame()
         try:
@@ -352,7 +352,7 @@ elif app_mode == "Monitor Dashboard":
             return df
         except: return pd.DataFrame()
 
-    @st.cache_data
+    @st.cache_data(max_entries=3, ttl=1800)
     def load_envelope_data():
         if not os.path.exists(DB_PATH): return None
         conn = sqlite3.connect(DB_PATH)
@@ -363,14 +363,14 @@ elif app_mode == "Monitor Dashboard":
         conn.close()
         return env_data if env_data else None
 
-    @st.cache_data
+    @st.cache_data(max_entries=3, ttl=1800)
     def load_test_data(path):
         p_path = path.replace('.csv', '.parquet')
         if os.path.exists(p_path): return pd.read_parquet(p_path, engine='pyarrow')
         if os.path.exists(path): return pd.read_csv(path)
         return pd.DataFrame()
 
-    @st.cache_data
+    @st.cache_data(max_entries=3, ttl=1800)
     def load_raw_data(test_name):
         base_file = f"{test_name}.xlsx"
         path_eval = os.path.join(dyno_engine.EVAL_FOLDER, base_file)
@@ -393,43 +393,39 @@ elif app_mode == "Monitor Dashboard":
     envelope_data = load_envelope_data()
     all_tests = summary_df['Test_Name'].tolist()
 
-    st.sidebar.markdown("### Data Browser")
-    
-    # 1. TIMEFRAME FILTER
-    available_timeframes = sorted(list(set([t[:7] for t in all_tests])), reverse=True)
-    selected_timeframes = st.sidebar.multiselect("Timeframe (YYYY-MM)", ["All Timeframes"] + available_timeframes, default=["All Timeframes"])
-    
-    time_filtered_tests = all_tests
-    if "All Timeframes" not in selected_timeframes:
-        time_filtered_tests = [t for t in all_tests if t[:7] in selected_timeframes]
+    # REFACTORED SIDEBAR UX
+    with st.sidebar.expander("📂 Mission Control & Navigation", expanded=True):
+        st.markdown("##### 1. Data Browser")
+        available_timeframes = sorted(list(set([t[:7] for t in all_tests])), reverse=True)
+        selected_timeframes = st.multiselect("Timeframe (YYYY-MM)", ["All Timeframes"] + available_timeframes, default=["All Timeframes"])
         
-    # 2. BIKE FILTER
-    def get_bike_no(test_name): return test_name.split('-')[1] if len(test_name.split('-')) > 1 else test_name
-    available_bikes = sorted(list(set([get_bike_no(t) for t in time_filtered_tests])))
-    selected_bikes = st.sidebar.multiselect("Vehicle ID", ["All Vehicles"] + available_bikes, default=["All Vehicles"])
-    
-    bike_filtered_tests = time_filtered_tests
-    if "All Vehicles" not in selected_bikes:
-        bike_filtered_tests = [t for t in time_filtered_tests if get_bike_no(t) in selected_bikes]
+        time_filtered_tests = all_tests
+        if "All Timeframes" not in selected_timeframes:
+            time_filtered_tests = [t for t in all_tests if t[:7] in selected_timeframes]
+            
+        def get_bike_no(test_name): return test_name.split('-')[1] if len(test_name.split('-')) > 1 else test_name
+        available_bikes = sorted(list(set([get_bike_no(t) for t in time_filtered_tests])))
+        selected_bikes = st.multiselect("Vehicle ID", ["All Vehicles"] + available_bikes, default=["All Vehicles"])
         
-    if not bike_filtered_tests: 
-        st.sidebar.warning("No tests found for the selected criteria.")
-        st.stop()
+        bike_filtered_tests = time_filtered_tests
+        if "All Vehicles" not in selected_bikes:
+            bike_filtered_tests = [t for t in time_filtered_tests if get_bike_no(t) in selected_bikes]
+            
+        if not bike_filtered_tests: 
+            st.warning("No tests found for the selected criteria.")
+            st.stop()
 
-    st.sidebar.divider()
-    
-    # 3. TEST SELECTION
-    st.sidebar.markdown("### Active Selection")
-    primary_test = st.sidebar.selectbox("Primary Test Overlay", bike_filtered_tests)
-    compare_tests = st.sidebar.multiselect("Comparison Overlays", [t for t in bike_filtered_tests if t != primary_test])
-    
-    st.sidebar.divider()
-    
-    # 4. CHANNELS & SETTINGS
-    st.sidebar.markdown("### Configuration")
-    channels = st.sidebar.multiselect("Telemetry Channels", ["IGBT", "Motor", "HighCell", "AFE"], default=["IGBT", "Motor"])
+        st.markdown("---")
+        st.markdown("##### 2. Active Selection")
+        primary_test = st.selectbox("Primary Test Overlay", bike_filtered_tests)
+        compare_tests = st.multiselect("Comparison Overlays", [t for t in bike_filtered_tests if t != primary_test])
 
-    with st.sidebar.expander("Advanced Settings"):
+    with st.sidebar.expander("⚙️ Diagnostic & Hardware Config", expanded=False):
+        st.markdown("##### 1. Channels")
+        channels = st.multiselect("Telemetry Channels", ["IGBT", "Motor", "HighCell", "AFE"], default=["IGBT", "Motor"])
+        
+        st.markdown("---")
+        st.markdown("##### 2. Advanced Settings")
         envelope_mode = st.radio("Method:", ["Statistical (2-Sigma)", "Tolerance (%)"], key="dyno_env_mode")
         tol_pct = 5
         if envelope_mode == "Tolerance (%)": tol_pct = st.selectbox("Tolerance Range", [5, 10, 15, 20], index=3, format_func=lambda x: f"± {x}%")
@@ -1072,11 +1068,18 @@ elif app_mode == "Monitor Dashboard":
         if st.session_state["selected_bike"] is None:
             st.markdown("<p style='color:#00cc96; font-weight:600; font-size:1.1rem; margin-top:-10px; margin-bottom: 20px;'>Select a vehicle below to analyze its complete hardware signature and performance metrics.</p>", unsafe_allow_html=True)
             
+            all_fleet_bikes = sorted(list(registry.keys()))
+            search_bikes = st.multiselect("🔍 Rapid Vehicle Filter:", options=["All Vehicles"] + all_fleet_bikes, default=["All Vehicles"])
+            st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+            
             c1, c2, c3, c4 = st.columns(4)
             cols_f = [c1, c2, c3, c4]
             
             idx = 0
             for b_id, b_data in registry.items():
+                if "All Vehicles" not in search_bikes and b_id not in search_bikes:
+                    continue
+                
                 current_col = cols_f[idx % 4]
                 try:
                     bike_num_str = str(int(b_id.split("-")[1]))

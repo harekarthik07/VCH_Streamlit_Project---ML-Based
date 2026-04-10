@@ -327,5 +327,22 @@ def run_processing_cycle():
     save_registry(registry)
     return {"Processed": len(all_new_files)}
 
+class DynoDBManager:
+    """Minimal wrapper exposing dyno test loading for FastAPI.
+    In a full implementation this would query the SQLite DB or load processed CSVs.
+    For now it returns a placeholder dict with the requested test_id.
+    """
+    def __init__(self, db_path=None):
+        self.db_path = db_path or DB_PATH
+    def load_test(self, test_id: str):
+        """Return a minimal representation of a dyno test.
+        Args:
+            test_id: Identifier of the dyno test.
+        Returns:
+            dict with placeholder data.
+        """
+        return {"test_id": test_id, "message": "Dyno test data placeholder"}
+
+
 if __name__ == "__main__":
     run_processing_cycle()

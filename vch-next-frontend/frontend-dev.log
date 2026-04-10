@@ -1,0 +1,363 @@
+
+> vch-next-frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.0.0.240:3000
+✓ Ready in 350ms
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of D:\Hare Karthik\Dashboard\Streamlit\VCH_Streamlit_Project - ML Based\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * D:\Hare Karthik\Dashboard\Streamlit\VCH_Streamlit_Project - ML Based\vch-next-frontend\package-lock.json
+
+Creating turbopack project {
+  dir: 'D:\\Hare Karthik\\Dashboard\\Streamlit\\VCH_Streamlit_Project - ML Based\\vch-next-frontend',
+  testMode: true
+}
+
+⚠ Slow filesystem detected. The benchmark took 1277ms. If D:\Hare Karthik\Dashboard\Streamlit\VCH_Streamlit_Project - ML Based\vch-next-frontend/.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+ GET /dyno 200 in 489ms (next.js: 178ms, application-code: 311ms)
+✓ Compiled in 46ms
+✓ Compiled in 33ms
+ GET /dyno 200 in 224ms (next.js: 50ms, application-code: 174ms)
+✓ Compiled in 33ms
+✓ Compiled in 68ms
+✓ Compiled in 31ms
+✓ Compiled in 47ms
+✓ Compiled in 36ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+✓ Compiled in 821ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /dyno 200 in 66ms (next.js: 7ms, application-code: 59ms)
+ GET /dyno 200 in 58ms (next.js: 3ms, application-code: 55ms)
+ GET / 200 in 290ms (next.js: 173ms, application-code: 117ms)
+⚠ Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from "desktop-l8tbn87".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['desktop-l8tbn87'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET /dyno 200 in 71ms (next.js: 3ms, application-code: 68ms)
+ GET /dyno 200 in 57ms (next.js: 3ms, application-code: 54ms)
+ GET /data-engine 200 in 70ms (next.js: 31ms, application-code: 39ms)
+✓ Compiled in 31ms
+✓ Compiled in 46ms
+✓ Compiled in 31ms
+✓ Compiled in 32ms
+✓ Compiled in 27ms
+ GET /dyno 200 in 140ms (next.js: 72ms, application-code: 68ms)
+ GET /data-engine 200 in 27ms (next.js: 4ms, application-code: 23ms)
+ GET /dyno 200 in 22ms (next.js: 3ms, application-code: 19ms)
+✓ Compiled in 57ms
+ GET /dyno 200 in 287ms (next.js: 66ms, application-code: 221ms)
+○ Compiling /dyno ...
+⨯ Error: The default export is not a React Component in "/dyno/page"
+    at ignore-listed frames
+⨯ Error: The default export is not a React Component in "/dyno/page"
+    at ignore-listed frames {
+  page: '/dyno'
+}
+⨯ Error: The default export is not a React Component in "/dyno/page"
+    at ignore-listed frames
+⨯ Error: The default export is not a React Component in "/dyno/page"
+    at ignore-listed frames {
+  page: '/dyno'
+}
+✓ Compiled in 2ms
+ GET /dyno 500 in 12.4s (next.js: 12.2s, application-code: 203ms)
+ GET /dyno 500 in 12.7s (next.js: 12.3s, application-code: 415ms)
+✓ Finished writing to filesystem cache in 20.9s
+[browser] Uncaught Error: The default export is not a React Component in "/dyno/page"
+    at async doRender (file://D:\Hare Karthik\Dashboard\Streamlit\VCH_Streamlit_Project - ML Based\vch-next-frontend\.next\dev\server\chunks\ssr\0hur_0yxh0.f._.js:5150:28)
+    at async handleResponse (file://D:\Hare Karthik\Dashboard\Streamlit\VCH_Streamlit_Project - ML Based\vch-next-frontend\.next\dev\server\chunks\ssr\0hur_0yxh0.f._.js:5425:32)
+    at async Module.handler (file://D:\Hare Karthik\Dashboard\Streamlit\VCH_Streamlit_Project - ML Based\vch-next-frontend\.next\dev\server\chunks\ssr\0hur_0yxh0.f._.js:5828:20)
+ GET /dyno 200 in 367ms (next.js: 94ms, application-code: 274ms)
+✓ Compiled in 68ms
+✓ Compiled in 40ms
+✓ Compiled in 39ms
+✓ Compiled in 50ms
+✓ Compiled in 52ms
+ GET /dyno 200 in 277ms (next.js: 73ms, application-code: 204ms)
+ GET /data-engine 200 in 60ms (next.js: 16ms, application-code: 43ms)
+ GET /dyno 200 in 25ms (next.js: 2ms, application-code: 22ms)
+✓ Compiled in 91ms
+✓ Compiled in 41ms
+✓ Compiled in 41ms
+✓ Compiled in 19ms
+✓ Compiled in 13ms
+ GET /dyno 200 in 289ms (next.js: 78ms, application-code: 211ms)
+✓ Compiled in 297ms
+ GET /dyno 200 in 212ms (next.js: 23ms, application-code: 189ms)
+ GET /dyno 200 in 346ms (next.js: 75ms, application-code: 271ms)
+ GET /dyno 200 in 106ms (next.js: 29ms, application-code: 77ms)
+ GET /dyno 200 in 51ms (next.js: 8ms, application-code: 42ms)
+ GET /dyno 200 in 107ms (next.js: 6ms, application-code: 101ms)
+ GET /dyno 200 in 266ms (next.js: 3ms, application-code: 262ms)
+✓ Compiled in 89ms
+ GET /dyno 200 in 63ms (next.js: 4ms, application-code: 59ms)
+ GET /dyno 200 in 270ms (next.js: 60ms, application-code: 210ms)
+ GET /dyno 200 in 151ms (next.js: 3ms, application-code: 148ms)
+ GET /dyno 200 in 105ms (next.js: 4ms, application-code: 100ms)
+ GET /dyno 200 in 105ms (next.js: 30ms, application-code: 75ms)
+ GET /dyno 200 in 104ms (next.js: 80ms, application-code: 24ms)
+ GET /dyno 200 in 105ms (next.js: 53ms, application-code: 52ms)
+ GET /dyno 200 in 168ms (next.js: 4ms, application-code: 164ms)
+ GET /dyno 200 in 191ms (next.js: 61ms, application-code: 130ms)
+ GET /dyno 200 in 58ms (next.js: 4ms, application-code: 55ms)
+ GET /dyno 200 in 20ms (next.js: 2ms, application-code: 18ms)
+ GET /dyno 200 in 174ms (next.js: 67ms, application-code: 107ms)
+ GET /dyno 200 in 36ms (next.js: 3ms, application-code: 34ms)
+ GET /dyno 200 in 189ms (next.js: 4ms, application-code: 185ms)
+✓ Compiled in 91ms
+ GET /dyno 200 in 335ms (next.js: 100ms, application-code: 234ms)
+ GET /dyno 200 in 170ms (next.js: 3ms, application-code: 167ms)
+ GET /dyno 200 in 146ms (next.js: 30ms, application-code: 116ms)
+ GET /dyno 200 in 147ms (next.js: 5ms, application-code: 142ms)
+ GET /dyno 200 in 145ms (next.js: 84ms, application-code: 61ms)
+ GET /dyno 200 in 146ms (next.js: 57ms, application-code: 89ms)
+ GET /dyno 200 in 180ms (next.js: 4ms, application-code: 176ms)
+ GET /dyno 200 in 176ms (next.js: 5ms, application-code: 171ms)
+ GET /dyno 200 in 146ms (next.js: 4ms, application-code: 142ms)
+ GET /dyno 200 in 146ms (next.js: 29ms, application-code: 117ms)
+ GET /dyno 200 in 146ms (next.js: 53ms, application-code: 93ms)
+ GET /dyno 200 in 147ms (next.js: 76ms, application-code: 71ms)
+ GET /dyno 200 in 108ms (next.js: 4ms, application-code: 104ms)
+ GET /dyno 200 in 81ms (next.js: 4ms, application-code: 77ms)
+ GET /dyno 200 in 57ms (next.js: 3ms, application-code: 54ms)
+ GET /dyno 200 in 57ms (next.js: 29ms, application-code: 28ms)
+ GET / 200 in 220ms (next.js: 72ms, application-code: 148ms)
+ GET / 200 in 36ms (next.js: 3ms, application-code: 34ms)
+ GET /dyno 200 in 126ms (next.js: 3ms, application-code: 123ms)
+ GET /dyno 200 in 164ms (next.js: 63ms, application-code: 101ms)
+ GET /dyno 200 in 31ms (next.js: 3ms, application-code: 29ms)
+ GET /dyno 200 in 130ms (next.js: 3ms, application-code: 127ms)
+✓ Compiled in 625ms
+✓ Compiled in 164ms
+ GET /dyno 200 in 97ms (next.js: 5ms, application-code: 92ms)
+ GET /dyno 200 in 749ms (next.js: 427ms, application-code: 322ms)
+ GET /dyno 200 in 84ms (next.js: 34ms, application-code: 50ms)
+ GET /dyno 200 in 85ms (next.js: 3ms, application-code: 82ms)
+ GET /dyno 200 in 702ms (next.js: 304ms, application-code: 398ms)
+✓ Compiled in 392ms
+ GET /dyno 200 in 269ms (next.js: 69ms, application-code: 200ms)
+ GET /dyno 200 in 135ms (next.js: 3ms, application-code: 132ms)
+ GET /dyno 200 in 133ms (next.js: 5ms, application-code: 128ms)
+ GET /dyno 200 in 132ms (next.js: 48ms, application-code: 84ms)
+ GET /dyno 200 in 132ms (next.js: 69ms, application-code: 63ms)
+ GET /dyno 200 in 134ms (next.js: 25ms, application-code: 109ms)
+ GET /dyno 200 in 59ms (next.js: 4ms, application-code: 55ms)
+ GET /dyno 200 in 32ms (next.js: 6ms, application-code: 26ms)
+ GET /dyno 200 in 13ms (next.js: 4ms, application-code: 9ms)
+ GET /dyno 200 in 28ms (next.js: 4ms, application-code: 24ms)
+ GET /dyno 200 in 118ms (next.js: 3ms, application-code: 115ms)
+✓ Finished writing to filesystem cache in 13.5s
+ GET /data-engine 200 in 778ms (next.js: 716ms, application-code: 62ms)
+ GET /dyno 200 in 21ms (next.js: 3ms, application-code: 18ms)
+✓ Compiled in 1058ms
+ GET /dyno 200 in 1136ms (next.js: 67ms, application-code: 1069ms)
+ GET /dyno 200 in 776ms (next.js: 48ms, application-code: 728ms)
+ GET /dyno 200 in 115ms (next.js: 26ms, application-code: 89ms)
+ GET /dyno 200 in 117ms (next.js: 3ms, application-code: 113ms)
+ GET /dyno 200 in 116ms (next.js: 46ms, application-code: 71ms)
+ GET /dyno 200 in 117ms (next.js: 69ms, application-code: 49ms)
+ GET /dyno 200 in 118ms (next.js: 3ms, application-code: 115ms)
+○ Compiling /dyno ...
+⨯ Error: The default export is not a React Component in "/dyno/layout"
+    at ignore-listed frames
+⨯ Error: The default export is not a React Component in "/dyno/layout"
+    at ignore-listed frames {
+  page: '/dyno'
+}
+[browser] Failed to fetch RSC payload for http://localhost:3000/dyno. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8084:21)
+    at fetchServerResponse (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:7928:27)
+    at fetchMissingDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9341:75)
+    at spawnDynamicRequests (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9149:35)
+    at navigateToKnownRoute (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10033:54)
+    at refreshDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10653:49)
+    at hmrRefreshReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10802:51)
+    at clientReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11398:65)
+    at Object.action (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11631:55)
+    at runAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11536:38)
+    at dispatchAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11599:9)
+    at Object.dispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11629:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:963:29)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_react-dom_0y3yml3._.js:5469:31)
+    at nextDispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:962:13)
+    at dispatchAppRouterAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:922:5)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11800:61)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at Object.hmrRefresh (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11799:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13967:64)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at processMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13966:44)
+    at WebSocket.handleMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13335:52) (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8005:21)
+[browser] Failed to fetch RSC payload for http://localhost:3000/dyno. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8084:21)
+    at fetchServerResponse (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:7928:27)
+    at fetchMissingDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9341:75)
+    at spawnDynamicRequests (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9149:35)
+    at navigateToKnownRoute (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10033:54)
+    at refreshDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10653:49)
+    at hmrRefreshReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10802:51)
+    at clientReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11398:65)
+    at Object.action (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11631:55)
+    at runAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11536:38)
+    at dispatchAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11599:9)
+    at Object.dispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11629:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:963:29)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_react-dom_0y3yml3._.js:5469:31)
+    at nextDispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:962:13)
+    at dispatchAppRouterAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:922:5)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11800:61)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at Object.hmrRefresh (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11799:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13967:64)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at processMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13966:44)
+    at WebSocket.handleMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13335:52) (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8005:21)
+[browser] Failed to fetch RSC payload for http://localhost:3000/dyno. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8084:21)
+    at fetchServerResponse (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:7928:27)
+    at fetchMissingDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9341:75)
+    at spawnDynamicRequests (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9149:35)
+    at navigateToKnownRoute (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10033:54)
+    at refreshDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10653:49)
+    at hmrRefreshReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10802:51)
+    at clientReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11398:65)
+    at Object.action (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11631:55)
+    at runAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11536:38)
+    at dispatchAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11599:9)
+    at Object.dispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11629:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:963:29)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_react-dom_0y3yml3._.js:5469:31)
+    at nextDispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:962:13)
+    at dispatchAppRouterAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:922:5)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11800:61)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at Object.hmrRefresh (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11799:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13967:64)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at processMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13966:44)
+    at WebSocket.handleMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13335:52) (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8005:21)
+[browser] Failed to fetch RSC payload for http://localhost:3000/dyno. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8084:21)
+    at fetchServerResponse (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:7928:27)
+    at fetchMissingDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9341:75)
+    at spawnDynamicRequests (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9149:35)
+    at navigateToKnownRoute (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10033:54)
+    at refreshDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10653:49)
+    at hmrRefreshReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10802:51)
+    at clientReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11398:65)
+    at Object.action (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11631:55)
+    at runAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11536:38)
+    at dispatchAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11599:9)
+    at Object.dispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11629:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:963:29)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_react-dom_0y3yml3._.js:5469:31)
+    at nextDispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:962:13)
+    at dispatchAppRouterAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:922:5)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11800:61)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at Object.hmrRefresh (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11799:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13967:64)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at processMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13966:44)
+    at WebSocket.handleMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13335:52) (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8005:21)
+[browser] Failed to fetch RSC payload for http://localhost:3000/dyno. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8084:21)
+    at fetchServerResponse (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:7928:27)
+    at fetchMissingDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9341:75)
+    at spawnDynamicRequests (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9149:35)
+    at navigateToKnownRoute (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10033:54)
+    at refreshDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10653:49)
+    at hmrRefreshReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10802:51)
+    at clientReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11398:65)
+    at Object.action (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11631:55)
+    at runAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11536:38)
+    at dispatchAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11599:9)
+    at Object.dispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11629:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:963:29)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_react-dom_0y3yml3._.js:5469:31)
+    at nextDispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:962:13)
+    at dispatchAppRouterAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:922:5)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11800:61)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at Object.hmrRefresh (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11799:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13967:64)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at processMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13966:44)
+    at WebSocket.handleMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13335:52) (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8005:21)
+[browser] Failed to fetch RSC payload for http://localhost:3000/dyno. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8084:21)
+    at fetchServerResponse (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:7928:27)
+    at fetchMissingDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9341:75)
+    at spawnDynamicRequests (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9149:35)
+    at navigateToKnownRoute (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10033:54)
+    at refreshDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10653:49)
+    at hmrRefreshReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10802:51)
+    at clientReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11398:65)
+    at Object.action (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11631:55)
+    at runAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11536:38)
+    at dispatchAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11599:9)
+    at Object.dispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11629:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:963:29)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_react-dom_0y3yml3._.js:5469:31)
+    at nextDispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:962:13)
+    at dispatchAppRouterAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:922:5)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11800:61)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at Object.hmrRefresh (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11799:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13967:64)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at processMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13966:44)
+    at WebSocket.handleMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13335:52) (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8005:21)
+[browser] Failed to fetch RSC payload for http://localhost:3000/dyno. Falling back to browser navigation. TypeError: Failed to fetch
+    at createFetch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8084:21)
+    at fetchServerResponse (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:7928:27)
+    at fetchMissingDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9341:75)
+    at spawnDynamicRequests (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:9149:35)
+    at navigateToKnownRoute (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10033:54)
+    at refreshDynamicData (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10653:49)
+    at hmrRefreshReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:10802:51)
+    at clientReducer (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11398:65)
+    at Object.action (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11631:55)
+    at runAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11536:38)
+    at dispatchAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11599:9)
+    at Object.dispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11629:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:963:29)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_react-dom_0y3yml3._.js:5469:31)
+    at nextDispatch (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:962:13)
+    at dispatchAppRouterAction (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:922:5)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11800:61)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at Object.hmrRefresh (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:11799:40)
+    at <unknown> (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13967:64)
+    at startTransition (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_compiled_0cez6sw._.js:1279:31)
+    at processMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13966:44)
+    at WebSocket.handleMessage (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:13335:52) (file://D:/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/vch-next-frontend/.next/dev/static/chunks/0hur_next_dist_client_0neoii7._.js:8005:21)
+✓ Compiled in 7ms
+ GET /dyno 200 in 360ms (next.js: 291ms, application-code: 69ms)
+ GET /dyno 200 in 30ms (next.js: 3ms, application-code: 27ms)
+ GET /dyno 200 in 370ms (next.js: 73ms, application-code: 297ms)
+✓ Compiled in 8ms
+✓ Compiled in 48ms
+ GET /dyno 200 in 274ms (next.js: 80ms, application-code: 193ms)
+ GET /data-engine 200 in 127ms (next.js: 70ms, application-code: 57ms)
+✓ Compiled in 3.6s
+ GET /data-engine 200 in 4.0s (next.js: 3.6s, application-code: 415ms)
+ GET /data-engine 200 in 135ms (next.js: 63ms, application-code: 72ms)
+ GET /data-engine 200 in 3.9s (next.js: 3.6s, application-code: 347ms)
+ GET /data-engine 200 in 101ms (next.js: 3ms, application-code: 98ms)
+ GET /data-engine 200 in 45ms (next.js: 3ms, application-code: 42ms)
+ GET /dyno 200 in 114ms (next.js: 64ms, application-code: 51ms)

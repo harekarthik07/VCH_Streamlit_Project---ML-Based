@@ -313,7 +313,7 @@ if app_mode == "🛠️ Data Engine":
         else: st.info("No logs generated yet. Hit Process to capture the terminal output.")
 
 elif app_mode == "📊 Monitor Dashboard":
-    @st.cache_data
+    @st.cache_data(max_entries=3, ttl=1800)
     def load_ride_database():
         if not os.path.exists(DB_PATH): return pd.DataFrame(), pd.DataFrame()
         try:
@@ -324,7 +324,7 @@ elif app_mode == "📊 Monitor Dashboard":
             return df, df_ev
         except: return pd.DataFrame(), pd.DataFrame()
 
-    @st.cache_data
+    @st.cache_data(max_entries=3, ttl=1800)
     def load_2hz_data(csv_path):
         p_path = csv_path.replace('.csv', '.parquet')
         if os.path.exists(p_path): return pd.read_parquet(p_path, engine='pyarrow')
@@ -337,30 +337,29 @@ elif app_mode == "📊 Monitor Dashboard":
     db_table, db_events = load_ride_database()
     if db_table.empty: st.error("🚨 Master Database Not Found! Factory Reset and re-upload."); st.stop()
 
-    st.sidebar.markdown("### 🎯 Test Selection")
-    all_tests = db_table['Ride_Name'].tolist()
-    available_dates = sorted(list(set([t[:10] for t in all_tests])), reverse=True)
-    selected_dates = st.sidebar.multiselect("📅 Filter Date:", ["All Dates"] + available_dates, default=["All Dates"])
-    available_routes = sorted(list(set([get_route_type(t) for t in all_tests])))
-    selected_routes = st.sidebar.multiselect("🛣️ Filter Route:", ["All Routes"] + available_routes, default=["All Routes"])
-    
-    filtered_df = db_table.copy()
-    if "All Dates" not in selected_dates: filtered_df = filtered_df[filtered_df['Ride_Name'].str[:10].isin(selected_dates)]
-    if "All Routes" not in selected_routes: filtered_df = filtered_df[filtered_df['Ride_Name'].apply(get_route_type).isin(selected_routes)]
-    if filtered_df.empty: st.sidebar.warning("⚠️ No tests found."); st.stop()
+    with st.sidebar.expander("📂 Mission Control & Navigation", expanded=True):
+        st.markdown("##### 1. Data Browser")
+        all_tests = db_table['Ride_Name'].tolist()
+        available_dates = sorted(list(set([t[:10] for t in all_tests])), reverse=True)
+        selected_dates = st.multiselect("📅 Filter Date:", ["All Dates"] + available_dates, default=["All Dates"])
+        available_routes = sorted(list(set([get_route_type(t) for t in all_tests])))
+        selected_routes = st.multiselect("🛣️ Filter Route:", ["All Routes"] + available_routes, default=["All Routes"])
+        
+        filtered_df = db_table.copy()
+        if "All Dates" not in selected_dates: filtered_df = filtered_df[filtered_df['Ride_Name'].str[:10].isin(selected_dates)]
+        if "All Routes" not in selected_routes: filtered_df = filtered_df[filtered_df['Ride_Name'].apply(get_route_type).isin(selected_routes)]
+        if filtered_df.empty: st.warning("⚠️ No tests found."); st.stop()
 
-    primary_test = st.sidebar.selectbox("⭐ Primary Test Log:", filtered_df['Ride_Name'].tolist())
-    selected_ride = primary_test # Map variable for backend compatibility
-    
-    # 🌟 NEW: ROAD SUITE COMPARE LOGIC
-    compare_tests = st.sidebar.multiselect("🔄 Compare Tests", [t for t in filtered_df['Ride_Name'].tolist() if t != primary_test])
+        st.markdown("---")
+        st.markdown("##### 2. Active Selection")
+        primary_test = st.selectbox("⭐ Primary Test Log:", filtered_df['Ride_Name'].tolist())
+        selected_ride = primary_test
+        compare_tests = st.multiselect("🔄 Compare Tests", [t for t in filtered_df['Ride_Name'].tolist() if t != primary_test])
 
     ride_kpis = filtered_df[filtered_df['Ride_Name'] == selected_ride].iloc[0]
     current_route_type = get_route_type(selected_ride)
     
-    st.sidebar.divider()
-    st.sidebar.markdown("### 📊 Channels")
-    with st.sidebar:
+    with st.sidebar.expander("⚙️ Diagnostic Config", expanded=False):
         selected_menu = option_menu(
             menu_title=None, 
             options=["Thermal Systems", "Dynamic Systems", "Ride Analytics", "Battery & Range", "Driver Diagnostics", "Ride Events & QC", "Master Repository"],
@@ -374,12 +373,13 @@ elif app_mode == "📊 Monitor Dashboard":
             }
         )
         
-    channel_mapping = {"Thermal Systems": "Channel 1", "Dynamic Systems": "Channel 2", "Ride Analytics": "Channel 3", "Battery & Range": "Channel 4", "Driver Diagnostics": "Channel 5", "Ride Events & QC": "Channel 6", "Master Repository": "Channel 7"}
-    channel_view = channel_mapping[selected_menu]
-    st.sidebar.markdown("---")
-    
-    if "Channel 1" in channel_view: active_channels = st.sidebar.multiselect("Select Thermal Channels:", ["IGBT", "Motor", "HighCell", "AFE"], default=["IGBT", "Motor", "HighCell", "AFE"])
-    elif "Channel 2" in channel_view: active_channels = st.sidebar.multiselect("Select Dynamic Channels:", ["RPM [RPM]", "Front_Speed [kph]", "Throttle", "soc", "Instant_Power [W]", "DC_Volatge [V]", "Motor_Torque [Nm]"], default=["Front_Speed [kph]", "RPM [RPM]", "Instant_Power [W]"])
+        channel_mapping = {"Thermal Systems": "Channel 1", "Dynamic Systems": "Channel 2", "Ride Analytics": "Channel 3", "Battery & Range": "Channel 4", "Driver Diagnostics": "Channel 5", "Ride Events & QC": "Channel 6", "Master Repository": "Channel 7"}
+        channel_view = channel_mapping[selected_menu]
+        st.markdown("---")
+        
+        active_channels = []
+        if "Channel 1" in channel_view: active_channels = st.multiselect("Select Thermal Channels:", ["IGBT", "Motor", "HighCell", "AFE"], default=["IGBT", "Motor", "HighCell", "AFE"])
+        elif "Channel 2" in channel_view: active_channels = st.multiselect("Select Dynamic Channels:", ["RPM [RPM]", "Front_Speed [kph]", "Throttle", "soc", "Instant_Power [W]", "DC_Volatge [V]", "Motor_Torque [Nm]"], default=["Front_Speed [kph]", "RPM [RPM]", "Instant_Power [W]"])
 
     try: df = load_2hz_data(ride_kpis['Processed_CSV_Path'])
     except Exception: st.error("Error loading data."); st.stop()
@@ -459,14 +459,14 @@ elif app_mode == "📊 Monitor Dashboard":
                         with graph_cols[i % 2]:
                             fig = go.Figure()
                             limit = thermal_map[ch]["limit"]
-                            fig.add_trace(go.Scatter(x=df['Time'], y=df[thermal_map[ch]["col"]], mode='lines', name=f"⭐ {primary_test}", line=dict(color=thermal_map[ch]["color"], width=2, shape='spline', smoothing=0.8)))
+                            fig.add_trace(go.Scatter(x=df['Time'], y=df[thermal_map[ch]["col"]], mode='lines', name=f"⭐ {primary_test}", line=dict(color=thermal_map[ch]["color"], width=2)))
                             
                             # 🌟 ROAD COMPARE LOGIC
                             for test in compare_tests:
                                 cmp_path = db_table[db_table["Ride_Name"] == test]["Processed_CSV_Path"].iloc[0]
                                 df_cmp = load_2hz_data(cmp_path)
                                 if not df_cmp.empty and thermal_map[ch]["col"] in df_cmp.columns:
-                                    fig.add_trace(go.Scatter(x=df_cmp['Time'], y=df_cmp[thermal_map[ch]["col"]], mode='lines', name=f"🔄 {test}", line=dict(width=1.5, dash='dot', shape='spline', smoothing=0.8), opacity=0.7))
+                                    fig.add_trace(go.Scatter(x=df_cmp['Time'], y=df_cmp[thermal_map[ch]["col"]], mode='lines', name=f"🔄 {test}", line=dict(width=1.5, dash='dot'), opacity=0.7))
 
                             fig.add_hline(y=limit, line_dash="dash", line_color="red", annotation_text=f"Limit: {limit}°C")
                             fig.update_layout(
@@ -483,7 +483,7 @@ elif app_mode == "📊 Monitor Dashboard":
                     fig_combined = go.Figure()
                     export_cols_comb = ['Time']
                     for ch in active_channels: 
-                        fig_combined.add_trace(go.Scatter(x=df['Time'], y=df[thermal_map[ch]["col"]], mode='lines', name=ch, line=dict(color=thermal_map[ch]["color"], width=2, shape='spline', smoothing=0.8)))
+                        fig_combined.add_trace(go.Scatter(x=df['Time'], y=df[thermal_map[ch]["col"]], mode='lines', name=ch, line=dict(color=thermal_map[ch]["color"], width=2)))
                         export_cols_comb.append(thermal_map[ch]["col"])
                     fig_combined.update_layout(
                         hovermode="x unified", height=450, legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -507,14 +507,14 @@ elif app_mode == "📊 Monitor Dashboard":
                     for i, ch in enumerate(active_channels):
                         with graph_cols[i % 2]:
                             fig = go.Figure()
-                            fig.add_trace(go.Scatter(x=df['Time'], y=df[ch], mode='lines', name=f"⭐ {primary_test}", line=dict(color=colors[i % len(colors)], width=2, shape='spline', smoothing=0.8)))
+                            fig.add_trace(go.Scatter(x=df['Time'], y=df[ch], mode='lines', name=f"⭐ {primary_test}", line=dict(color=colors[i % len(colors)], width=2)))
                             
                             # 🌟 ROAD COMPARE LOGIC
                             for test in compare_tests:
                                 cmp_path = db_table[db_table["Ride_Name"] == test]["Processed_CSV_Path"].iloc[0]
                                 df_cmp = load_2hz_data(cmp_path)
                                 if not df_cmp.empty and ch in df_cmp.columns:
-                                    fig.add_trace(go.Scatter(x=df_cmp['Time'], y=df_cmp[ch], mode='lines', name=f"🔄 {test}", line=dict(width=1.5, dash='dot', shape='spline', smoothing=0.8), opacity=0.7))
+                                    fig.add_trace(go.Scatter(x=df_cmp['Time'], y=df_cmp[ch], mode='lines', name=f"🔄 {test}", line=dict(width=1.5, dash='dot'), opacity=0.7))
 
                             fig.update_layout(
                                 title=f"{ch} Profile", hovermode="x unified", height=350,
@@ -555,8 +555,8 @@ elif app_mode == "📊 Monitor Dashboard":
                 st.subheader("⚠️ Motor Torque vs. Thermal Deration Map")
                 if 'Motor_Torque [Nm]' in df.columns and 'Motor_Temp [C]' in df.columns:
                     fig_derate = go.Figure()
-                    fig_derate.add_trace(go.Scatter(x=df['Time'], y=df['Motor_Torque [Nm]'], mode='lines', fill='tozeroy', name='Motor Torque Demanded (Nm)', line=dict(color='#1f77b4', width=1, shape='spline', smoothing=0.8), opacity=0.4))
-                    fig_derate.add_trace(go.Scatter(x=df['Time'], y=df['Motor_Temp [C]'], mode='lines', name='Motor Temp (°C)', yaxis='y2', line=dict(color='#ff4b4b', width=3, shape='spline', smoothing=0.8)))
+                    fig_derate.add_trace(go.Scatter(x=df['Time'], y=df['Motor_Torque [Nm]'], mode='lines', fill='tozeroy', name='Motor Torque Demanded (Nm)', line=dict(color='#1f77b4', width=1), opacity=0.4))
+                    fig_derate.add_trace(go.Scatter(x=df['Time'], y=df['Motor_Temp [C]'], mode='lines', name='Motor Temp (°C)', yaxis='y2', line=dict(color='#ff4b4b', width=3)))
                     fig_derate.add_hline(y=125.0, line_dash="dash", line_color="gold", annotation_text="Safety Limit (125°C)", yref="y2")
                     
                     fig_derate.update_layout(
@@ -579,15 +579,15 @@ elif app_mode == "📊 Monitor Dashboard":
                     
                     st.subheader("📉 SOC Drop vs Speed Profile")
                     fig_soc = go.Figure()
-                    fig_soc.add_trace(go.Scatter(x=df['Time'], y=df['Front_Speed [kph]'], mode='lines', name=f"⭐ {primary_test} Speed", line=dict(color='#00cc96', width=1, shape='spline', smoothing=0.8), opacity=0.5))
-                    fig_soc.add_trace(go.Scatter(x=df['Time'], y=df['soc'], mode='lines', name=f"⭐ {primary_test} SOC", yaxis='y2', line=dict(color='#ab63fa', width=3, shape='spline', smoothing=0.8)))
+                    fig_soc.add_trace(go.Scatter(x=df['Time'], y=df['Front_Speed [kph]'], mode='lines', name=f"⭐ {primary_test} Speed", line=dict(color='#00cc96', width=1), opacity=0.5))
+                    fig_soc.add_trace(go.Scatter(x=df['Time'], y=df['soc'], mode='lines', name=f"⭐ {primary_test} SOC", yaxis='y2', line=dict(color='#ab63fa', width=3)))
                     
                     # 🌟 ROAD COMPARE LOGIC
                     for test in compare_tests:
                         cmp_path = db_table[db_table["Ride_Name"] == test]["Processed_CSV_Path"].iloc[0]
                         df_cmp = load_2hz_data(cmp_path)
                         if not df_cmp.empty and 'soc' in df_cmp.columns:
-                            fig_soc.add_trace(go.Scatter(x=df_cmp['Time'], y=df_cmp['soc'], mode='lines', name=f"🔄 {test} SOC", yaxis='y2', line=dict(width=1.5, dash='dot', shape='spline', smoothing=0.8), opacity=0.7))
+                            fig_soc.add_trace(go.Scatter(x=df_cmp['Time'], y=df_cmp['soc'], mode='lines', name=f"🔄 {test} SOC", yaxis='y2', line=dict(width=1.5, dash='dot'), opacity=0.7))
 
                     fig_soc.update_layout(
                         hovermode="x unified", height=450, legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -644,7 +644,7 @@ elif app_mode == "📊 Monitor Dashboard":
                         if f"{ch}_dT" in df_10s.columns:
                             with plot_cols[i % 2]:
                                 fig_dt = go.Figure()
-                                fig_dt.add_trace(go.Scatter(x=df_10s['Time'], y=df_10s[f"{ch}_dT"], mode='lines+markers', name=f"⭐ {primary_test}", line=dict(color="#FF4081", width=2, shape='spline', smoothing=0.8), marker=dict(size=4)))
+                                fig_dt.add_trace(go.Scatter(x=df_10s['Time'], y=df_10s[f"{ch}_dT"], mode='lines+markers', name=f"⭐ {primary_test}", line=dict(color="#FF4081", width=2), marker=dict(size=4)))
                                 fig_dt.add_vline(x=snap_time, line_width=1, line_dash="dash", line_color="cyan", annotation_text=f"Snapshot ({snap_time}s)")
                                 
                                 # 🌟 ROAD COMPARE LOGIC
@@ -655,7 +655,7 @@ elif app_mode == "📊 Monitor Dashboard":
                                         # Calculate dT for compare test natively
                                         df_cmp_10s = pd.merge_asof(pd.DataFrame({"Time": np.arange(0, df_cmp['Time'].max() + 10, 10)}), df_cmp.sort_values("Time"), on="Time", direction="nearest")
                                         df_cmp_10s[f"{ch}_dT"] = df_cmp_10s[thermal_map[ch]] - df_cmp_10s[thermal_map[ch]].iloc[0]
-                                        fig_dt.add_trace(go.Scatter(x=df_cmp_10s['Time'], y=df_cmp_10s[f"{ch}_dT"], mode='lines', name=f"🔄 {test}", line=dict(width=1.5, dash='dot', shape='spline', smoothing=0.8), opacity=0.7))
+                                        fig_dt.add_trace(go.Scatter(x=df_cmp_10s['Time'], y=df_cmp_10s[f"{ch}_dT"], mode='lines', name=f"🔄 {test}", line=dict(width=1.5, dash='dot'), opacity=0.7))
 
                                 fig_dt.update_layout(
                                     title=f"{ch} Cumulative Rise Profile", hovermode="x unified", height=350,
@@ -754,20 +754,20 @@ elif app_mode == "📊 Monitor Dashboard":
                     
                     color_idx = 0
                     for y_col in y_axes: 
-                        fig_multi.add_trace(go.Scatter(x=df[x_axis], y=df[y_col], mode=plot_mode, name=f"⭐ {primary_test} {y_col} (L)", marker=marker_settings, line=dict(color=custom_colors[color_idx % len(custom_colors)], shape='spline', smoothing=0.8) if plot_mode == 'lines' else None))
+                        fig_multi.add_trace(go.Scatter(x=df[x_axis], y=df[y_col], mode=plot_mode, name=f"⭐ {primary_test} {y_col} (L)", marker=marker_settings, line=dict(color=custom_colors[color_idx % len(custom_colors)]) if plot_mode == 'lines' else None))
                         for test in compare_tests:
                             cmp_path = db_table[db_table["Ride_Name"] == test]["Processed_CSV_Path"].iloc[0]
                             df_cmp = load_2hz_data(cmp_path)
                             if not df_cmp.empty and y_col in df_cmp.columns and x_axis in df_cmp.columns:
-                                fig_multi.add_trace(go.Scatter(x=df_cmp[x_axis], y=df_cmp[y_col], mode=plot_mode, name=f"🔄 {test} {y_col} (L)", marker=marker_settings, line=dict(dash='dot', color=custom_colors[color_idx % len(custom_colors)], shape='spline', smoothing=0.8) if plot_mode == 'lines' else None, opacity=0.7))
+                                fig_multi.add_trace(go.Scatter(x=df_cmp[x_axis], y=df_cmp[y_col], mode=plot_mode, name=f"🔄 {test} {y_col} (L)", marker=marker_settings, line=dict(dash='dot', color=custom_colors[color_idx % len(custom_colors)]) if plot_mode == 'lines' else None, opacity=0.7))
                         color_idx += 1
                     for y_col in y_axes_sec:
-                        fig_multi.add_trace(go.Scatter(x=df[x_axis], y=df[y_col], mode=plot_mode, name=f"⭐ {primary_test} {y_col} (R)", yaxis="y2", marker=marker_settings, line=dict(dash='dash', color=custom_colors[color_idx % len(custom_colors)], shape='spline', smoothing=0.8) if plot_mode == 'lines' else None))
+                        fig_multi.add_trace(go.Scatter(x=df[x_axis], y=df[y_col], mode=plot_mode, name=f"⭐ {primary_test} {y_col} (R)", yaxis="y2", marker=marker_settings, line=dict(dash='dash', color=custom_colors[color_idx % len(custom_colors)]) if plot_mode == 'lines' else None))
                         for test in compare_tests:
                             cmp_path = db_table[db_table["Ride_Name"] == test]["Processed_CSV_Path"].iloc[0]
                             df_cmp = load_2hz_data(cmp_path)
                             if not df_cmp.empty and y_col in df_cmp.columns and x_axis in df_cmp.columns:
-                                fig_multi.add_trace(go.Scatter(x=df_cmp[x_axis], y=df_cmp[y_col], mode=plot_mode, name=f"🔄 {test} {y_col} (R)", yaxis="y2", marker=marker_settings, line=dict(dash='dashdot', color=custom_colors[color_idx % len(custom_colors)], shape='spline', smoothing=0.8) if plot_mode == 'lines' else None, opacity=0.7))
+                                fig_multi.add_trace(go.Scatter(x=df_cmp[x_axis], y=df_cmp[y_col], mode=plot_mode, name=f"🔄 {test} {y_col} (R)", yaxis="y2", marker=marker_settings, line=dict(dash='dashdot', color=custom_colors[color_idx % len(custom_colors)]) if plot_mode == 'lines' else None, opacity=0.7))
                         color_idx += 1
 
                     fig_multi.update_layout(

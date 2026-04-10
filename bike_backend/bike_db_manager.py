@@ -96,3 +96,12 @@ def update_bike_info(bike_id, new_data):
 
 # Self-execute sync on backend script load
 ingest_csv_to_registry()
+
+
+class BikeDBManager:
+    """Simple wrapper exposing bike registry operations for FastAPI."""
+    def __init__(self):
+        pass
+    def list_all(self):
+        """Return the full bike registry as a dict/list."""
+        return load_bike_registry()
