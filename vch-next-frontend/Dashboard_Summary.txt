@@ -1,0 +1,36 @@
+====================================================================
+          VCH NEXT.JS DASHBOARD - PROJECT SUMMARY
+====================================================================
+
+1. WHAT THIS DASHBOARD IS ABOUT
+--------------------------------------------------------------------
+The "vch-next-frontend" is a modern, JavaScript-based web application 
+built using Next.js (a popular React framework). 
+
+While the original VCH Thermal Suite was built entirely in Python 
+using Streamlit, this new Next.js dashboard is designed to be the 
+next-generation frontend for Raptee.HV's telemetry and thermal data. 
+It provides a much faster, more customizable, and highly scalable 
+User Interface (UI) for monitoring Dyno tests and Road analytics.
+
+2. HOW IT WORKS & ARCHITECTURE
+--------------------------------------------------------------------
+* Frontend (React/Next.js): It handles the UI, routing, and user 
+  interactions. It uses modern web standards and auto-optimizes 
+  assets (like the Geist font) for better performance.
+* Backend Integration: Instead of doing data processing directly in 
+  the UI like Streamlit does, this JS dashboard will act as a client. 
+  It will make HTTP requests to your Python backend (e.g., your FastAPI 
+  server) to fetch the ML predictions, SQLite database records, and 
+  processed 2Hz telemetry arrays.
+
+3. HOW TO RUN AND DEVELOP THE APP
+--------------------------------------------------------------------
+To launch this new dashboard locally on your machine:
+1. Open a terminal and navigate into the `vch-next-frontend` folder.
+2. Run the command: `npm run dev` (or `yarn dev` / `pnpm dev`).
+3. Open your browser and go to: http://localhost:3000
+
+The dashboard features "Hot Module Replacement", meaning any changes 
+you make to the code (e.g., inside `app/page.js`) will instantly 
+update in the browser without needing to manually refresh.

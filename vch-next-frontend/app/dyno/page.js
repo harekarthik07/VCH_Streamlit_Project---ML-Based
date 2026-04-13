@@ -218,7 +218,7 @@ export default function DynoPage() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", maxHeight: "100vh" }}>
+    <div style={{ display: "flex", minHeight: "100vh" }}>
       <style>{`
         .dyno-shell {
           position: relative;

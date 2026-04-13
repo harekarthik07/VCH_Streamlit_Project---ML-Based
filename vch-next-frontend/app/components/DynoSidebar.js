@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Zap, FolderOpen, Settings, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Zap, FolderOpen, Settings, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen, Home, Route } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function DynoSidebar({
@@ -162,6 +162,40 @@ export default function DynoSidebar({
       {!collapsed && (
         <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 16 }}>
           Dyno VCH Suite
+        </div>
+      )}
+
+      {/* Navigation Links */}
+      {!collapsed && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: 16 }}>
+          <button
+            onClick={() => router.push("/")}
+            style={{
+              width: "100%", padding: "8px 12px", borderRadius: 8,
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+              color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8,
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
+          >
+            <Home size={15} /> Main Dashboard
+          </button>
+          <button
+            onClick={() => router.push("/road")}
+            style={{
+              width: "100%", padding: "8px 12px", borderRadius: 8,
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+              color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8,
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
+          >
+            <Route size={15} /> Road Suite
+          </button>
         </div>
       )}
 
@@ -416,14 +450,15 @@ export default function DynoSidebar({
 
       {collapsed && (
         <div style={{ marginTop: 18, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-          {[RefreshCw, FolderOpen, Settings].map((Icon, index) => (
+          {[Home, Route, RefreshCw, FolderOpen, Settings].map((Icon, index) => (
             <button
               key={index}
               onClick={() => {
-                if (index === 0) onRefresh();
-                if (index === 1) setMissionOpen(true);
-                if (index === 2) setConfigOpen(true);
-                setCollapsed(false);
+                if (index === 0) router.push("/");
+                if (index === 1) router.push("/road");
+                if (index === 2) { onRefresh(); setCollapsed(false); }
+                if (index === 3) { setMissionOpen(true); setCollapsed(false); }
+                if (index === 4) { setConfigOpen(true); setCollapsed(false); }
               }}
               style={{
                 width: 40,

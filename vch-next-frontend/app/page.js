@@ -1,140 +1,101 @@
-"use client";
-import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import Sidebar from "./components/Sidebar";
-import { Rocket, Settings, Route } from "lucide-react";
 
-export default function DashboardHome() {
-  const router = useRouter();
-  const [authState] = useState(() => {
-    if (typeof window === "undefined") return { username: "", ready: false };
-    const stored = window.localStorage.getItem("vch-auth");
-    if (!stored) return { username: "", ready: false };
-    try {
-      const parsed = JSON.parse(stored);
-      return { username: parsed?.username || "admin", ready: true };
-    } catch {
-      window.localStorage.removeItem("vch-auth");
-      return { username: "", ready: false };
-    }
-  });
+const SUITES = [
+  {
+    href: "/dyno",
+    icon: "⚙️",
+    title: "Dyno Suite",
+    copy: "Strict Quality Control gatekeeper designed to evaluate stationary Dewesoft telemetry against mathematically calculated Golden Standards.",
+    features: [
+      "Automated ±2-Sigma statistical envelopes.",
+      "Dynamic power and early deration tracking.",
+      "1-click executive Word report generator.",
+    ],
+    buttonText: "Launch Dyno Engine →",
+    buttonClass: "text-[#d7ffe9] bg-[#0f141d]/90 border-white/10 hover:bg-[#0a0e14]",
+  },
+  {
+    href: "/road",
+    icon: "🛣️",
+    title: "Road Suite",
+    copy: "Dynamic telemetry processing engine for raw CAN logs, powertrain performance visualization, and battery efficiency mapping.",
+    features: [
+      "Raw CAN & Excel decoding to 2Hz time series.",
+      "SOC drain and Wh/km efficiency tracking.",
+      "Thermal protection overlay maps.",
+    ],
+    buttonText: "Launch Road Engine →",
+    buttonClass: "text-[#00cc96] bg-[#0f141d]/90 border-[#00cc96]/20 hover:bg-[#07100c]",
+  },
+];
 
-  useEffect(() => {
-    if (!authState.ready) {
-      router.replace("/login");
-    }
-  }, [authState.ready, router]);
-
-  if (!authState.ready) return null;
-
-  const cards = [
-    {
-      title: "Dyno Suite",
-      icon: <Settings size={42} style={{ color: "#d7d1e8" }} />,
-      href: "/dyno",
-      cta: "Launch Dyno Engine",
-      description:
-        "Strict Quality Control gatekeeper designed to evaluate stationary Dewesoft telemetry against calculated Golden Standards.",
-      features: [
-        "Statistical Envelopes: Automated +-2-Sigma boundaries.",
-        "QC Gatekeeper: Dynamic power and early deration tracking.",
-        "Automated Docs: Executive report workflow.",
-      ],
-    },
-    {
-      title: "Road Suite",
-      icon: <Route size={42} style={{ color: "#d7d1e8" }} />,
-      href: "/road",
-      cta: "Launch Road Engine",
-      description:
-        "Dynamic telemetry processing space for raw CAN logs, efficiency analysis, and real-world powertrain behavior.",
-      features: [
-        "Universal Decoder: Raw CAN and Excel to 2Hz time-series.",
-        "Battery Analytics: SOC drain and Wh/km workflows.",
-        "Thermal Protection: Torque versus deration overlays.",
-      ],
-    },
-  ];
-
+export default function Home() {
   return (
-    <div className="app-container">
-      <Sidebar />
-      <main className="main-content">
-        <div className="fade-in" style={{ maxWidth: 1480 }}>
-          <div style={{ marginBottom: 22 }}>
-            <div
-              style={{
-                width: 182,
-                height: 74,
-                borderRadius: 10,
-                background: "#f2f2f2",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#151515",
-                fontSize: 28,
-                fontWeight: 800,
-                marginBottom: 26,
-              }}
-            >
-              RAPTEE
+    <div
+      className="min-h-screen px-6 py-10 sm:px-10 lg:px-14 text-white"
+      style={{
+        background: "radial-gradient(circle at 28% 6%, rgba(0, 204, 150, 0.18), transparent 18%), radial-gradient(circle at 78% 10%, rgba(85, 170, 255, 0.08), transparent 18%), #070a10",
+      }}
+    >
+      <div className="mx-auto w-full max-w-7xl space-y-10">
+        <section className="rounded-[2rem] border border-white/10 bg-white/5 p-10 shadow-[0_45px_120px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl space-y-6">
+              <div className="inline-flex items-center gap-3 rounded-full bg-[#00cc9666] px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] text-[#d7ffe9] shadow-[0_12px_40px_rgba(0,204,150,0.12)]">
+                Raptee Thermal Suite
+              </div>
+              <div className="space-y-4">
+                <h1 className="text-5xl font-black tracking-tight sm:text-6xl">Thermal & Dynamics Analytics Engine V4</h1>
+                <p className="text-lg text-gray-300 leading-8">
+                  A modern JS dashboard for the same Streamlit workflow: launch Dyno or Road engines, inspect telemetry, and run quality control from one unified interface.
+                </p>
+              </div>
+              <div className="text-sm text-gray-400">
+                Logged in as: <span className="text-[#00cc96] font-semibold">admin</span>
+              </div>
             </div>
-            <h1 className="section-title" style={{ fontSize: 58, marginBottom: 12 }}>
-              Raptee Thermal Suite
-            </h1>
-            <div style={{ color: "var(--primary-accent)", fontSize: 18, fontWeight: 700, marginBottom: 14 }}>
-              Thermal & Dynamics Analytics Engine V4
-            </div>
-            <div className="section-subtitle">
-              Logged in as: <span style={{ color: "var(--primary-accent)", fontWeight: 700 }}>{authState.username}</span>
+
+            <div className="space-y-4 rounded-[1.8rem] border border-[#00cc96]/10 bg-[#0b121d]/95 p-6 shadow-[0_30px_60px_rgba(0,0,0,0.25)]">
+              <p className="text-xs uppercase tracking-[0.3em] text-[#00cc96]/90">Quick Launch</p>
+              <div className="grid gap-3">
+                <a href="/dyno" className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-[#0f141d]/90 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#d7ffe9] transition hover:bg-[#0a0e14]">
+                  Open Dyno Suite
+                </a>
+                <a href="/road" className="inline-flex items-center justify-center rounded-2xl border border-[#00cc96]/20 bg-[#0f141d]/90 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#00cc96] transition hover:bg-[#07100c]">
+                  Open Road Suite
+                </a>
+              </div>
             </div>
           </div>
+        </section>
 
-          <hr className="soft-divider" />
-
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-              <Rocket size={26} color="#ff8a5b" />
-              <h2 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "-0.02em" }}>Active Testing Environments</h2>
-            </div>
-            <p className="section-subtitle">
-              Select a module below or use the sidebar to launch the dedicated evaluation suites.
+        <section className="space-y-6">
+          <div className="rounded-[2rem] border border-white/10 bg-[#0d111c]/80 p-8 shadow-[0_28px_80px_rgba(0,0,0,0.22)] backdrop-blur-2xl">
+            <h2 className="text-3xl font-semibold text-white">🚀 Active Testing Environments</h2>
+            <p className="mt-3 text-gray-400 text-base leading-7">
+              Select a module below to launch the dedicated evaluation suites. This interface now mirrors the Streamlit structure with clear cards, concise module summaries, and strong visual hierarchy.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 20 }}>
-            {cards.map((card) => (
-              <div key={card.href} className="metric-card" style={{ padding: "34px 28px 26px" }}>
-                <div style={{ marginBottom: 22 }}>{card.icon}</div>
-                <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 16 }}>{card.title}</div>
-                <div style={{ color: "var(--text-sub)", fontSize: 15, lineHeight: 1.7, marginBottom: 18 }}>
-                  {card.description}
-                </div>
-                <div style={{ display: "grid", gap: 10, marginBottom: 22 }}>
-                  {card.features.map((feature) => (
-                    <div
-                      key={feature}
-                      style={{
-                        color: "var(--text-sub)",
-                        fontSize: 14,
-                        borderLeft: "2px solid rgba(255,255,255,0.12)",
-                        paddingLeft: 12,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {feature}
-                    </div>
+          <div className="grid gap-8 xl:grid-cols-2">
+            {SUITES.map((suite) => (
+              <div key={suite.href} className="group overflow-hidden rounded-[2rem] border border-white/10 bg-[#11131a]/85 p-10 shadow-[0_35px_90px_rgba(0,0,0,0.24)] transition-all duration-300 hover:-translate-y-1 hover:border-[#00cc96]/30">
+                <div className="text-6xl mb-6">{suite.icon}</div>
+                <h3 className="text-4xl font-black mb-4 text-white">{suite.title}</h3>
+                <p className="text-gray-400 mb-8 text-base leading-8">{suite.copy}</p>
+                <ul className="text-gray-500 space-y-3 mb-10 text-sm">
+                  {suite.features.map((feature) => (
+                    <li key={feature} className="border-l-2 border-gray-700 pl-3">{feature}</li>
                   ))}
-                </div>
-                <Link className="pill-button" href={card.href} style={{ width: "fit-content" }}>
-                  {card.cta}
-                </Link>
+                </ul>
+                <a href={suite.href} className={`inline-flex w-full justify-center rounded-2xl border px-6 py-4 text-sm font-semibold uppercase tracking-[0.18em] shadow-[0_15px_40px_rgba(0,204,150,0.16)] transition ${suite.buttonClass}`}>
+                  {suite.buttonText}
+                </a>
               </div>
             ))}
           </div>
-        </div>
-      </main>
+        </section>
+      </div>
     </div>
   );
 }

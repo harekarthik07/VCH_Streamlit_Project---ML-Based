@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -10,29 +10,35 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  ShieldAlert
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Master App", icon: LayoutDashboard, section: "VCH SYSTEMS" },
   { href: "/dyno", label: "Dyno Suite", icon: Activity, section: "DYNO SUITE" },
   { href: "/road", label: "Road Suite", icon: Route, section: "ROAD SUITE" },
+  { href: "/admin", label: "Admin Zone", icon: ShieldAlert, section: "ADMINISTRATION" },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
-  const [username] = useState(() => {
-    if (typeof window === "undefined") return "admin";
-    const stored = window.localStorage.getItem("vch-auth");
-    if (!stored) return "admin";
-    try {
-      const parsed = JSON.parse(stored);
-      return parsed?.username || "admin";
-    } catch {
-      return "admin";
+  const [isMounted, setIsMounted] = useState(false);
+  const [username, setUsername] = useState("admin");
+
+  useEffect(() => {
+    setIsMounted(true);
+    const stored = window?.localStorage?.getItem("vch-auth");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed?.username) setUsername(parsed.username);
+      } catch {
+        // ignore
+      }
     }
-  });
+  }, []);
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
@@ -45,12 +51,18 @@ export default function Sidebar() {
     <aside
       className="sidebar"
       style={{
-        width: collapsed ? 70 : 250,
+        width: collapsed ? 80 : 260,
+        minHeight: "100vh",
+        flexShrink: 0,
+        backgroundColor: "#0b0c10",
+        borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+        padding: "30px 20px",
         transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
         display: "flex",
         flexDirection: "column",
         position: "relative",
         overflow: "hidden",
+        boxSizing: "border-box"
       }}
     >
       {/* Brand */}
@@ -135,7 +147,7 @@ export default function Sidebar() {
 
       {!collapsed && (
         <div style={{ color: "var(--text-sub)", fontSize: 13, marginBottom: 12 }}>
-          Logged in as: <span style={{ color: "var(--primary-accent)", fontWeight: 700 }}>{username}</span>
+          Logged in as: <span style={{ color: "var(--primary-accent)", fontWeight: 700 }}>{isMounted ? username : "admin"}</span>
         </div>
       )}
 

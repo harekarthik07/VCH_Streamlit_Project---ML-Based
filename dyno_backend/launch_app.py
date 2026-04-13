@@ -9,10 +9,10 @@ def main():
     if getattr(sys, 'frozen', False):
         base_dir = os.path.dirname(sys.executable)
     else:
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
-    # 2. Point to YOUR specific app file
-    app_path = os.path.join(base_dir, "vch_app_V2.py")
+    # 2. Point to the master app file
+    app_path = os.path.join(base_dir, "master_app.py")
 
     # 3. Path to the logo (optional, just for completeness)
     logo_path = os.path.join(base_dir, "raptee_logo.png")

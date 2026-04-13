@@ -165,6 +165,24 @@ st.markdown("""
     [data-testid="stSidebarNav"] { padding-top: 1.5rem; }
     [data-testid="stSidebarNav"]::before { content: "⚡ VCH SYSTEMS"; color: #00cc96; font-weight: 900; font-size: 1.1rem; letter-spacing: 2px; padding-left: 20px; margin-bottom: 20px; display: block; }
     [data-testid="stSidebarNav"] a { text-transform: uppercase !important; font-weight: 700 !important; font-size: 0.85rem !important; letter-spacing: 1.5px !important; padding: 12px 15px !important; border-radius: 6px !important; margin: 0px 15px 8px 15px !important; transition: all 0.3s ease-in-out !important; color: var(--text-title) !important; }
+    [data-testid="stSidebarNav"] a:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #FFFFFF !important;
+        transform: translateX(6px) !important;
+    }
+    [data-testid="stSidebarNav"] a[aria-current="page"] {
+        background-color: rgba(0, 204, 150, 0.1) !important;
+        color: #00cc96 !important;
+        border-left: 4px solid #00cc96 !important;
+    }
+    [data-testid="stSidebarNav"] a[aria-current="page"]::before {
+        content: "●";
+        color: #00cc96;
+        text-shadow: 0 0 8px #00cc96, 0 0 15px #00cc96;
+        margin-right: 12px;
+        font-size: 1.2rem;
+        vertical-align: middle;
+    }
     
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
