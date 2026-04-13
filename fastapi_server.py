@@ -19,18 +19,20 @@ DYNO_DB = os.path.join(ROOT_DIR, "dyno_backend", "raptee_dyno.db")
 ROAD_DB = os.path.join(ROOT_DIR, "road_backend", "raptee_rides.db")
 
 # Allow Next.js frontend (ports 3000 and 3001) to talk to FastAPI
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001",
-    ],
+    allow_origins=["*"], # For dev, allow everything to kill the hang
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ... your @app.get("/api/master/overview") code from earlier ...
 
 @app.get("/api/health")
 def health_check():
@@ -461,6 +463,79 @@ async def dyno_promote_test(payload: dict):
         return {"message": f"Promoted {test_name} to Golden Baseline"}
     else:
         return {"error": "Could not find the original .xlsx file in the Evaluation folder"}
+import sqlite3
+import pandas as pd
+from fastapi import APIRouter
+
+# Assuming you already have your FastAPI app initialized as `app = FastAPI()`
+# Add this endpoint to serve the Master Dashboard
+
+@app.get("/api/master/overview")
+def get_master_overview():
+    try:
+        dyno_db_path = "dyno_backend/raptee_dyno.db"
+        road_db_path = "road_backend/raptee_rides.db"
+        
+        recent_activity = []
+        dyno_count = 0
+        road_count = 0
+        golden_count = 0
+
+        # 1. ⚡ ULTRA-FAST DYNO SQL QUERY
+        import os
+        if os.path.exists(dyno_db_path):
+            conn = sqlite3.connect(dyno_db_path)
+            cursor = conn.cursor()
+            
+            # Fast Counts (Takes < 1 millisecond)
+            cursor.execute("SELECT COUNT(*) FROM dyno_summaries")
+            dyno_count = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM dyno_summaries WHERE Type LIKE '%Golden%'")
+            golden_count = cursor.fetchone()[0]
+            
+            # Fast Grab of Last 10 Tests (No Pandas Needed!)
+            cursor.execute("SELECT Test_Name, Type FROM dyno_summaries ORDER BY Test_Name DESC LIMIT 10")
+            for row in cursor.fetchall():
+                recent_activity.append({
+                    "id": row[0],
+                    "suite": "Dyno",
+                    "type": row[1],
+                    "date": row[0][:10] if len(row[0]) >= 10 else "Unknown"
+                })
+            conn.close()
+
+        # 2. ⚡ ULTRA-FAST ROAD SQL QUERY
+        if os.path.exists(road_db_path):
+            conn = sqlite3.connect(road_db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM ride_summaries")
+            road_count = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT Ride_Name, Drive_Score FROM ride_summaries ORDER BY Ride_Name DESC LIMIT 10")
+            for row in cursor.fetchall():
+                recent_activity.append({
+                    "id": row[0],
+                    "suite": "Road",
+                    "type": f"Score: {row[1] if row[1] is not None else 'N/A'}",
+                    "date": row[0][:10] if len(row[0]) >= 10 else "Unknown"
+                })
+            conn.close()
+
+        # Sort combined activity by date descending and grab top 5
+        recent_activity.sort(key=lambda x: x["date"], reverse=True)
+        top_5_recent = recent_activity[:5]
+
+        return {
+            "status": "success",
+            "dyno_total": dyno_count,
+            "road_total": road_count,
+            "golden_count": golden_count,
+            "recent_activity": top_5_recent
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

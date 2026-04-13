@@ -1,100 +1,114 @@
+"use client";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
-const SUITES = [
-  {
-    href: "/dyno",
-    icon: "⚙️",
-    title: "Dyno Suite",
-    copy: "Strict Quality Control gatekeeper designed to evaluate stationary Dewesoft telemetry against mathematically calculated Golden Standards.",
-    features: [
-      "Automated ±2-Sigma statistical envelopes.",
-      "Dynamic power and early deration tracking.",
-      "1-click executive Word report generator.",
-    ],
-    buttonText: "Launch Dyno Engine →",
-    buttonClass: "text-[#d7ffe9] bg-[#0f141d]/90 border-white/10 hover:bg-[#0a0e14]",
-  },
-  {
-    href: "/road",
-    icon: "🛣️",
-    title: "Road Suite",
-    copy: "Dynamic telemetry processing engine for raw CAN logs, powertrain performance visualization, and battery efficiency mapping.",
-    features: [
-      "Raw CAN & Excel decoding to 2Hz time series.",
-      "SOC drain and Wh/km efficiency tracking.",
-      "Thermal protection overlay maps.",
-    ],
-    buttonText: "Launch Road Engine →",
-    buttonClass: "text-[#00cc96] bg-[#0f141d]/90 border-[#00cc96]/20 hover:bg-[#07100c]",
-  },
-];
+export default function MasterDashboard() {
+  const [overviewData, setOverviewData] = useState({
+    dyno_total: 0, road_total: 0, golden_count: 0, recent_activity: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-export default function Home() {
+  useEffect(() => {
+    const fetchOverview = async () => {
+      try {
+        // Using 127.0.0.1 to bypass slow localhost DNS resolution
+        const res = await fetch("http://127.0.0.1:8001/api/master/overview", {
+          next: { revalidate: 0 } // Disable caching for live telemetry
+        });
+
+        if (!res.ok) throw new Error(`HTTP Error! Status: ${res.status}`);
+
+        const data = await res.json();
+        setOverviewData(data);
+        setError(null);
+      } catch (err) {
+        console.error("Fetch failed:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOverview();
+  }, []);
+
+  if (error) return (
+    <div className="min-h-screen bg-[#0b0c10] flex items-center justify-center p-10">
+      <div className="bg-red-500/10 border border-red-500 p-6 rounded-xl text-center">
+        <h2 className="text-red-500 font-bold text-xl mb-2">🚨 Backend Connection Failed</h2>
+        <p className="text-white/70 text-sm">Make sure FastAPI is running on port 8001</p>
+        <p className="text-red-400 mt-4 text-xs font-mono">{error}</p>
+        <button onClick={() => window.location.reload()} className="mt-6 px-4 py-2 bg-red-500 text-white rounded-lg font-bold">Retry Connection</button>
+      </div>
+    </div>
+  );
+
   return (
-    <div
-      className="min-h-screen px-6 py-10 sm:px-10 lg:px-14 text-white"
-      style={{
-        background: "radial-gradient(circle at 28% 6%, rgba(0, 204, 150, 0.18), transparent 18%), radial-gradient(circle at 78% 10%, rgba(85, 170, 255, 0.08), transparent 18%), #070a10",
-      }}
-    >
-      <div className="mx-auto w-full max-w-7xl space-y-10">
-        <section className="rounded-[2rem] border border-white/10 bg-white/5 p-10 shadow-[0_45px_120px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl space-y-6">
-              <div className="inline-flex items-center gap-3 rounded-full bg-[#00cc9666] px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] text-[#d7ffe9] shadow-[0_12px_40px_rgba(0,204,150,0.12)]">
-                Raptee Thermal Suite
-              </div>
-              <div className="space-y-4">
-                <h1 className="text-5xl font-black tracking-tight sm:text-6xl">Thermal & Dynamics Analytics Engine V4</h1>
-                <p className="text-lg text-gray-300 leading-8">
-                  A modern JS dashboard for the same Streamlit workflow: launch Dyno or Road engines, inspect telemetry, and run quality control from one unified interface.
-                </p>
-              </div>
-              <div className="text-sm text-gray-400">
-                Logged in as: <span className="text-[#00cc96] font-semibold">admin</span>
-              </div>
-            </div>
+    <div className="min-h-screen bg-[#0b0c10] text-white p-8 font-sans bg-[radial-gradient(circle_at_50%_-20%,#1e2430_0%,#0b0c10_70%)]">
+      {/* HEADER BANNER */}
+      <div className="flex justify-between items-center mb-10 bg-[#1F1F23]/40 border border-white/20 rounded-2xl p-6 shadow-xl">
+        <div>
+          <h1 className="text-3xl font-black italic tracking-wide text-white">RAPTEE<span className="text-[#00cc96]">.HV</span></h1>
+          <p className="text-[#A0A0AB] text-sm uppercase tracking-widest mt-1 font-bold">VCH Master Command Center</p>
+        </div>
+        <div className="flex space-x-4">
+          <Link href="/dyno" className="px-6 py-3 bg-[#2D2D33]/60 border border-white/20 rounded-xl hover:border-[#00cc96] hover:text-[#00cc96] transition-all font-bold text-sm tracking-wide">🏍️ Launch Dyno Suite</Link>
+          <Link href="/road" className="px-6 py-3 bg-[#2D2D33]/60 border border-white/20 rounded-xl hover:border-[#00cc96] hover:text-[#00cc96] transition-all font-bold text-sm tracking-wide">🛣️ Launch Road Suite</Link>
+        </div>
+      </div>
 
-            <div className="space-y-4 rounded-[1.8rem] border border-[#00cc96]/10 bg-[#0b121d]/95 p-6 shadow-[0_30px_60px_rgba(0,0,0,0.25)]">
-              <p className="text-xs uppercase tracking-[0.3em] text-[#00cc96]/90">Quick Launch</p>
-              <div className="grid gap-3">
-                <a href="/dyno" className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-[#0f141d]/90 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#d7ffe9] transition hover:bg-[#0a0e14]">
-                  Open Dyno Suite
-                </a>
-                <a href="/road" className="inline-flex items-center justify-center rounded-2xl border border-[#00cc96]/20 bg-[#0f141d]/90 px-6 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#00cc96] transition hover:bg-[#07100c]">
-                  Open Road Suite
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
+      {/* KPI BENTO BOXES */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-[#19191e]/40 backdrop-blur-md border border-white/20 border-t-white/30 rounded-2xl p-6 shadow-xl hover:-translate-y-1 transition-transform">
+          <div className="text-[#B4B4C0] text-xs uppercase tracking-widest font-bold mb-2">Total Dyno Logs</div>
+          <div className="text-4xl font-extrabold text-[#00cc96]">{loading ? "..." : overviewData.dyno_total}</div>
+        </div>
 
-        <section className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-[#0d111c]/80 p-8 shadow-[0_28px_80px_rgba(0,0,0,0.22)] backdrop-blur-2xl">
-            <h2 className="text-3xl font-semibold text-white">🚀 Active Testing Environments</h2>
-            <p className="mt-3 text-gray-400 text-base leading-7">
-              Select a module below to launch the dedicated evaluation suites. This interface now mirrors the Streamlit structure with clear cards, concise module summaries, and strong visual hierarchy.
-            </p>
-          </div>
+        <div className="bg-[#19191e]/40 backdrop-blur-md border border-white/20 border-t-white/30 rounded-2xl p-6 shadow-xl hover:-translate-y-1 transition-transform">
+          <div className="text-[#B4B4C0] text-xs uppercase tracking-widest font-bold mb-2">Total Road Logs</div>
+          <div className="text-4xl font-extrabold text-[#ab63fa]">{loading ? "..." : overviewData.road_total}</div>
+        </div>
 
-          <div className="grid gap-8 xl:grid-cols-2">
-            {SUITES.map((suite) => (
-              <div key={suite.href} className="group overflow-hidden rounded-[2rem] border border-white/10 bg-[#11131a]/85 p-10 shadow-[0_35px_90px_rgba(0,0,0,0.24)] transition-all duration-300 hover:-translate-y-1 hover:border-[#00cc96]/30">
-                <div className="text-6xl mb-6">{suite.icon}</div>
-                <h3 className="text-4xl font-black mb-4 text-white">{suite.title}</h3>
-                <p className="text-gray-400 mb-8 text-base leading-8">{suite.copy}</p>
-                <ul className="text-gray-500 space-y-3 mb-10 text-sm">
-                  {suite.features.map((feature) => (
-                    <li key={feature} className="border-l-2 border-gray-700 pl-3">{feature}</li>
-                  ))}
-                </ul>
-                <a href={suite.href} className={`inline-flex w-full justify-center rounded-2xl border px-6 py-4 text-sm font-semibold uppercase tracking-[0.18em] shadow-[0_15px_40px_rgba(0,204,150,0.16)] transition ${suite.buttonClass}`}>
-                  {suite.buttonText}
-                </a>
-              </div>
-            ))}
-          </div>
-        </section>
+        <div className="bg-[#19191e]/40 backdrop-blur-md border border-[#FFD700]/30 border-t-[#FFD700]/60 rounded-2xl p-6 shadow-xl hover:-translate-y-1 transition-transform bg-gradient-to-br from-[#FFD700]/5 to-transparent">
+          <div className="text-[#B4B4C0] text-xs uppercase tracking-widest font-bold mb-2">Active Golden Bikes</div>
+          <div className="text-4xl font-extrabold text-[#FFD700]">{loading ? "..." : overviewData.golden_count}</div>
+        </div>
+      </div>
+
+      {/* RECENT ACTIVITY TABLE */}
+      <div className="bg-[#19191e]/40 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl overflow-hidden">
+        <div className="px-6 py-5 border-b border-white/10 flex justify-between items-center">
+          <h2 className="text-lg font-bold tracking-wide text-white">🔄 Recent System Activity</h2>
+          {loading && <div className="text-[#00cc96] text-xs animate-pulse font-bold">SYNCING LIVE DB...</div>}
+        </div>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-[#2D2D33]/30 text-[#A0A0AB] text-xs uppercase tracking-wider">
+                <th className="px-6 py-4 font-semibold">Date</th>
+                <th className="px-6 py-4 font-semibold">Test ID</th>
+                <th className="px-6 py-4 font-semibold">Environment</th>
+                <th className="px-6 py-4 font-semibold">Classification</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {overviewData.recent_activity.map((act, idx) => (
+                <tr key={idx} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="px-6 py-4 text-[#B4B4C0] font-medium">{act.date}</td>
+                  <td className="px-6 py-4 font-bold text-white truncate max-w-[300px]">{act.id}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-md text-xs font-bold ${act.suite === "Dyno" ? "bg-[#00cc96]/10 text-[#00cc96] border border-[#00cc96]/20" : "bg-[#ab63fa]/10 text-[#ab63fa] border border-[#ab63fa]/20"
+                      }`}>
+                      {act.suite}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-[#A0A0AB]">{act.type}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
