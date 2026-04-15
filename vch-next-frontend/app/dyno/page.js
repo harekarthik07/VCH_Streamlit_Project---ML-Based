@@ -13,6 +13,8 @@ const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 const API = process.env.NEXT_PUBLIC_API || "http://localhost:8001";
 
 const LIMIT_MAP = { IGBT: 95, Motor: 125, HighCell: 50, AFE: 50 };
+// AFE uses 'AFE_Mean_dTdt' / 'AFE_Mean_dT' in the processed data, not 'AFE_dTdt' / 'AFE_dT'
+const COL_MAP = { IGBT: { dTdt: "IGBT_dTdt", dT: "IGBT_dT" }, Motor: { dTdt: "Motor_dTdt", dT: "Motor_dT" }, HighCell: { dTdt: "HighCell_dTdt", dT: "HighCell_dT" }, AFE: { dTdt: "AFE_Mean_dTdt", dT: "AFE_Mean_dT" } };
 const CARD_ACCENTS = { 
   IGBT: "#00CC96", 
   Motor: "#FFD700", 
@@ -35,6 +37,33 @@ const DARK_TOOLTIP = {
     font: { family: "Calibri, Segoe UI, Arial, sans-serif", color: "#FFF", size: 12 }
   }
 };
+
+// Reusable CSV download helper
+function downloadCSV(columns, data, filename) {
+  const rows = [columns.join(",")];
+  const rowCount = data[columns[0]]?.length || 0;
+  for (let i = 0; i < rowCount; i++) {
+    rows.push(columns.map(col => {
+      const v = data[col]?.[i];
+      if (v === null || v === undefined) return "";
+      const s = String(v);
+      return s.includes(",") ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(","));
+  }
+  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+function downloadTableCSV(headers, rows, filename) {
+  const csv = [headers.join(","), ...rows.map(r => r.map(v => { const s = String(v ?? ""); return s.includes(",") ? `"${s}"` : s; }).join(","))].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
 
 const TABS = [
   { id: "rise_rate", label: "Rise Rate (dT/dt)", icon: <Zap size={14} color="#00CC96"/> },
@@ -420,7 +449,7 @@ export default function DynoPage() {
                   <p style={{ color: "var(--text-sub)", fontSize: 13 }}><b>Target:</b> <span style={{ color: "#00CC96", fontWeight: 700 }}>{selectedTest || "No Selection"}</span></p>
                 </div>
               </div>
-              <button className="glass-panel" style={{ padding: "8px 16px", borderRadius: 10, backgroundColor: "rgba(29,30,36,0.65)", color: "#ddd", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              <button className="glass-panel" onClick={() => { if (!telemetry) return; const allCols = Object.keys(telemetry); downloadCSV(allCols, telemetry, `${(selectedTest || "dyno").slice(0,10)}_full_trace.csv`); }} style={{ padding: "8px 16px", borderRadius: 10, backgroundColor: "rgba(29,30,36,0.65)", color: "#ddd", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                 <Download size={14} /> Export FULL 2Hz Trace
               </button>
             </div>
@@ -490,8 +519,9 @@ export default function DynoPage() {
             {activeTab === "rise_rate" && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 {channels.map((ch) => {
-                  const data = [{ x: telemetry?.["Time (s)"], y: telemetry?.[`${ch}_dTdt`], name: selectedTest, type: "scatter", mode: "lines", line: { color: "#00CC96", width: 3, shape: "spline", smoothing: 0.8 } }];
-                  compareTests.forEach(t => { if (compareDataMap[t]) data.push({ x: compareDataMap[t]["Time (s)"], y: compareDataMap[t][`${ch}_dTdt`], name: t, type: "scatter", mode: "lines", line: { width: 1.5, dash: "dot" } }); });
+                  const dTdtCol = COL_MAP[ch]?.dTdt || `${ch}_dTdt`;
+                  const data = [{ x: telemetry?.["Time (s)"], y: telemetry?.[dTdtCol], name: selectedTest, type: "scatter", mode: "lines", line: { color: "#00CC96", width: 3, shape: "spline", smoothing: 0.8 } }];
+                  compareTests.forEach(t => { if (compareDataMap[t]) data.push({ x: compareDataMap[t]["Time (s)"], y: compareDataMap[t][dTdtCol], name: t, type: "scatter", mode: "lines", line: { width: 1.5, dash: "dot" } }); });
                   if (envelopes[ch]) {
                     const env = envelopes[ch];
                     const tol = tolerancePct;
@@ -512,6 +542,7 @@ export default function DynoPage() {
                     <div key={ch} className="metric-card sandbox-panel" style={{ padding: 16 }}>
                       <div style={{ fontWeight: 700, color: "var(--text-main)", marginBottom: 12 }}>{ch} Rise Rate</div>
                       <Plot data={data} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 300, margin: { t: 10, b: 30, l: 40, r: 10 }, xaxis: { title: "Time (s)", showgrid: false }, yaxis: { title: "dT/dt (°C/s)", showgrid: true, gridcolor: "rgba(255,255,255,0.05)" }, showlegend: true, legend: { orientation: "h", y: -0.2 } }} config={{ displayModeBar: true, displaylogo: false, responsive: true, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: { format: "png", filename: `${ch.toLowerCase()}_rise_rate`, scale: 2 } }} style={{ width: "100%" }} />
+                      <button onClick={() => { if (!telemetry) return; downloadCSV(["Time (s)", dTdtCol], telemetry, `${(selectedTest || "dyno").slice(0,10)}_${ch}_dTdt.csv`); }} style={{ width: "100%", marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#00CC96"; e.currentTarget.style.color = "#00CC96"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={13} /> Export {ch} dT/dt Data</button>
                     </div>
                   );
                 })}
@@ -521,8 +552,9 @@ export default function DynoPage() {
             {activeTab === "cumulative" && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 {channels.map((ch) => {
-                  const data = [{ x: telemetry?.["Time (s)"], y: telemetry?.[`${ch}_dT`], name: selectedTest, type: "scatter", mode: "lines", line: { color: "#19D3A2", width: 3, shape: "spline", smoothing: 0.8 } }];
-                  compareTests.forEach(t => { if (compareDataMap[t]) data.push({ x: compareDataMap[t]["Time (s)"], y: compareDataMap[t][`${ch}_dT`], name: t, mode: "lines", line: { width: 1.5, dash: "dot" } }); });
+                  const dTCol = COL_MAP[ch]?.dT || `${ch}_dT`;
+                  const data = [{ x: telemetry?.["Time (s)"], y: telemetry?.[dTCol], name: selectedTest, type: "scatter", mode: "lines", line: { color: "#19D3A2", width: 3, shape: "spline", smoothing: 0.8 } }];
+                  compareTests.forEach(t => { if (compareDataMap[t]) data.push({ x: compareDataMap[t]["Time (s)"], y: compareDataMap[t][dTCol], name: t, mode: "lines", line: { width: 1.5, dash: "dot" } }); });
                   if (envelopes[ch]) {
                     const env = envelopes[ch];
                     const tol = tolerancePct;
@@ -543,6 +575,7 @@ export default function DynoPage() {
                     <div key={ch} className="metric-card sandbox-panel" style={{ padding: 16 }}>
                       <div style={{ fontWeight: 700, color: "var(--text-main)", marginBottom: 12 }}>{ch} Cumulative Rise</div>
                       <Plot data={data} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 300, margin: { t: 10, b: 30, l: 40, r: 10 }, xaxis: { title: "Time (s)", showgrid: false }, yaxis: { title: "ΔT (°C)", showgrid: true, gridcolor: "rgba(255,255,255,0.05)" }, showlegend: true, legend: { orientation: "h", y: -0.2 }, hovermode: "x unified" }} config={{ displayModeBar: true, displaylogo: false, responsive: true, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: { format: "png", filename: `${ch.toLowerCase()}_cumulative_rise`, scale: 2 } }} style={{ width: "100%" }} />
+                      <button onClick={() => { if (!telemetry) return; downloadCSV(["Time (s)", dTCol], telemetry, `${(selectedTest || "dyno").slice(0,10)}_${ch}_DeltaT.csv`); }} style={{ width: "100%", marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#00CC96"; e.currentTarget.style.color = "#00CC96"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={13} /> Export {ch} ΔT Data</button>
                     </div>
                   );
                 })}
@@ -791,6 +824,7 @@ export default function DynoPage() {
                           </div>
                        </div>
                     </div>
+                     <button onClick={() => { const headers = ["Test Name", "Type", "Avg Power (kW)", "Status"]; const rows = powerRecords.map(r => [r.testName, r.type, r.avgPower, r.status]); downloadTableCSV(headers, rows, "Dyno_Power_Analysis.csv"); }} style={{ marginTop: 20, padding: "10px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#00CC96"; e.currentTarget.style.color = "#00CC96"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={14} /> Export Power Validation Data</button>
                   </div>
                );
             })()}
@@ -824,7 +858,7 @@ export default function DynoPage() {
                const mPwr = bikePwrs.length > 0 ? bikePwrs.reduce((a, b) => a + b, 0) / bikePwrs.length : 19.5;
                const pUp = mPwr * 1.10, pLow = mPwr * 0.90;
                const tExp = qcTolerance; const isT = qcEnvMethod === "Tolerance (%)";
-               const getE = (ch) => envelopes[ch]?.find(r => r["Time (s)"] === qcTimeS);
+               const getE = (ch) => { const env = envelopes[ch]; if (!env || !env["Time (s)"]) return null; const times = env["Time (s)"]; const idx = times.findIndex(t => t === qcTimeS); if (idx < 0) return null; const row = {}; Object.keys(env).forEach(k => { row[k] = env[k][idx]; }); return row; };
 
                const pRes = qcResults?.filter(r => r["Final Conclusion"]?.startsWith("PASS")) || [];
                const fRes = qcResults?.filter(r => r["Final Conclusion"]?.startsWith("FAIL")) || [];
@@ -895,7 +929,14 @@ export default function DynoPage() {
                   }
 
                   const env = envelopes[ch];
-                  const envRow = Array.isArray(env) ? env.find((row) => Number(row["Time (s)"]) === 120) : null;
+                  let envRow = null;
+                  if (env && env["Time (s)"]) {
+                    const idx = env["Time (s)"].findIndex(t => Number(t) === 120);
+                    if (idx >= 0) {
+                      envRow = {};
+                      Object.keys(env).forEach(k => { envRow[k] = env[k][idx]; });
+                    }
+                  }
                   if (!envRow || nearestIndex < 0) return;
 
                   const dtdtKey = ch === "AFE" ? "AFE_Mean_dTdt" : `${ch}_dTdt`;

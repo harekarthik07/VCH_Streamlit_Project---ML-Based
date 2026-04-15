@@ -8,6 +8,20 @@ const USERS = {
   user: { password: "user@123", role: "user" },
 };
 
+const DEFAULT_USERS_KEY = "vch-users";
+const DEFAULT_USERS = { admin: { role: "admin" }, user: { role: "user" } };
+
+function initDefaultUsers() {
+  try {
+    const existing = localStorage.getItem(DEFAULT_USERS_KEY);
+    if (!existing || !JSON.parse(existing) || Object.keys(JSON.parse(existing)).length === 0) {
+      localStorage.setItem(DEFAULT_USERS_KEY, JSON.stringify(DEFAULT_USERS));
+    }
+  } catch {
+    localStorage.setItem(DEFAULT_USERS_KEY, JSON.stringify(DEFAULT_USERS));
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -43,6 +57,7 @@ export default function LoginPage() {
       return;
     }
 
+    initDefaultUsers();
     window.localStorage.setItem(
       "vch-auth",
       JSON.stringify({ username: username.trim(), role: u.role })
@@ -51,11 +66,11 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Outfit', sans-serif !important; }
+      <>
+        <style>{`
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Outfit', sans-serif !important; }
+
 
         .login-root {
           min-height: 100vh;
@@ -396,7 +411,7 @@ export default function LoginPage() {
                 onClick={() => { setUsername(h.user); setPassword(h.pw); setError(""); }}
               >
                 <div className="hint-role">{h.role}</div>
-                <div className="hint-cred">{h.user} / {h.pw}</div>
+                <div className="hint-cred">{h.user}</div>
               </button>
             ))}
           </div>

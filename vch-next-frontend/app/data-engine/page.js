@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { UploadCloud, File, Trash, Terminal, Lock, XCircle, Star } from "lucide-react";
+import { UploadCloud, File, Trash, Terminal, Lock, XCircle, Star, Download } from "lucide-react";
 import DynoSidebar from "../components/DynoSidebar";
 import StreamlitSelect from "../components/StreamlitSelect";
 
@@ -193,6 +193,9 @@ export default function DataEnginePage() {
             </button>
 
             <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 20 }}>
+              <a href={`${API}/api/dyno/export_db`} download="raptee_dyno.db" style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px", background: "linear-gradient(90deg, #00CC96, #00b383)", border: "none", borderRadius: 8, cursor: "pointer", color: "#000", fontSize: 14, fontWeight: 800, textDecoration: "none", marginBottom: 12 }}>
+                <Download size={16} /> Download Master SQLite DB
+              </a>
               <div onClick={handleReset} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px", background: "var(--card-bg)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, cursor: "pointer", color: "var(--text-sub)", fontSize: 14, transition: "0.2s" }}
                 onMouseEnter={(e) => e.currentTarget.style.border = "1px solid #FF4B4B"}
                 onMouseLeave={(e) => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.05)"}>
