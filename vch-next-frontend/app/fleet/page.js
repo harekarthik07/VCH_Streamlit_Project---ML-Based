@@ -89,7 +89,7 @@ export default function FleetPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
                   <div style={{
                     width: 42, height: 42, borderRadius: 10,
-                    background: "rgba(0,204,150,0.12)", display: "flex",
+                    background: "rgba(67,179,174,0.12)", display: "flex",
                     alignItems: "center", justifyContent: "center",
                   }}>
                     <Cpu size={20} style={{ color: "var(--primary-accent)" }} />
@@ -143,3 +143,4 @@ export default function FleetPage() {
     </div>
   );
 }
+

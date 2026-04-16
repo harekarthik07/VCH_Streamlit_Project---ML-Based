@@ -27,8 +27,8 @@ export default function StreamlitSelect({ options = [], value, onChange, placeho
         onClick={() => setIsOpen(!isOpen)}
         style={{
           minHeight: 38,
-          background: "linear-gradient(180deg, rgba(15, 30, 28, 0.72), rgba(22, 22, 28, 0.82))",
-          border: isOpen ? "1px solid #00CC96" : "1px solid rgba(0, 204, 150, 0.18)",
+          background: "rgba(255,255,255,0.05)",
+          border: isOpen ? "1px solid #43B3AE" : "1px solid rgba(67,179,174, 0.18)",
           borderRadius: 10,
           padding: "6px 10px",
           display: "flex",
@@ -57,8 +57,8 @@ export default function StreamlitSelect({ options = [], value, onChange, placeho
           left: 0,
           right: 0,
           marginTop: 4,
-          background: "var(--sidebar-bg, #0b0c10)",
-          border: "1px solid rgba(0,204,150,0.18)",
+          background: "#201e24",
+          border: "1px solid rgba(67,179,174,0.18)",
           borderRadius: 10,
           boxShadow: "0 8px 32px rgba(0,0,0,0.8)",
           maxHeight: 250,
@@ -77,8 +77,8 @@ export default function StreamlitSelect({ options = [], value, onChange, placeho
                   onClick={() => handleSelect(option)}
                   style={{
                     padding: "8px 12px",
-                    color: isSelected ? "#00CC96" : "#FFF",
-                    background: isSelected ? "rgba(0, 204, 150, 0.1)" : "transparent",
+                    color: isSelected ? "#43B3AE" : "#FFF",
+                    background: isSelected ? "rgba(67,179,174, 0.1)" : "transparent",
                     fontSize: 14,
                     fontWeight: isSelected ? 700 : 600,
                     cursor: "pointer",
@@ -103,3 +103,5 @@ export default function StreamlitSelect({ options = [], value, onChange, placeho
     </div>
   );
 }
+
+

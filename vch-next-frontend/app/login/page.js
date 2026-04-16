@@ -77,7 +77,7 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: radial-gradient(ellipse at 18% -10%, rgba(0,204,150,0.22) 0%, transparent 42%),
+          background: radial-gradient(ellipse at 18% -10%, rgba(67,179,174,0.22) 0%, transparent 42%),
                       radial-gradient(ellipse at 90% 95%, rgba(0,179,131,0.14) 0%, transparent 38%),
                       radial-gradient(ellipse at 60% 50%, rgba(0,0,0,0) 0%, transparent 100%),
                       linear-gradient(180deg, #0b0c10 0%, #060709 100%);
@@ -90,7 +90,7 @@ export default function LoginPage() {
           content: '';
           position: absolute;
           inset: 0;
-          background-image: radial-gradient(rgba(0,204,150,0.04) 1px, transparent 1px);
+          background-image: radial-gradient(rgba(67,179,174,0.04) 1px, transparent 1px);
           background-size: 40px 40px;
           mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
           pointer-events: none;
@@ -103,13 +103,13 @@ export default function LoginPage() {
           backdrop-filter: blur(28px) saturate(140%);
           -webkit-backdrop-filter: blur(28px) saturate(140%);
           border: 1px solid rgba(255,255,255,0.09);
-          border-top: 1px solid rgba(0, 204, 150, 0.38);
+          border-top: 1px solid rgba(67,179,174, 0.38);
           border-radius: 24px;
           padding: 48px 44px 44px;
           box-shadow:
-            0 0 0 1px rgba(0,204,150,0.04),
+            0 0 0 1px rgba(67,179,174,0.04),
             0 32px 80px rgba(0,0,0,0.7),
-            0 0 60px rgba(0,204,150,0.06);
+            0 0 60px rgba(67,179,174,0.06);
           position: relative;
           opacity: 0;
           transform: translateY(28px);
@@ -125,7 +125,7 @@ export default function LoginPage() {
           position: absolute;
           top: 0; left: 50%; transform: translateX(-50%);
           width: 200px; height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(0,204,150,0.7), transparent);
+          background: linear-gradient(90deg, transparent, rgba(67,179,174,0.7), transparent);
         }
 
         .brand-row {
@@ -138,8 +138,8 @@ export default function LoginPage() {
 
         .brand-icon {
           width: 40px; height: 40px;
-          background: linear-gradient(135deg, rgba(0,204,150,0.22), rgba(0,140,100,0.12));
-          border: 1px solid rgba(0,204,150,0.3);
+          background: linear-gradient(135deg, rgba(67,179,174,0.22), rgba(0,140,100,0.12));
+          border: 1px solid rgba(67,179,174,0.3);
           border-radius: 12px;
           display: flex; align-items: center; justify-content: center;
         }
@@ -151,7 +151,7 @@ export default function LoginPage() {
           letter-spacing: 0.5px;
         }
 
-        .brand-accent { color: #00cc96; }
+        .brand-accent { color: #43B3AE; }
 
         .login-title {
           text-align: center;
@@ -204,9 +204,9 @@ export default function LoginPage() {
         }
 
         .form-input:focus {
-          border-color: rgba(0,204,150,0.55);
-          background: rgba(0, 204, 150, 0.04);
-          box-shadow: 0 0 0 3px rgba(0,204,150,0.08), 0 0 20px rgba(0,204,150,0.06);
+          border-color: rgba(67,179,174,0.55);
+          background: rgba(67,179,174, 0.04);
+          box-shadow: 0 0 0 3px rgba(67,179,174,0.08), 0 0 20px rgba(67,179,174,0.06);
         }
 
         .form-input::placeholder { color: rgba(160,160,171,0.45); }
@@ -222,7 +222,7 @@ export default function LoginPage() {
           display: flex; align-items: center;
           transition: color 0.2s;
         }
-        .pw-toggle:hover { color: #00cc96; }
+        .pw-toggle:hover { color: #43B3AE; }
 
         .error-bar {
           display: flex; align-items: center; gap: 8px;
@@ -245,7 +245,7 @@ export default function LoginPage() {
         .submit-btn {
           width: 100%;
           padding: 15px 20px;
-          background: linear-gradient(135deg, #00cc96 0%, #00a87c 100%);
+          background: linear-gradient(135deg, #43B3AE 0%, #00a87c 100%);
           color: #071a14;
           border: none;
           border-radius: 12px;
@@ -262,8 +262,8 @@ export default function LoginPage() {
 
         .submit-btn:not(:disabled):hover {
           transform: translateY(-2px);
-          box-shadow: 0 12px 32px rgba(0,204,150,0.38), 0 0 0 1px rgba(0,204,150,0.2);
-          background: linear-gradient(135deg, #00e6aa 0%, #00cc96 100%);
+          box-shadow: 0 12px 32px rgba(67,179,174,0.38), 0 0 0 1px rgba(67,179,174,0.2);
+          background: linear-gradient(135deg, #00e6aa 0%, #43B3AE 100%);
         }
 
         .submit-btn:not(:disabled):active { transform: translateY(1px); }
@@ -305,8 +305,8 @@ export default function LoginPage() {
         }
 
         .hint-chip:hover {
-          background: rgba(0,204,150,0.06);
-          border-color: rgba(0,204,150,0.22);
+          background: rgba(67,179,174,0.06);
+          border-color: rgba(67,179,174,0.22);
         }
 
         .hint-role {
@@ -314,7 +314,7 @@ export default function LoginPage() {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 1px;
-          color: #00cc96;
+          color: #43B3AE;
           margin-bottom: 2px;
         }
 
@@ -337,7 +337,7 @@ export default function LoginPage() {
         <div className="login-card">
           <div className="brand-row">
             <div className="brand-icon">
-              <Zap size={20} color="#00cc96" />
+              <Zap size={20} color="#43B3AE" />
             </div>
             <span className="brand-name">
               VCH <span className="brand-accent">Systems</span>
@@ -424,3 +424,4 @@ export default function LoginPage() {
     </>
   );
 }
+

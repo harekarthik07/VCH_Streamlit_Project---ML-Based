@@ -1,16 +1,22 @@
 "use client";
 import React, { useState } from "react";
-import { Zap, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen, Home, Activity, Thermometer, Zap as ZapIcon, TrendingUp, Battery, Cpu, AlertTriangle, ClipboardList, Route } from "lucide-react";
+import { 
+  Zap, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen, 
+  Home, Activity, Thermometer, Zap as ZapIcon, TrendingUp, Battery, Cpu, 
+  AlertTriangle, ClipboardList, Route, FolderOpen, ChevronRight, Download
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import StreamlitSelect from "./StreamlitSelect";
+import StreamlitMultiSelect from "./StreamlitMultiSelect";
 
 const CHANNEL_TABS = [
-  { id: "thermal", label: "Thermal Systems", icon: <Thermometer size={14} />, color: "#FF4B4B" },
-  { id: "dynamic", label: "Dynamic Systems", icon: <ZapIcon size={14} />, color: "#00CC96" },
-  { id: "analytics", label: "Ride Analytics", icon: <TrendingUp size={14} />, color: "#8388B9" },
-  { id: "battery", label: "Battery & Range", icon: <Battery size={14} />, color: "#CFFF60" },
-  { id: "driver", label: "Driver Diagnostics", icon: <Cpu size={14} />, color: "#FF6080" },
-  { id: "events", label: "Ride Events & QC", icon: <AlertTriangle size={14} />, color: "#FFA15A" },
-  { id: "repository", label: "Master Repository", icon: <ClipboardList size={14} />, color: "#EF553B" },
+  { id: "thermal", label: "Thermal Systems", icon: <Thermometer size={16} />, color: "#FF4B4B" },
+  { id: "dynamic", label: "Dynamic Systems", icon: <ZapIcon size={16} />, color: "#43B3AE" },
+  { id: "analytics", label: "Ride Analytics", icon: <TrendingUp size={16} />, color: "#8388B9" },
+  { id: "battery", label: "Battery & Range", icon: <Battery size={16} />, color: "#CFFF60" },
+  { id: "driver", label: "Driver Diagnostics", icon: <Cpu size={16} />, color: "#FF6080" },
+  { id: "events", label: "Ride Events & QC", icon: <AlertTriangle size={16} />, color: "#FFA15A" },
+  { id: "repository", label: "Master Repository", icon: <FolderOpen size={16} />, color: "#EF553B" },
 ];
 
 export default function RoadSidebar({
@@ -19,226 +25,280 @@ export default function RoadSidebar({
   setSelectedRide,
   activeChannel,
   setActiveChannel,
+  comparisonRides = [],
+  setComparisonRides,
   onRefresh,
+  showTimeFilter,
+  setShowTimeFilter,
+  timeRange,
+  setTimeRange,
+  exportAllThermals,
+  maxTime = 0,
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [configOpen, setConfigOpen] = useState(false);
+  const [missionOpen, setMissionOpen] = useState(true);
+  const [diagOpen, setDiagOpen] = useState(true);
   const router = useRouter();
 
   const selectStyle = {
-    width: "100%", padding: "8px 10px", borderRadius: 8,
-    background: "rgba(30,30,35,0.8)", border: "1px solid rgba(255,255,255,0.1)",
-    color: "#fff", fontSize: 12, fontFamily: "inherit", fontWeight: 600,
+    width: "100%", padding: "10px 12px", borderRadius: 10,
+    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+    color: "#fff", fontSize: 13, fontWeight: 600,
     outline: "none", cursor: "pointer",
+    appearance: "none",
+    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m6 9 6 6 6-6'/%3e%3c/svg%3e")`,
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 10px center",
+    backgroundSize: "16px",
+  };
+
+  const sectionSubHeader = {
+    fontSize: 13, fontWeight: 800, color: "#fff", marginBottom: 14,
+    display: "flex", alignItems: "center", gap: 10
   };
 
   const labelStyle = {
-    fontSize: 11, fontWeight: 600, color: "#B4B4C0", marginBottom: 5, display: "block",
+    fontSize: 12, fontWeight: 700, color: "#A0A0AB", marginBottom: 8, display: "flex", alignItems: "center", gap: 8, opacity: 0.9
   };
 
-  const dividerStyle = {
-    borderTop: "1px solid rgba(255,255,255,0.08)", margin: "14px 0",
-  };
+  const accordionToggle = (title, icon, isOpen, setIsOpen) => (
+    <button
+      onClick={() => setIsOpen(!isOpen)}
+      style={{
+        width: "100%", display: "flex", alignItems: "center", gap: 10,
+        padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 12, color: "#fff", fontSize: 13, fontWeight: 800, cursor: "pointer",
+        transition: "all 0.3s ease",
+      }}
+    >
+      <ChevronRight size={16} style={{ transform: isOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.3s", color: "#43B3AE" }} />
+      {icon}
+      <span style={{ flex: 1, textAlign: "left" }}>{title}</span>
+    </button>
+  );
 
   return (
     <aside
       style={{
-        width: collapsed ? 72 : 320,
-        minWidth: collapsed ? 72 : 320,
-        maxWidth: collapsed ? 72 : 320,
+        width: collapsed ? 72 : 340,
+        minWidth: collapsed ? 72 : 340,
+        maxWidth: collapsed ? 72 : 340,
         flexShrink: 0,
-        transition: "width 0.28s ease, min-width 0.28s ease, max-width 0.28s ease",
+        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         position: "relative",
-        overflowX: "hidden",
-        background: "linear-gradient(180deg, rgba(18,20,27,0.98), rgba(12,14,19,0.98))",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
+        background: "#201e24",
+        borderRight: "1px solid rgba(255, 255, 255, 0.08)",
         display: "flex",
         flexDirection: "column",
+        backdropFilter: "blur(24px)",
+        zIndex: 100,
       }}
     >
-      {/* Collapse Button */}
-      <button
-        onClick={() => setCollapsed((value) => !value)}
-        style={{
-          position: "absolute",
-          top: 14,
-          right: 12,
-          width: 34,
-          height: 34,
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.1)",
-          background: "rgba(255,255,255,0.04)",
-          color: "#d7dbe5",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          zIndex: 2,
-        }}
-      >
-        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-      </button>
+      {/* Brand Header */}
+      <div style={{ padding: "24px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => router.push("/")}>
+          <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(67,179,174,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Activity size={20} color="#43B3AE" />
+          </div>
+          {!collapsed && <span style={{ color: "#fff", fontWeight: 900, fontSize: 16, letterSpacing: -0.5 }}>VCH ROAD <span style={{ color: "#43B3AE" }}>SUITE</span></span>}
+        </div>
+      </div>
 
-      {/* Brand */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: collapsed ? 10 : 20, paddingRight: collapsed ? 0 : 40, paddingTop: 10 }}>
-        <Zap size={18} style={{ color: "#00CC96" }} />
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "visible", padding: "0 16px 20px" }}>
         {!collapsed && (
-          <span style={{ color: "#00CC96", fontSize: 14, fontWeight: 900, letterSpacing: 2 }}>
-            VCH SYSTEMS
-          </span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            
+            {/* Group 1: Mission Control */}
+            <div>
+              {accordionToggle("Mission Control & Navigation", <FolderOpen size={16} color="#FFD700" />, missionOpen, setMissionOpen)}
+              {missionOpen && (
+                <div style={{ padding: "20px 10px 10px", display: "flex", flexDirection: "column", gap: 20, borderLeft: "1px solid rgba(255,255,255,0.05)", marginLeft: 22 }}>
+                  
+                  {/* Data Browser */}
+                  <div>
+                    <div style={sectionSubHeader}>1. Data Browser</div>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={labelStyle}><ClipboardList size={14} /> Filter Date:</label>
+                      <div style={{ ...selectStyle, background: "rgba(67,179,174,0.1)", color: "#43B3AE", border: "1px solid rgba(67,179,174,0.2)", height: 40, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        All Dates <span style={{ fontSize: 10 }}>●</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label style={labelStyle}><Route size={14} /> Filter Route:</label>
+                      <div style={{ ...selectStyle, background: "rgba(67,179,174,0.1)", color: "#43B3AE", border: "1px solid rgba(67,179,174,0.2)", height: 40, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        All Routes <span style={{ fontSize: 10 }}>●</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Active Selection */}
+                  <div>
+                    <div style={sectionSubHeader}>2. Active Selection</div>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={labelStyle}><Activity size={14} color="#FF6080" /> Primary Test Log:</label>
+                      <StreamlitSelect
+                        value={selectedRide}
+                        onChange={(val) => setSelectedRide(val)}
+                        options={rides.map(r => r.Ride_Name)}
+                        placeholder="Select a ride"
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}><Zap size={14} color="#CFFF60" /> Compare Tests:</label>
+                      <StreamlitMultiSelect
+                        value={comparisonRides}
+                        onChange={setComparisonRides}
+                        options={rides.map(r => r.Ride_Name).filter(name => name !== selectedRide)}
+                        placeholder="Choose options"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Group 2: Diagnostic Config */}
+            <div>
+              {accordionToggle("Diagnostic Config", <Cpu size={16} color="#43B3AE" />, diagOpen, setDiagOpen)}
+              {diagOpen && (
+                <div style={{ padding: "12px 0 0", display: "flex", flexDirection: "column", gap: 6, borderLeft: "1px solid rgba(255,255,255,0.05)", marginLeft: 22 }}>
+                  {CHANNEL_TABS.map((tab) => {
+                    const isActive = activeChannel === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveChannel(tab.id)}
+                        className={`sidebar-link ${isActive ? "active" : ""}`}
+                        style={{
+                          padding: "12px 16px",
+                          borderRadius: 10,
+                          margin: "2px 8px 2px 0",
+                          background: isActive ? "#43B3AE" : "rgba(255,255,255,0.04)",
+                          border: isActive ? "1px solid #43B3AE" : "1px solid rgba(255,255,255,0.03)",
+                          color: isActive ? "#fff" : "#A0A0AB",
+                          fontSize: 13,
+                          fontWeight: isActive ? 800 : 600,
+                          textAlign: "left",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                          boxShadow: isActive ? "0 4px 12px rgba(67, 179, 174, 0.3)" : "none",
+                        }}
+                      >
+                        <span style={{ opacity: isActive ? 1 : 0.6 }}>{tab.icon}</span>
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+
+                  {/* Visual Controls */}
+                  <div style={{ marginTop: 24, padding: "0 10px 10px" }}>
+                    <div style={sectionSubHeader}>3. Visual Controls</div>
+                    
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={labelStyle}><TrendingUp size={14} /> Time Window:</label>
+                      <button
+                        onClick={() => setShowTimeFilter(!showTimeFilter)}
+                        style={{
+                          width: "100%", padding: "10px", borderRadius: 10,
+                          background: showTimeFilter ? "rgba(67,179,174,0.15)" : "rgba(255,255,255,0.03)",
+                          border: `1px solid ${showTimeFilter ? "#43B3AE" : "rgba(255,255,255,0.1)"}`,
+                          color: showTimeFilter ? "#43B3AE" : "#888",
+                          fontSize: 12, fontWeight: 700, cursor: "pointer",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+                        }}
+                      >
+                         Time Window {showTimeFilter ? "ON" : "OFF"}
+                      </button>
+                    </div>
+
+                    {showTimeFilter && (
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+                        <div>
+                          <label style={{ ...labelStyle, fontSize: 10 }}>Start (s)</label>
+                          <input
+                            type="number"
+                            value={timeRange.start}
+                            onChange={(e) => setTimeRange({ ...timeRange, start: Math.max(0, parseFloat(e.target.value) || 0) })}
+                            style={selectStyle}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ ...labelStyle, fontSize: 10 }}>End (s)</label>
+                          <input
+                            type="number"
+                            value={timeRange.end}
+                            onChange={(e) => setTimeRange({ ...timeRange, end: Math.min(maxTime, parseFloat(e.target.value) || maxTime) })}
+                            style={selectStyle}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={exportAllThermals}
+                      style={{
+                        width: "100%", padding: "12px", borderRadius: 10,
+                        background: "rgba(67,179,174,0.15)", border: "1px solid rgba(67,179,174,0.3)",
+                        color: "#43B3AE", fontSize: 12, fontWeight: 700,
+                        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      }}
+                    >
+                      <Download size={14} /> Export All Test Data
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Global Actions */}
+            <div style={{ marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20 }}>
+              <button
+                onClick={onRefresh}
+                style={{
+                  width: "100%", padding: "12px", borderRadius: 10,
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                  color: "#fff", fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                }}
+              >
+                <RefreshCw size={14} /> Refresh Diagnostic Data
+              </button>
+            </div>
+          </div>
+        )}
+
+        {collapsed && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+            {CHANNEL_TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveChannel(tab.id); setCollapsed(false); }}
+                style={{
+                  width: 44, height: 44, borderRadius: 10,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: activeChannel === tab.id ? `${tab.color}20` : "transparent",
+                  color: activeChannel === tab.id ? tab.color : "#666",
+                  border: "none", cursor: "pointer",
+                }}
+              >
+                {tab.icon}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Title */}
-      {!collapsed && (
-        <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 16 }}>
-          Road VCH Suite
-        </div>
-      )}
-
-      {/* Navigation Links */}
-      {!collapsed && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: 16 }}>
-          <button
-            onClick={() => router.push("/")}
-            style={{
-              width: "100%", padding: "8px 12px", borderRadius: 8,
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-              color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8,
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
-          >
-            <Home size={15} /> Main Dashboard
-          </button>
-          <button
-            onClick={() => router.push("/dyno")}
-            style={{
-              width: "100%", padding: "8px 12px", borderRadius: 8,
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-              color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8,
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
-          >
-            <Activity size={15} /> Dyno Suite
-          </button>
-        </div>
-      )}
-
-      {/* Divider */}
-      {!collapsed && <div style={dividerStyle} />}
-
-      {/* Mission Control Section */}
-      {!collapsed && (
-        <div style={{ flex: 1, overflowY: "auto" }}>
-          <button
-            onClick={() => { setConfigOpen(!configOpen); }}
-            style={{
-              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-              color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", marginBottom: configOpen ? 0 : 10,
-            }}
-          >
-            <span>Diagnostic Config</span>
-            {configOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-        </div>
-      )}
-
-      {!collapsed && configOpen && (
-        <div style={{ padding: "12px", borderRadius: "0 0 8px 8px", marginBottom: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderTop: "none", flex: 1, overflowY: "auto" }}>
-          {/* Ride Selector */}
-          <span style={labelStyle}>Select Ride</span>
-          <select
-            value={selectedRide}
-            onChange={(e) => setSelectedRide(e.target.value)}
-            style={{ ...selectStyle, marginBottom: 12 }}
-          >
-            <option value="">-- Select Ride --</option>
-            {rides.map((r) => (
-              <option key={r.Ride_Name} value={r.Ride_Name}>{r.Ride_Name}</option>
-            ))}
-          </select>
-
-          {/* Channel Tabs */}
-          <span style={labelStyle}>Channel Selection</span>
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            {CHANNEL_TABS.map((tab) => {
-              const isActive = activeChannel === tab.id;
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveChannel(tab.id)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
-                    borderRadius: 8, background: isActive ? `${tab.color}15` : "transparent",
-                    border: isActive ? `1px solid ${tab.color}44` : "1px solid transparent",
-                    color: isActive ? tab.color : "#B4B4C0", fontSize: 12, fontWeight: isActive ? 700 : 600,
-                    cursor: "pointer", transition: "all 0.2s ease", width: "100%", textAlign: "left",
-                    fontFamily: "inherit",
-                  }}
-                  onMouseEnter={(e) => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; } }}
-                  onMouseLeave={(e) => { if (!isActive) { e.currentTarget.style.background = "transparent"; } }}
-                >
-                  <span style={{ color: isActive ? tab.color : "#666" }}>{Icon}</span>
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Refresh Button */}
-          <div style={{ marginTop: 16 }}>
-            <button
-              onClick={onRefresh}
-              style={{
-                width: "100%", padding: "10px 12px", borderRadius: 8,
-                background: "rgba(0,204,150,0.15)", border: "1px solid rgba(0,204,150,0.3)",
-                color: "#00CC96", fontSize: 12, fontWeight: 700, fontFamily: "inherit",
-                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              }}
-            >
-              <RefreshCw size={13} /> Refresh Data
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Collapsed View */}
-      {collapsed && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, paddingTop: 10 }}>
-          {[
-            { icon: Home, action: () => router.push("/") },
-            { icon: Activity, action: () => router.push("/dyno") },
-            { icon: RefreshCw, action: onRefresh },
-            { icon: Route, action: () => {} },
-          ].map((item, index) => (
-            <button
-              key={index}
-              onClick={item.action}
-              style={{
-                width: 44, height: 44, borderRadius: 10,
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "rgba(255,255,255,0.04)",
-                color: "#d5dae4", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer",
-              }}
-            >
-              <item.icon size={18} />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Footer spacer */}
-      <div style={{ height: 20 }} />
+      {/* Collapse Toggle */}
+      <div style={{ padding: 16, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          style={{ width: "100%", height: 36, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "none", color: "#666", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>Collapse Viewer</div>}
+        </button>
+      </div>
     </aside>
   );
 }

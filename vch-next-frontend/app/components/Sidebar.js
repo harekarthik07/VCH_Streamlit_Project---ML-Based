@@ -57,7 +57,7 @@ export default function Sidebar() {
         backgroundColor: "#0b0c10",
         borderRight: "1px solid rgba(255, 255, 255, 0.08)",
         padding: "30px 20px",
-        transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
+        transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         display: "flex",
         flexDirection: "column",
         position: "relative",
@@ -77,12 +77,12 @@ export default function Sidebar() {
       >
         <Zap
           size={18}
-          style={{ color: "#ff934d", flexShrink: 0 }}
+          style={{ color: "#00CC96", flexShrink: 0 }}
         />
         {!collapsed && (
           <span
             style={{
-              color: "var(--primary-accent)",
+              color: "#00CC96",
               fontSize: "1rem",
               fontWeight: 800,
               letterSpacing: "0.12em",
@@ -129,15 +129,37 @@ export default function Sidebar() {
                   fontWeight: 700,
                   fontSize: 14,
                   whiteSpace: "nowrap",
-                  color: isActive ? "#f4fff9" : "var(--text-title)",
-                  background: isActive ? "rgba(0,204,150,0.12)" : "transparent",
-                  border: isActive ? "1px solid rgba(0,204,150,0.12)" : "1px solid transparent",
-                  borderLeft: isActive ? "4px solid var(--primary-accent)" : "4px solid transparent",
+                  color: isActive ? "#f4fff9" : "#B4B4C0",
+                  background: isActive ? "rgba(0, 204, 150, 0.12)" : "transparent",
+                  border: isActive ? "1px solid rgba(0, 204, 150, 0.12)" : "1px solid transparent",
+                  borderLeft: isActive ? "4px solid #00CC96" : "4px solid transparent",
                   opacity: isActive ? 1 : 0.82,
                   transition: "all 0.25s ease",
+                  boxShadow: isActive ? "0 0 12px rgba(0, 204, 150, 0.15)" : "none",
                 }}
               >
-                <Icon size={18} style={{ flexShrink: 0, color: isActive ? "var(--primary-accent)" : "#a2aab9" }} />
+                {isActive && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: 14,
+                      color: "#00CC96",
+                      textShadow: "0 0 8px #00CC96, 0 0 15px #00CC96",
+                      fontSize: "0.5rem",
+                      marginRight: 0,
+                    }}
+                  >
+                    ●
+                  </span>
+                )}
+                <Icon 
+                  size={18} 
+                  style={{ 
+                    flexShrink: 0, 
+                    color: isActive ? "#00CC96" : "#a2aab9",
+                    filter: isActive ? "drop-shadow(0 0 4px rgba(0, 204, 150, 0.5))" : "none"
+                  }} 
+                />
                 {!collapsed && item.label}
               </Link>
             </React.Fragment>
@@ -146,8 +168,8 @@ export default function Sidebar() {
       </nav>
 
       {!collapsed && (
-        <div style={{ color: "var(--text-sub)", fontSize: 13, marginBottom: 12 }}>
-          Logged in as: <span style={{ color: "var(--primary-accent)", fontWeight: 700 }}>{isMounted ? username : "admin"}</span>
+        <div style={{ color: "#A0A0AB", fontSize: 13, marginBottom: 12 }}>
+          Logged in as: <span style={{ color: "#00CC96", fontWeight: 700 }}>{isMounted ? username : "admin"}</span>
         </div>
       )}
 
@@ -165,6 +187,17 @@ export default function Sidebar() {
           color: "#ebeef5",
           cursor: "pointer",
           marginBottom: 56,
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(255,75,75,0.1)";
+          e.currentTarget.style.borderColor = "rgba(255,75,75,0.3)";
+          e.currentTarget.style.color = "#FF4B4B";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+          e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
+          e.currentTarget.style.color = "#ebeef5";
         }}
       >
         <LogOut size={15} />
@@ -179,15 +212,25 @@ export default function Sidebar() {
           bottom: 20,
           right: collapsed ? "50%" : 16,
           transform: collapsed ? "translateX(50%)" : "none",
-          background: "var(--btn-bg)",
-          border: "1px solid var(--btn-border)",
+          background: "rgba(45, 45, 51, 0.6)",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
           borderRadius: 8,
           padding: "6px 8px",
           cursor: "pointer",
-          color: "var(--text-title)",
+          color: "#B4B4C0",
           display: "flex",
           alignItems: "center",
           transition: "all 0.3s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "rgba(0,204,150,0.1)";
+          e.currentTarget.style.borderColor = "#00CC96";
+          e.currentTarget.style.color = "#00CC96";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "rgba(45, 45, 51, 0.6)";
+          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+          e.currentTarget.style.color = "#B4B4C0";
         }}
       >
         {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}

@@ -16,10 +16,10 @@ const LIMIT_MAP = { IGBT: 95, Motor: 125, HighCell: 50, AFE: 50 };
 // AFE uses 'AFE_Mean_dTdt' / 'AFE_Mean_dT' in the processed data, not 'AFE_dTdt' / 'AFE_dT'
 const COL_MAP = { IGBT: { dTdt: "IGBT_dTdt", dT: "IGBT_dT" }, Motor: { dTdt: "Motor_dTdt", dT: "Motor_dT" }, HighCell: { dTdt: "HighCell_dTdt", dT: "HighCell_dT" }, AFE: { dTdt: "AFE_Mean_dTdt", dT: "AFE_Mean_dT" } };
 const CARD_ACCENTS = { 
-  IGBT: "#00CC96", 
+  IGBT: "#43B3AE", 
   Motor: "#FFD700", 
   HighCell: "#FF4B4B", 
-  AFE: "#00CC96" 
+  AFE: "#43B3AE" 
 };
 const GOLDEN_BIKES = [
   "2025_10_22-07-BK",
@@ -66,7 +66,7 @@ function downloadTableCSV(headers, rows, filename) {
 }
 
 const TABS = [
-  { id: "rise_rate", label: "Rise Rate (dT/dt)", icon: <Zap size={14} color="#00CC96"/> },
+  { id: "rise_rate", label: "Rise Rate (dT/dt)", icon: <Zap size={14} color="#43B3AE"/> },
   { id: "cumulative", label: "Cumulative Rise (ΔT)", icon: <TrendingUp size={14} color="#8388B9"/> },
   { id: "3d_sandbox", label: "Dynamic 3D Plotter", icon: <Box size={14} color="#55AAFF"/> },
   { id: "power_analysis", label: "Power Analysis", icon: <BatteryCharging size={14} color="#CFFF60"/> },
@@ -259,7 +259,7 @@ export default function DynoPage() {
           inset: 0;
           pointer-events: none;
           background:
-            radial-gradient(circle at 12% 18%, rgba(0, 204, 150, 0.12), transparent 28%),
+            radial-gradient(circle at 12% 18%, rgba(67,179,174, 0.12), transparent 28%),
             radial-gradient(circle at 84% 12%, rgba(255, 215, 0, 0.10), transparent 24%),
             radial-gradient(circle at 78% 68%, rgba(85, 170, 255, 0.10), transparent 26%);
           opacity: 0.9;
@@ -294,11 +294,11 @@ export default function DynoPage() {
           position: absolute;
           inset: auto 0 0 0;
           height: 3px;
-          background: var(--status-accent, #00CC96);
+          background: var(--status-accent, #43B3AE);
         }
         .temp-status-card.safe {
-          --status-accent: #00CC96;
-          border-color: rgba(0,204,150,0.34);
+          --status-accent: #43B3AE;
+          border-color: rgba(67,179,174,0.34);
           background:
             linear-gradient(180deg, rgba(11, 52, 48, 0.86), rgba(13, 24, 28, 0.94)),
             linear-gradient(180deg, rgba(28, 30, 38, 0.82), rgba(18, 20, 28, 0.58));
@@ -348,7 +348,7 @@ export default function DynoPage() {
           margin-bottom: 24px;
           padding: 6px;
           background: linear-gradient(180deg, rgba(16, 24, 24, 0.84), rgba(13, 16, 22, 0.9));
-          border: 1px solid rgba(0, 204, 150, 0.18);
+          border: 1px solid rgba(67,179,174, 0.18);
           border-radius: 14px;
           box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 16px 28px rgba(0,0,0,0.16);
           overflow-x: auto;
@@ -371,21 +371,21 @@ export default function DynoPage() {
         }
         .tab-button:hover {
           color: #dffef3;
-          border-color: rgba(0, 204, 150, 0.26);
-          background: rgba(0, 204, 150, 0.06);
+          border-color: rgba(67,179,174, 0.26);
+          background: rgba(67,179,174, 0.06);
         }
         .tab-button.active {
           color: #effff9;
-          border-color: rgba(0, 204, 150, 0.5);
-          background: linear-gradient(180deg, rgba(0, 204, 150, 0.18), rgba(0, 122, 94, 0.16));
-          box-shadow: inset 0 -2px 0 #00CC96, 0 10px 24px rgba(0, 204, 150, 0.12);
+          border-color: rgba(67,179,174, 0.5);
+          background: linear-gradient(180deg, rgba(67,179,174, 0.18), rgba(0, 122, 94, 0.16));
+          box-shadow: inset 0 -2px 0 #43B3AE, 0 10px 24px rgba(67,179,174, 0.12);
         }
         .sandbox-panel {
-          border: 1px solid rgba(0, 204, 150, 0.18);
+          border: 1px solid rgba(67,179,174, 0.18);
           box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 18px 36px rgba(0,0,0,0.16);
         }
         .sandbox-control {
-          border: 1px solid rgba(0, 204, 150, 0.14);
+          border: 1px solid rgba(67,179,174, 0.14);
           border-radius: 14px;
           padding: 14px;
           background: linear-gradient(180deg, rgba(13, 26, 25, 0.58), rgba(18, 18, 24, 0.52));
@@ -398,7 +398,7 @@ export default function DynoPage() {
           margin-bottom: 18px;
           padding: 12px 14px;
           border-radius: 12px;
-          border: 1px solid rgba(0, 204, 150, 0.14);
+          border: 1px solid rgba(67,179,174, 0.14);
           background: linear-gradient(180deg, rgba(8, 44, 36, 0.34), rgba(14, 20, 25, 0.72));
           color: #bfeee0;
           font-size: 13px;
@@ -406,19 +406,19 @@ export default function DynoPage() {
         .sandbox-export {
           padding: 8px 14px;
           border-radius: 9px;
-          border: 1px solid rgba(0, 204, 150, 0.28);
-          background: rgba(0, 204, 150, 0.12);
+          border: 1px solid rgba(67,179,174, 0.28);
+          background: rgba(67,179,174, 0.12);
           color: #dcfff3;
           font-size: 12px;
           font-weight: 800;
           cursor: pointer;
         }
         .fleet-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; transition: all 0.2s; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; }
-        .fleet-card:hover { border-color: #00CC96; background: rgba(0,204,150,0.05); transform: translateY(-3px); }
-        .fleet-icon { margin-bottom: 12px; color: #00CC96; }
+        .fleet-card:hover { border-color: #43B3AE; background: rgba(67,179,174,0.05); transform: translateY(-3px); }
+        .fleet-icon { margin-bottom: 12px; color: #43B3AE; }
         .fleet-vin { font-size: 14px; font-weight: 800; color: #FFF; margin-bottom: 2px; }
         .fleet-id { font-size: 12px; color: var(--text-sub); }
-        .hw-box { background: rgba(255,255,255,0.03); border-left: 3px solid #00CC96; padding: 12px 16px; border-radius: 4px; }
+        .hw-box { background: rgba(255,255,255,0.03); border-left: 3px solid #43B3AE; padding: 12px 16px; border-radius: 4px; }
         .hw-label { color: var(--text-sub); font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
         .hw-value { color: #FFF; font-size: 13px; font-weight: 500; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -446,7 +446,7 @@ export default function DynoPage() {
                 <Image src="/raptee_logo.png" alt="Raptee" width={140} height={44} style={{ opacity: 0.98 }} />
                 <div style={{ borderLeft: "1px solid rgba(255,255,255,0.1)", paddingLeft: 20 }}>
                   <h1 style={{ fontSize: 28, fontWeight: 900, color: "#FFF", marginBottom: 4 }}>VCH - Dyno Thermal Monitor</h1>
-                  <p style={{ color: "var(--text-sub)", fontSize: 13 }}><b>Target:</b> <span style={{ color: "#00CC96", fontWeight: 700 }}>{selectedTest || "No Selection"}</span></p>
+                  <p style={{ color: "var(--text-sub)", fontSize: 13 }}><b>Target:</b> <span style={{ color: "#43B3AE", fontWeight: 700 }}>{selectedTest || "No Selection"}</span></p>
                 </div>
               </div>
               <button className="glass-panel" onClick={() => { if (!telemetry) return; const allCols = Object.keys(telemetry); downloadCSV(allCols, telemetry, `${(selectedTest || "dyno").slice(0,10)}_full_trace.csv`); }} style={{ padding: "8px 16px", borderRadius: 10, backgroundColor: "rgba(29,30,36,0.65)", color: "#ddd", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
@@ -456,7 +456,7 @@ export default function DynoPage() {
 
             <div className="header-strip" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: 14, padding: "14px 20px", marginBottom: 20 }}>
               {[{ label: "TEST DATE", value: `📅 ${testDate}` }, { label: "TEST TYPE", value: "🏍️ Dyno Thermal" }, { label: "DYNO SET SPEED", value: "🏁 60 kmph" }, { label: "ELECTRICAL POWER", value: `⚡ ${peakPower}` }, { label: "PACK DCIR", value: `🔋 ${dcirDisplay}`, accent: true }, { label: "TOTAL DURATION", value: `⏱️ ${totalDuration} s` }].map((item, i, arr) => (
-                <React.Fragment key={item.label}><div style={{ textAlign: "center", minWidth: 130 }}><div style={{ color: "var(--text-title)", fontSize: 10, textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>{item.label}</div><div style={{ color: item.accent ? "#00CC96" : "var(--text-main)", fontWeight: 700, fontSize: 14 }}>{item.value}</div></div>{i < arr.length - 1 && <div style={{ borderLeft: "1px solid rgba(255,255,255,0.08)", height: 24 }} />}</React.Fragment>
+                <React.Fragment key={item.label}><div style={{ textAlign: "center", minWidth: 130 }}><div style={{ color: "var(--text-title)", fontSize: 10, textTransform: "uppercase", fontWeight: 700, marginBottom: 4 }}>{item.label}</div><div style={{ color: item.accent ? "#43B3AE" : "var(--text-main)", fontWeight: 700, fontSize: 14 }}>{item.value}</div></div>{i < arr.length - 1 && <div style={{ borderLeft: "1px solid rgba(255,255,255,0.08)", height: 24 }} />}</React.Fragment>
               ))}
             </div>
 
@@ -487,8 +487,8 @@ export default function DynoPage() {
                 const derationVal = selectedSummary?.[`${ch}_Deration_Time`] || "SAFE";
                 const isBreach = String(derationVal) !== "SAFE";
                 const isDominant = ch === dominantChannel;
-                const borderS = isBreach ? "1px solid rgba(255,75,75,0.34)" : isDominant ? "1px solid rgba(255,215,0,0.42)" : "1px solid rgba(0,204,150,0.34)";
-                const shadowS = isBreach ? "0 18px 38px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,75,75,0.06), inset 0 1px 0 rgba(255,255,255,0.08)" : isDominant ? "0 18px 38px rgba(0,0,0,0.25), 0 0 24px rgba(255,215,0,0.08), inset 0 1px 0 rgba(255,255,255,0.10)" : "0 18px 38px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,204,150,0.06), inset 0 1px 0 rgba(255,255,255,0.08)";
+                const borderS = isBreach ? "1px solid rgba(255,75,75,0.34)" : isDominant ? "1px solid rgba(255,215,0,0.42)" : "1px solid rgba(67,179,174,0.34)";
+                const shadowS = isBreach ? "0 18px 38px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,75,75,0.06), inset 0 1px 0 rgba(255,255,255,0.08)" : isDominant ? "0 18px 38px rgba(0,0,0,0.25), 0 0 24px rgba(255,215,0,0.08), inset 0 1px 0 rgba(255,255,255,0.10)" : "0 18px 38px rgba(0,0,0,0.25), 0 0 0 1px rgba(67,179,174,0.06), inset 0 1px 0 rgba(255,255,255,0.08)";
                 let extraInfo = ch === "HighCell" ? (selectedSummary?.["HighCell_Peak_Cell_No"] ? ` | Cell: #${Math.round(selectedSummary["HighCell_Peak_Cell_No"])}` : "") : "";
 
                 return (
@@ -499,7 +499,7 @@ export default function DynoPage() {
                     <div className="temp-card-divider" />
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 11 }}>
                       <span style={{ color: "var(--text-sub)" }}>Limit: {limit}°C | </span>
-                      {isBreach ? <span style={{ color: "#FF4B4B", fontWeight: 800 }}>⚠️ BREACH</span> : <span style={{ color: "#00CC96", fontWeight: 800 }}>✅ SAFE</span>}
+                      {isBreach ? <span style={{ color: "#FF4B4B", fontWeight: 800 }}>⚠️ BREACH</span> : <span style={{ color: "#43B3AE", fontWeight: 800 }}>✅ SAFE</span>}
                     </div>
                     <div style={{ marginTop: 4, fontSize: 11 }}>{isBreach ? <span style={{ fontWeight: 700 }}>Derated @ <strong>{derationVal}s</strong></span> : <span style={{ color: "var(--text-sub)" }}>0s</span>}</div>
                   </div>
@@ -520,7 +520,7 @@ export default function DynoPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                 {channels.map((ch) => {
                   const dTdtCol = COL_MAP[ch]?.dTdt || `${ch}_dTdt`;
-                  const data = [{ x: telemetry?.["Time (s)"], y: telemetry?.[dTdtCol], name: selectedTest, type: "scatter", mode: "lines", line: { color: "#00CC96", width: 3, shape: "spline", smoothing: 0.8 } }];
+                  const data = [{ x: telemetry?.["Time (s)"], y: telemetry?.[dTdtCol], name: selectedTest, type: "scatter", mode: "lines", line: { color: "#43B3AE", width: 3, shape: "spline", smoothing: 0.8 } }];
                   compareTests.forEach(t => { if (compareDataMap[t]) data.push({ x: compareDataMap[t]["Time (s)"], y: compareDataMap[t][dTdtCol], name: t, type: "scatter", mode: "lines", line: { width: 1.5, dash: "dot" } }); });
                   if (envelopes[ch]) {
                     const env = envelopes[ch];
@@ -542,7 +542,7 @@ export default function DynoPage() {
                     <div key={ch} className="metric-card sandbox-panel" style={{ padding: 16 }}>
                       <div style={{ fontWeight: 700, color: "var(--text-main)", marginBottom: 12 }}>{ch} Rise Rate</div>
                       <Plot data={data} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 300, margin: { t: 10, b: 30, l: 40, r: 10 }, xaxis: { title: "Time (s)", showgrid: false }, yaxis: { title: "dT/dt (°C/s)", showgrid: true, gridcolor: "rgba(255,255,255,0.05)" }, showlegend: true, legend: { orientation: "h", y: -0.2 } }} config={{ displayModeBar: true, displaylogo: false, responsive: true, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: { format: "png", filename: `${ch.toLowerCase()}_rise_rate`, scale: 2 } }} style={{ width: "100%" }} />
-                      <button onClick={() => { if (!telemetry) return; downloadCSV(["Time (s)", dTdtCol], telemetry, `${(selectedTest || "dyno").slice(0,10)}_${ch}_dTdt.csv`); }} style={{ width: "100%", marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#00CC96"; e.currentTarget.style.color = "#00CC96"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={13} /> Export {ch} dT/dt Data</button>
+                      <button onClick={() => { if (!telemetry) return; downloadCSV(["Time (s)", dTdtCol], telemetry, `${(selectedTest || "dyno").slice(0,10)}_${ch}_dTdt.csv`); }} style={{ width: "100%", marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#43B3AE"; e.currentTarget.style.color = "#43B3AE"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={13} /> Export {ch} dT/dt Data</button>
                     </div>
                   );
                 })}
@@ -575,7 +575,7 @@ export default function DynoPage() {
                     <div key={ch} className="metric-card sandbox-panel" style={{ padding: 16 }}>
                       <div style={{ fontWeight: 700, color: "var(--text-main)", marginBottom: 12 }}>{ch} Cumulative Rise</div>
                       <Plot data={data} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 300, margin: { t: 10, b: 30, l: 40, r: 10 }, xaxis: { title: "Time (s)", showgrid: false }, yaxis: { title: "ΔT (°C)", showgrid: true, gridcolor: "rgba(255,255,255,0.05)" }, showlegend: true, legend: { orientation: "h", y: -0.2 }, hovermode: "x unified" }} config={{ displayModeBar: true, displaylogo: false, responsive: true, modeBarButtonsToRemove: ["lasso2d", "select2d"], toImageButtonOptions: { format: "png", filename: `${ch.toLowerCase()}_cumulative_rise`, scale: 2 } }} style={{ width: "100%" }} />
-                      <button onClick={() => { if (!telemetry) return; downloadCSV(["Time (s)", dTCol], telemetry, `${(selectedTest || "dyno").slice(0,10)}_${ch}_DeltaT.csv`); }} style={{ width: "100%", marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#00CC96"; e.currentTarget.style.color = "#00CC96"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={13} /> Export {ch} ΔT Data</button>
+                      <button onClick={() => { if (!telemetry) return; downloadCSV(["Time (s)", dTCol], telemetry, `${(selectedTest || "dyno").slice(0,10)}_${ch}_DeltaT.csv`); }} style={{ width: "100%", marginTop: 10, padding: "8px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#43B3AE"; e.currentTarget.style.color = "#43B3AE"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={13} /> Export {ch} ΔT Data</button>
                     </div>
                   );
                 })}
@@ -583,7 +583,7 @@ export default function DynoPage() {
             )}
 
             {activeTab === "3d_sandbox" && (
-              <div className="metric-card sandbox-panel" style={{ padding: 24 }}>
+              <div className="metric-card sandbox-panel" style={{ position: "relative", zIndex: 100, padding: 24 }}>
                 <div className="sandbox-caption">
                   <span>
                     {loadingRawTelemetry
@@ -654,7 +654,7 @@ export default function DynoPage() {
                               name: `${y} (L)`,
                               type: "scatter",
                               mode: "lines",
-                              line: { color: ["#00CC96", "#2DD4BF", "#7CE7C5", "#B6F09C"][idx % 4], width: 2.4, shape: "spline", smoothing: 0.8 }
+                              line: { color: ["#43B3AE", "#2DD4BF", "#7CE7C5", "#B6F09C"][idx % 4], width: 2.4, shape: "spline", smoothing: 0.8 }
                             })),
                             ...sandboxSecondarySeries.map((y, idx) => ({
                               x: sandboxData?.[sandboxXKey],
@@ -676,9 +676,9 @@ export default function DynoPage() {
                             margin: { t: 20, b: 10, l: 0, r: 0 },
                             scene: {
                               bgcolor: "rgba(0,0,0,0)",
-                              xaxis: { title: sandboxXKey, gridcolor: "rgba(0,204,150,0.10)", zerolinecolor: "rgba(0,204,150,0.18)" },
-                              yaxis: { title: sandboxPrimarySeries[0] || sandboxSecondarySeries[0], gridcolor: "rgba(0,204,150,0.10)", zerolinecolor: "rgba(0,204,150,0.18)" },
-                              zaxis: { title: sandboxZKey, gridcolor: "rgba(0,204,150,0.10)", zerolinecolor: "rgba(0,204,150,0.18)" }
+                              xaxis: { title: sandboxXKey, gridcolor: "rgba(67,179,174,0.10)", zerolinecolor: "rgba(67,179,174,0.18)" },
+                              yaxis: { title: sandboxPrimarySeries[0] || sandboxSecondarySeries[0], gridcolor: "rgba(67,179,174,0.10)", zerolinecolor: "rgba(67,179,174,0.18)" },
+                              zaxis: { title: sandboxZKey, gridcolor: "rgba(67,179,174,0.10)", zerolinecolor: "rgba(67,179,174,0.18)" }
                             }
                           }
                         : {
@@ -690,7 +690,7 @@ export default function DynoPage() {
                             hovermode: "x unified",
                             margin: { t: 20, b: 60, l: 60, r: 60 },
                             xaxis: { title: sandboxXKey, showgrid: false, zeroline: false },
-                            yaxis: { title: "Left Axis (Primary)", showgrid: true, gridcolor: "rgba(0,204,150,0.10)", zeroline: false },
+                            yaxis: { title: "Left Axis (Primary)", showgrid: true, gridcolor: "rgba(67,179,174,0.10)", zeroline: false },
                             yaxis2: { title: "Right Axis (Secondary)", overlaying: "y", side: "right", showgrid: false, zeroline: false },
                             legend: { orientation: "h", y: -0.14 }
                           }}
@@ -704,7 +704,7 @@ export default function DynoPage() {
                     )}
                   </>
                 ) : (
-                  <div style={{ textAlign: "center", padding: "70px 20px", color: "var(--text-sub)", border: "1px dashed rgba(0,204,150,0.2)", borderRadius: 14 }}>
+                  <div style={{ textAlign: "center", padding: "70px 20px", color: "var(--text-sub)", border: "1px dashed rgba(67,179,174,0.2)", borderRadius: 14 }}>
                     Select at least one Y-axis channel to start plotting the full telemetry timeline.
                   </div>
                 )}
@@ -745,7 +745,7 @@ export default function DynoPage() {
                       </div>
                       <div className="metric-card" style={{padding:"16px 20px"}}>
                         <div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>Upper Boundary (+10%)</div>
-                        <div style={{fontSize:22,fontWeight:900,color:"#00CC96"}}>{pUp.toFixed(2)} kW</div>
+                        <div style={{fontSize:22,fontWeight:900,color:"#43B3AE"}}>{pUp.toFixed(2)} kW</div>
                       </div>
                       <div className="metric-card" style={{padding:"16px 20px"}}>
                         <div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>Lower Boundary (-10%)</div>
@@ -759,7 +759,7 @@ export default function DynoPage() {
                            y: powerRecords.map((row) => row.avgPower),
                            text: powerRecords.map((row) => row.avgPower.toFixed(2)),
                            type: "bar",
-                           marker: { color: powerRecords.map((row) => row.status === "PASS" ? "#00CC96" : "#FF4B4B") },
+                           marker: { color: powerRecords.map((row) => row.status === "PASS" ? "#43B3AE" : "#FF4B4B") },
                            hovertemplate: "Test: %{x}<br>Power: %{y:.2f} kW<extra></extra>"
                          }]}
                          layout={{
@@ -812,7 +812,7 @@ export default function DynoPage() {
                     </div>
                     <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:20}}>
                        <div className="metric-card" style={{padding:16}}>
-                          <div style={{color:"#00CC96", fontWeight:800, marginBottom:10}}>✅ Passed Power Criteria</div>
+                          <div style={{color:"#43B3AE", fontWeight:800, marginBottom:10}}>✅ Passed Power Criteria</div>
                           <div style={{maxHeight:300, overflowY:"auto"}}>
                              <table><thead><tr><th>Test Name</th><th>Type</th><th>Power (kW)</th></tr></thead><tbody>{passed.map((row)=><tr key={row.testName}><td>{row.testName}</td><td>{row.type}</td><td>{row.avgPower.toFixed(2)}</td></tr>)}</tbody></table>
                           </div>
@@ -824,7 +824,7 @@ export default function DynoPage() {
                           </div>
                        </div>
                     </div>
-                     <button onClick={() => { const headers = ["Test Name", "Type", "Avg Power (kW)", "Status"]; const rows = powerRecords.map(r => [r.testName, r.type, r.avgPower, r.status]); downloadTableCSV(headers, rows, "Dyno_Power_Analysis.csv"); }} style={{ marginTop: 20, padding: "10px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#00CC96"; e.currentTarget.style.color = "#00CC96"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={14} /> Export Power Validation Data</button>
+                     <button onClick={() => { const headers = ["Test Name", "Type", "Avg Power (kW)", "Status"]; const rows = powerRecords.map(r => [r.testName, r.type, r.avgPower, r.status]); downloadTableCSV(headers, rows, "Dyno_Power_Analysis.csv"); }} style={{ marginTop: 20, padding: "10px 20px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#A0A0AB", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }} onMouseEnter={e => { e.currentTarget.style.borderColor = "#43B3AE"; e.currentTarget.style.color = "#43B3AE"; }} onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#A0A0AB"; }}><Download size={14} /> Export Power Validation Data</button>
                   </div>
                );
             })()}
@@ -842,12 +842,12 @@ export default function DynoPage() {
                     <div style={{fontSize:16,fontWeight:800,color:"var(--text-main)",marginBottom:16}}>🪫 Interactive Battery Health & DCIR Diagnostics</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}><div className="metric-card" style={{padding:"16px 20px"}}><div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>👑 Golden Mean DCIR</div><div style={{fontSize:22,fontWeight:900,color:"#FFD700"}}>{gDCIR} mΩ</div></div><div className="metric-card" style={{padding:"16px 20px"}}><div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>⚠️ Degradation Limit (+15%)</div><div style={{fontSize:22,fontWeight:900,color:"#FF4B4B"}}>{dLimit.toFixed(2)} mΩ</div></div></div>
                     <div className="metric-card" style={{padding:"16px",marginBottom:20}}>
-                        <div style={{fontWeight:700,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}><span>⚡ Voltage Sag vs. Current Draw — {selectedTest}</span><button onClick={loadBatteryData} disabled={loadingBattery} style={{background:"rgba(0,204,150,0.15)",border:"1px solid rgba(0,204,150,0.3)",color:"#00CC96",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:700}}>{loadingBattery ? "Loading..." : "Load Raw Data"}</button></div>
+                        <div style={{fontWeight:700,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}><span>⚡ Voltage Sag vs. Current Draw — {selectedTest}</span><button onClick={loadBatteryData} disabled={loadingBattery} style={{background:"rgba(67,179,174,0.15)",border:"1px solid rgba(67,179,174,0.3)",color:"#43B3AE",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:700}}>{loadingBattery ? "Loading..." : "Load Raw Data"}</button></div>
                         {batteryData ? (
-                          <Plot data={[{x:batteryData["Time (s)"],y:batteryData[cCol || "Current (A)"],type:"scatter",mode:"lines",name:"Current (A)",line:{color:"#FF4B4B",width:2}}, {x:batteryData["Time (s)"],y:batteryData[vCol || "Voltage (V)"],type:"scatter",mode:"lines",name:"Voltage (V)",yaxis:"y2",line:{color:"#00CC96",width:2}}]} layout={{ ...DARK_TOOLTIP, paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color:"#E0E0E0",size:11},height:400,hovermode:"x unified",margin:{t:20,b:50,l:60,r:60},xaxis:{title:"Time (s)",showgrid:false},yaxis:{title:"Current (A)"},yaxis2:{title:"Voltage (V)",overlaying:"y",side:"right",showgrid:false},legend:{orientation:"h",y:-0.15} }} config={{responsive:true}} style={{width:"100%"}} />
+                          <Plot data={[{x:batteryData["Time (s)"],y:batteryData[cCol || "Current (A)"],type:"scatter",mode:"lines",name:"Current (A)",line:{color:"#FF4B4B",width:2}}, {x:batteryData["Time (s)"],y:batteryData[vCol || "Voltage (V)"],type:"scatter",mode:"lines",name:"Voltage (V)",yaxis:"y2",line:{color:"#43B3AE",width:2}}]} layout={{ ...DARK_TOOLTIP, paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color:"#E0E0E0",size:11},height:400,hovermode:"x unified",margin:{t:20,b:50,l:60,r:60},xaxis:{title:"Time (s)",showgrid:false},yaxis:{title:"Current (A)"},yaxis2:{title:"Voltage (V)",overlaying:"y",side:"right",showgrid:false},legend:{orientation:"h",y:-0.15} }} config={{responsive:true}} style={{width:"100%"}} />
                         ) : <div style={{textAlign:"center",padding:50,color:"var(--text-sub)"}}>Click Load Raw Data to fetch high-resolution traces.</div>}
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}><div className="metric-card" style={{padding:16}}><div style={{color:"#00CC96",fontWeight:800,marginBottom:10}}>✅ DCIR Validated Vehicles ({passed.length})</div><div style={{maxHeight:300,overflowY:"auto"}}><table><thead><tr><th>Vehicle</th><th>DCIR (mΩ)</th><th>Verdict</th></tr></thead><tbody>{passed.map(s=><tr key={s.Test_Name}><td>{getBikeNo(s.Test_Name)}</td><td>{s.Pack_DCIR_mOhm.toFixed(2)}</td><td style={{color:"#00CC96",fontWeight:700}}>PASS</td></tr>)}</tbody></table></div></div><div className="metric-card" style={{padding:16}}><div style={{color:"#FF4B4B",fontWeight:800,marginBottom:10}}>❌ Excessive Battery Sag/DCIR ({failed.length})</div><div style={{maxHeight:300,overflowY:"auto"}}><table><thead><tr><th>Vehicle</th><th>DCIR (mΩ)</th><th>Verdict</th></tr></thead><tbody>{failed.map(s=><tr key={s.Test_Name}><td>{getBikeNo(s.Test_Name)}</td><td>{s.Pack_DCIR_mOhm.toFixed(2)}</td><td style={{color:"#FF4B4B",fontWeight:700}}>FAIL</td></tr>)}</tbody></table></div></div></div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}><div className="metric-card" style={{padding:16}}><div style={{color:"#43B3AE",fontWeight:800,marginBottom:10}}>✅ DCIR Validated Vehicles ({passed.length})</div><div style={{maxHeight:300,overflowY:"auto"}}><table><thead><tr><th>Vehicle</th><th>DCIR (mΩ)</th><th>Verdict</th></tr></thead><tbody>{passed.map(s=><tr key={s.Test_Name}><td>{getBikeNo(s.Test_Name)}</td><td>{s.Pack_DCIR_mOhm.toFixed(2)}</td><td style={{color:"#43B3AE",fontWeight:700}}>PASS</td></tr>)}</tbody></table></div></div><div className="metric-card" style={{padding:16}}><div style={{color:"#FF4B4B",fontWeight:800,marginBottom:10}}>❌ Excessive Battery Sag/DCIR ({failed.length})</div><div style={{maxHeight:300,overflowY:"auto"}}><table><thead><tr><th>Vehicle</th><th>DCIR (mΩ)</th><th>Verdict</th></tr></thead><tbody>{failed.map(s=><tr key={s.Test_Name}><td>{getBikeNo(s.Test_Name)}</td><td>{s.Pack_DCIR_mOhm.toFixed(2)}</td><td style={{color:"#FF4B4B",fontWeight:700}}>FAIL</td></tr>)}</tbody></table></div></div></div>
                   </div>
                );
             })()}
@@ -872,17 +872,17 @@ export default function DynoPage() {
                     <div className="metric-card" style={{padding:12}}><div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>🎯 Target Data</div><StreamlitSelect value={qcTarget} onChange={setQcTarget} options={["All Data","IGBT","Motor","HighCell","AFE","Electrical Power"]} /></div>
                     <div className="metric-card" style={{padding:12}}><div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>📉 Assessment</div><StreamlitSelect value={qcMetric} onChange={setQcMetric} options={["All Assessments","dT/dt","dT","Power Based"]} /></div>
                   </div>
-                  {isT && <div className="metric-card" style={{padding:12,marginBottom:16,display:"flex",alignItems:"center",gap:16}}><div style={{fontSize:12,color:"var(--text-sub)",fontWeight:700}}>Tolerance Range:</div>{[5,10,15,20].map(t=><button key={t} onClick={()=>setQcTolerance(t)} style={{padding:"6px 14px",borderRadius:6,border:`1px solid ${qcTolerance===t?"#00CC96":"rgba(255,255,255,0.1)"}`,background:qcTolerance===t?"rgba(0,204,150,0.15)":"transparent",color:qcTolerance===t?"#00CC96":"var(--text-sub)",cursor:"pointer",fontWeight:700,fontSize:13}}>±{t}%</button>)}</div>}
+                  {isT && <div className="metric-card" style={{padding:12,marginBottom:16,display:"flex",alignItems:"center",gap:16}}><div style={{fontSize:12,color:"var(--text-sub)",fontWeight:700}}>Tolerance Range:</div>{[5,10,15,20].map(t=><button key={t} onClick={()=>setQcTolerance(t)} style={{padding:"6px 14px",borderRadius:6,border:`1px solid ${qcTolerance===t?"#43B3AE":"rgba(255,255,255,0.1)"}`,background:qcTolerance===t?"rgba(67,179,174,0.15)":"transparent",color:qcTolerance===t?"#43B3AE":"var(--text-sub)",cursor:"pointer",fontWeight:700,fontSize:13}}>±{t}%</button>)}</div>}
 
                   <div style={{marginBottom:24}}><div style={{fontSize:16,fontWeight:800,color:"var(--text-main)",marginBottom:12}}>Master Golden Criteria @ {qcTimeS/60} min ({qcTimeS}s) 👑</div>
-                    <div style={{background:"var(--card-bg)",borderTop:"4px solid #FFD700",borderRadius:16,padding:"18px 24px",marginBottom:16,boxShadow:"0 4px 20px rgba(0,0,0,0.3)"}}><div style={{fontSize:12,color:"var(--text-sub)",textTransform:"uppercase",fontWeight:600,marginBottom:6}}>⚡ Electrical Power Validation (0s to 120s)</div><div style={{fontSize:22,fontWeight:800}}><span style={{color:"#00CC96"}}>{pUp.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span>{mPwr.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span style={{color:"#00CC96"}}>{pLow.toFixed(2)} kW</span></div></div>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:12}}>{["IGBT","Motor","HighCell","AFE"].map(ch=>{const e=getE(ch); const up=(isT ? e?.[`dTdt_Upper_${tExp}Pct`] : e?.["dTdt_Upper_2Sigma"]) ?? 0; const low=(isT ? e?.[`dTdt_Lower_${tExp}Pct`] : e?.["dTdt_Lower_2Sigma"]) ?? 0; return <div key={ch} className="metric-card" style={{padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"var(--text-sub)",fontWeight:600}}>{ch} dT/dt</div><div style={{fontSize:15,fontWeight:800,marginTop:4}}><span style={{color:"#00CC96"}}>{up?.toFixed(3)}</span> | {e?.["dTdt_Mean"]?.toFixed(3)} | <span style={{color:"#00CC96"}}>{low?.toFixed(3)}</span></div></div>})}</div>
+                    <div style={{background:"var(--card-bg)",borderTop:"4px solid #FFD700",borderRadius:16,padding:"18px 24px",marginBottom:16,boxShadow:"0 4px 20px rgba(0,0,0,0.3)"}}><div style={{fontSize:12,color:"var(--text-sub)",textTransform:"uppercase",fontWeight:600,marginBottom:6}}>⚡ Electrical Power Validation (0s to 120s)</div><div style={{fontSize:22,fontWeight:800}}><span style={{color:"#43B3AE"}}>{pUp.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span>{mPwr.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span style={{color:"#43B3AE"}}>{pLow.toFixed(2)} kW</span></div></div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:12}}>{["IGBT","Motor","HighCell","AFE"].map(ch=>{const e=getE(ch); const up=(isT ? e?.[`dTdt_Upper_${tExp}Pct`] : e?.["dTdt_Upper_2Sigma"]) ?? 0; const low=(isT ? e?.[`dTdt_Lower_${tExp}Pct`] : e?.["dTdt_Lower_2Sigma"]) ?? 0; return <div key={ch} className="metric-card" style={{padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"var(--text-sub)",fontWeight:600}}>{ch} dT/dt</div><div style={{fontSize:15,fontWeight:800,marginTop:4}}><span style={{color:"#43B3AE"}}>{up?.toFixed(3)}</span> | {e?.["dTdt_Mean"]?.toFixed(3)} | <span style={{color:"#43B3AE"}}>{low?.toFixed(3)}</span></div></div>})}</div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>{["IGBT","Motor","HighCell","AFE"].map(ch=>{const e=getE(ch); const up=(isT ? e?.[`dT_Upper_${tExp}Pct`] : e?.["dT_Upper_2Sigma"]) ?? 0; const low=(isT ? e?.[`dT_Lower_${tExp}Pct`] : e?.["dT_Lower_2Sigma"]) ?? 0; return <div key={ch} className="metric-card" style={{padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"var(--text-sub)",fontWeight:600}}>{ch} ΔT</div><div style={{fontSize:15,fontWeight:800,marginTop:4}}><span style={{color:"#FF4B4B"}}>{up?.toFixed(2)}</span> | {e?.["dT_Mean"]?.toFixed(2)} | <span style={{color:"#FF4B4B"}}>{low?.toFixed(2)}</span></div></div>})}</div>
                   </div>
 
-                  <button onClick={async () => { setLoadingQC(true); try { const res = await axios.post(`${API}/api/dyno/qc_eval`, { time_s: qcTimeS, env_method: qcEnvMethod, tolerance_pct: qcTolerance, target: qcTarget, metric: qcMetric }); setQcResults(res.data); } catch(e) {} setLoadingQC(false); }} disabled={loadingQC} style={{background:"linear-gradient(90deg,#00CC96,#00b383)",color:"#000",border:"none",padding:"11px 28px",borderRadius:8,fontWeight:900,fontSize:14,cursor:loadingQC?"not-allowed":"pointer",marginBottom:24}}> {loadingQC ? "Evaluating…" : "⚙️ Run QC Evaluation"} </button>
+                  <button onClick={async () => { setLoadingQC(true); try { const res = await axios.post(`${API}/api/dyno/qc_eval`, { time_s: qcTimeS, env_method: qcEnvMethod, tolerance_pct: qcTolerance, target: qcTarget, metric: qcMetric }); setQcResults(res.data); } catch(e) {} setLoadingQC(false); }} disabled={loadingQC} style={{background:"linear-gradient(90deg,#43B3AE,#3B9F9A)",color:"#000",border:"none",padding:"11px 28px",borderRadius:8,fontWeight:900,fontSize:14,cursor:loadingQC?"not-allowed":"pointer",marginBottom:24}}> {loadingQC ? "Evaluating…" : "⚙️ Run QC Evaluation"} </button>
 
-                  {qcResults && <div><div style={{color:"#00CC96",fontWeight:800,marginBottom:12,display:"flex",alignItems:"center",gap:8}}><ClipboardList size={20}/> Passed QC Criteria ({pRes.length})</div><div style={{background:"rgba(0,204,150,0.03)",border:"1px solid rgba(0,204,150,0.1)",borderRadius:12,padding:8,marginBottom:24,maxHeight:400,overflowY:"auto"}}><table><thead><tr><th>Test Name</th><th>Type</th><th>IGBT dT</th><th>Motor dT</th><th>HighCell dT</th><th>AFE dT</th><th>Power (kW)</th><th>Conclusion</th></tr></thead><tbody>{pRes.map((r,i)=><tr key={i}><td>{r["Test Name"]}</td><td>{r["Type"]}</td><td>{r["IGBT_dT"]?.toFixed(2)}</td><td>{r["Motor_dT"]?.toFixed(2)}</td><td>{r["HighCell_dT"]?.toFixed(2)}</td><td>{r["AFE_dT"]?.toFixed(2)}</td><td>{r["Power Rating (kW)"]?.toFixed(2)}</td><td style={{color:"#00CC96",fontWeight:700}}>{r["Final Conclusion"]}</td></tr>)}</tbody></table></div><div style={{color:"#FF4B4B",fontWeight:800,marginBottom:12,display:"flex",alignItems:"center",gap:8}}><XCircle size={20}/> Failed QC Criteria ({fRes.length})</div><div style={{background:"rgba(255,75,75,0.03)",border:"1px solid rgba(255,75,75,0.1)",borderRadius:12,padding:8,maxHeight:400,overflowY:"auto"}}><table><thead><tr><th>Test Name</th><th>Type</th><th>IGBT dT</th><th>Motor dT</th><th>HighCell dT</th><th>AFE dT</th><th>Power (kW)</th><th>Conclusion</th></tr></thead><tbody>{fRes.map((r,i)=><tr key={i}><td>{r["Test Name"]}</td><td>{r["Type"]}</td><td>{r["IGBT_dT"]?.toFixed(2)}</td><td>{r["Motor_dT"]?.toFixed(2)}</td><td>{r["HighCell_dT"]?.toFixed(2)}</td><td>{r["AFE_dT"]?.toFixed(2)}</td><td>{r["Power Rating (kW)"]?.toFixed(2)}</td><td style={{color:"#FF4B4B",fontWeight:700}}>{r["Final Conclusion"]}</td></tr>)}</tbody></table></div></div>}
+                  {qcResults && <div><div style={{color:"#43B3AE",fontWeight:800,marginBottom:12,display:"flex",alignItems:"center",gap:8}}><ClipboardList size={20}/> Passed QC Criteria ({pRes.length})</div><div style={{background:"rgba(67,179,174,0.03)",border:"1px solid rgba(67,179,174,0.1)",borderRadius:12,padding:8,marginBottom:24,maxHeight:400,overflowY:"auto"}}><table><thead><tr><th>Test Name</th><th>Type</th><th>IGBT dT</th><th>Motor dT</th><th>HighCell dT</th><th>AFE dT</th><th>Power (kW)</th><th>Conclusion</th></tr></thead><tbody>{pRes.map((r,i)=><tr key={i}><td>{r["Test Name"]}</td><td>{r["Type"]}</td><td>{r["IGBT_dT"]?.toFixed(2)}</td><td>{r["Motor_dT"]?.toFixed(2)}</td><td>{r["HighCell_dT"]?.toFixed(2)}</td><td>{r["AFE_dT"]?.toFixed(2)}</td><td>{r["Power Rating (kW)"]?.toFixed(2)}</td><td style={{color:"#43B3AE",fontWeight:700}}>{r["Final Conclusion"]}</td></tr>)}</tbody></table></div><div style={{color:"#FF4B4B",fontWeight:800,marginBottom:12,display:"flex",alignItems:"center",gap:8}}><XCircle size={20}/> Failed QC Criteria ({fRes.length})</div><div style={{background:"rgba(255,75,75,0.03)",border:"1px solid rgba(255,75,75,0.1)",borderRadius:12,padding:8,maxHeight:400,overflowY:"auto"}}><table><thead><tr><th>Test Name</th><th>Type</th><th>IGBT dT</th><th>Motor dT</th><th>HighCell dT</th><th>AFE dT</th><th>Power (kW)</th><th>Conclusion</th></tr></thead><tbody>{fRes.map((r,i)=><tr key={i}><td>{r["Test Name"]}</td><td>{r["Type"]}</td><td>{r["IGBT_dT"]?.toFixed(2)}</td><td>{r["Motor_dT"]?.toFixed(2)}</td><td>{r["HighCell_dT"]?.toFixed(2)}</td><td>{r["AFE_dT"]?.toFixed(2)}</td><td>{r["Power Rating (kW)"]?.toFixed(2)}</td><td style={{color:"#FF4B4B",fontWeight:700}}>{r["Final Conclusion"]}</td></tr>)}</tbody></table></div></div>}
                 </div>
                );
             })()}
@@ -971,9 +971,9 @@ export default function DynoPage() {
                   icon: passed ? "✅" : "❌",
                   title: passed ? "PASS" : "FAIL",
                   detail: passed ? "" : `Failed Rules: ${failures.join(", ")}`,
-                  color: passed ? "#00CC96" : "#FF4B4B",
-                  background: passed ? "rgba(0,204,150,0.15)" : "rgba(255,75,75,0.15)",
-                  borderLeft: passed ? "4px solid #00CC96" : "4px solid #FF4B4B"
+                  color: passed ? "#43B3AE" : "#FF4B4B",
+                  background: passed ? "rgba(67,179,174,0.15)" : "rgba(255,75,75,0.15)",
+                  borderLeft: passed ? "4px solid #43B3AE" : "4px solid #FF4B4B"
                 };
               })();
 
@@ -1002,6 +1002,7 @@ export default function DynoPage() {
                                   .filter((s) => getBikeNo(s.Test_Name) === bikeNum)
                                   .sort((a, b) => String(b.Test_Name).localeCompare(String(a.Test_Name)))[0];
                                 if (firstTest) setHistoricalTest(firstTest.Test_Name);
+                                else setHistoricalTest("");
                               }}
                               style={{ width: "100%", marginTop: -4, padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#FFF", fontWeight: 700, cursor: "pointer" }}
                             >
@@ -1017,7 +1018,7 @@ export default function DynoPage() {
 
               return (
                 <div>
-                  <button onClick={() => setSelectedBike(null)} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "#00CC96", cursor: "pointer", marginBottom: 16, fontWeight: 700 }}><ChevronLeft size={16} /> Back to Fleet</button>
+                  <button onClick={() => setSelectedBike(null)} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "#43B3AE", cursor: "pointer", marginBottom: 16, fontWeight: 700 }}><ChevronLeft size={16} /> Back to Fleet</button>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}><h2 style={{ fontSize: 28, fontWeight: 900, color: "#FFF" }}>{selectedFleet.vin || "UNKNOWN_VIN"}</h2><span style={{ color: "var(--text-sub)", fontSize: 18 }}>| {selectedBike}</span></div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#FFF", marginBottom: 16 }}>Hardware Registry Details</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 30 }}>
@@ -1030,11 +1031,35 @@ export default function DynoPage() {
                   </div>
                   <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 20 }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: "#FFF", marginBottom: 16 }}>Historical Test Inspection</div>
-                    <div style={{ maxWidth: 420, marginBottom: 20 }}>
-                      <StreamlitSelect value={historicalTest} onChange={setHistoricalTest} options={bikeTests.map((s) => s.Test_Name).sort((a, b) => String(b).localeCompare(String(a)))} />
-                    </div>
-                    {historicalTelemetry && <div className="metric-card" style={{ padding: 16, marginBottom: 20 }}><div style={{ fontWeight: 700, marginBottom: 12 }}>Thermal Profile — {historicalTest}</div><Plot data={[historicalTelemetry["HighCell_Temp"] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry["HighCell_Temp"], name: "HighCell (Primary)", line: { color: "#FF4B4B", width: 2 } } : null, historicalTelemetry["IGBT_Temp"] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry["IGBT_Temp"], name: "IGBT (Secondary)", yaxis: "y2", line: { color: "#00CC96", width: 2 } } : null, historicalTelemetry["Motor_Temp"] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry["Motor_Temp"], name: "Motor (Secondary)", yaxis: "y2", line: { color: "cyan", width: 2 } } : null].filter(Boolean)} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 500, hovermode: "x unified", margin: { t: 10, b: 10, l: 10, r: 10 }, legend: { orientation: "h", y: 1.02, x: 1, xanchor: "right", yanchor: "bottom" }, xaxis: { title: "Time (s)", showgrid: false, zeroline: false }, yaxis: { title: "HighCell Temp (°C)", showgrid: true, gridcolor: "rgba(128,128,128,0.2)", zeroline: false }, yaxis2: { title: "Powertrain Temp (°C)", overlaying: "y", side: "right", showgrid: false, zeroline: false } }} config={{ responsive: true, displaylogo: false }} style={{ width: "100%" }} /></div>}
-                    {qcVerdict && <div><div style={{ fontWeight: 800, color: "#FFF", marginBottom: 10 }}>QC Verdict (120s @ 20% Tolerance)</div><div style={{ background: qcVerdict.background, borderLeft: qcVerdict.borderLeft, padding: 15, borderRadius: 8 }}><div style={{ color: qcVerdict.color, fontSize: "1.2rem", fontWeight: 800 }}>{qcVerdict.icon} {qcVerdict.title}</div>{qcVerdict.detail && <div style={{ fontSize: "0.9rem", color: "#A0A0AB", marginTop: 4 }}>{qcVerdict.detail}</div>}</div></div>}
+                    
+                    {bikeTests.length === 0 ? (
+                      <div style={{ padding: "20px", color: "var(--text-sub)", background: "rgba(255,255,255,0.02)", borderRadius: 8, border: "1px dashed rgba(255,255,255,0.1)" }}>
+                        ⚠️ No historical tests logged for {selectedBike}
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ maxWidth: 420, marginBottom: 20 }}>
+                          <StreamlitSelect value={historicalTest} onChange={setHistoricalTest} options={bikeTests.map((s) => s.Test_Name).sort((a, b) => String(b).localeCompare(String(a)))} />
+                        </div>
+                        {historicalTelemetry && (() => {
+                            const keys = Object.keys(historicalTelemetry);
+                            const htCol = keys.find(c => c === "highest_temp (oC)") || keys.find(c => c.toLowerCase().includes("highcell")) || keys.find(c => c.toLowerCase().includes("highest")) || "HighCell_Temp";
+                            const igbtCol = keys.find(c => c.toLowerCase().includes("igbt")) || "IGBT_Temp";
+                            const motorCol = keys.find(c => c.toLowerCase().includes("motor")) || "Motor_Temp";
+                            return (
+                                <div className="metric-card" style={{ padding: 16, marginBottom: 20 }}>
+                                  <div style={{ fontWeight: 700, marginBottom: 12 }}>Thermal Profile — {historicalTest}</div>
+                                  <Plot data={[
+                                    historicalTelemetry[htCol] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry[htCol], name: "HighCell (Primary)", line: { color: "#FF4B4B", width: 2 } } : null,
+                                    historicalTelemetry[igbtCol] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry[igbtCol], name: "IGBT (Secondary)", yaxis: "y2", line: { color: "#43B3AE", width: 2 } } : null,
+                                    historicalTelemetry[motorCol] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry[motorCol], name: "Motor (Secondary)", yaxis: "y2", line: { color: "cyan", width: 2 } } : null
+                                  ].filter(Boolean)} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 500, hovermode: "x unified", margin: { t: 10, b: 10, l: 10, r: 10 }, legend: { orientation: "h", y: 1.02, x: 1, xanchor: "right", yanchor: "bottom" }, xaxis: { title: "Time (s)", showgrid: false, zeroline: false }, yaxis: { title: "HighCell Temp (°C)", showgrid: true, gridcolor: "rgba(128,128,128,0.2)", zeroline: false }, yaxis2: { title: "Powertrain Temp (°C)", overlaying: "y", side: "right", showgrid: false, zeroline: false } }} config={{ responsive: true, displaylogo: false }} style={{ width: "100%" }} />
+                                </div>
+                            );
+                        })()}
+                        {qcVerdict && <div><div style={{ fontWeight: 800, color: "#FFF", marginBottom: 10 }}>QC Verdict (120s @ 20% Tolerance)</div><div style={{ background: qcVerdict.background, borderLeft: qcVerdict.borderLeft, padding: 15, borderRadius: 8 }}><div style={{ color: qcVerdict.color, fontSize: "1.2rem", fontWeight: 800 }}>{qcVerdict.icon} {qcVerdict.title}</div>{qcVerdict.detail && <div style={{ fontSize: "0.9rem", color: "#A0A0AB", marginTop: 4 }}>{qcVerdict.detail}</div>}</div></div>}
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -1054,12 +1079,12 @@ export default function DynoPage() {
                   </div>
                 ) : (
                   <div>
-                    <button onClick={() => setSelectedBike(null)} style={{display:"flex", alignItems:"center", gap:6, background:"transparent", border:"none", color:"#00CC96", cursor:"pointer", marginBottom:16, fontWeight:700}}><ChevronLeft size={16} /> Back to Fleet</button>
+                    <button onClick={() => setSelectedBike(null)} style={{display:"flex", alignItems:"center", gap:6, background:"transparent", border:"none", color:"#43B3AE", cursor:"pointer", marginBottom:16, fontWeight:700}}><ChevronLeft size={16} /> Back to Fleet</button>
                     <div style={{display:"flex", alignItems:"baseline", gap:12, marginBottom:20}}><h2 style={{fontSize:28, fontWeight:900, color:"#FFF"}}>{fleetData[selectedBike]?.vin}</h2><span style={{color:"var(--text-sub)", fontSize:18}}>| {selectedBike}</span></div>
                     <div style={{fontSize:16, fontWeight:800, color:"#FFF", display:"flex", alignItems:"center", gap:8, marginBottom:16}}>⚙️ Hardware Registry Details</div>
                     <div style={{display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:16, marginBottom:30}}><div className="hw-box"><div className="hw-label">Tests Evaluated</div><div className="hw-value">{summaries.filter(s => getBikeNo(s.Test_Name) === selectedBike.split("-")[1].replace(/^0+/, "")).length}</div></div><div className="hw-box"><div className="hw-label">Motor ID</div><div className="hw-value">{fleetData[selectedBike]?.motor_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">Battery Box ID</div><div className="hw-value">{fleetData[selectedBike]?.battery_box_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">Left Module ID</div><div className="hw-value">{fleetData[selectedBike]?.left_module_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">Right Module ID</div><div className="hw-value">{fleetData[selectedBike]?.right_module_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">BMS Firmware ID</div><div className="hw-value">{fleetData[selectedBike]?.bms_id || "N/A"}</div></div></div>
                     <div style={{borderTop:"1px solid rgba(255,255,255,0.1)", paddingTop:20}}><div style={{fontSize:18, fontWeight:800, color:"#FFF", marginBottom:16}}>🔍 Historical Test Inspection</div><div style={{maxWidth:400, marginBottom:20}}><StreamlitSelect value={historicalTest} onChange={setHistoricalTest} options={summaries.filter(s => getBikeNo(s.Test_Name) === selectedBike.split("-")[1].replace(/^0+/, "")).map(s => s.Test_Name)} /></div>
-                      {historicalTelemetry && <div className="metric-card" style={{padding:16}}><div style={{fontWeight:700, marginBottom:12}}>📈 Thermal Profile — {historicalTest}</div><Plot data={[{x: historicalTelemetry["Time (s)"], y: historicalTelemetry["HighCell_Temp"], name: "HighCell", line: {color: "#FF4B4B"}}, {x: historicalTelemetry["Time (s)"], y: historicalTelemetry["IGBT_Temp"], name: "IGBT", line: {color: "#00CC96"}, yaxis: "y2"}, {x: historicalTelemetry["Time (s)"], y: historicalTelemetry["Motor_Temp"], name: "Motor", line: {color: "cyan"}, yaxis: "y2"}]} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: {color: "#A0A0AB", size: 10}, height: 450, margin: {t:20, b:40, l:40, r:40}, xaxis: {title: "Time (s)", showgrid: false}, yaxis: {title: "HighCell Temp (°C)"}, yaxis2: {title: "Powertrain Temp (°C)", overlaying: "y", side: "right", showgrid: false}, legend: {orientation: "h", y: 1.1} }} config={{responsive:true}} style={{width:"100%"}} /></div>}
+                      {historicalTelemetry && <div className="metric-card" style={{padding:16}}><div style={{fontWeight:700, marginBottom:12}}>📈 Thermal Profile — {historicalTest}</div><Plot data={[{x: historicalTelemetry["Time (s)"], y: historicalTelemetry["HighCell_Temp"], name: "HighCell", line: {color: "#FF4B4B"}}, {x: historicalTelemetry["Time (s)"], y: historicalTelemetry["IGBT_Temp"], name: "IGBT", line: {color: "#43B3AE"}, yaxis: "y2"}, {x: historicalTelemetry["Time (s)"], y: historicalTelemetry["Motor_Temp"], name: "Motor", line: {color: "cyan"}, yaxis: "y2"}]} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: {color: "#A0A0AB", size: 10}, height: 450, margin: {t:20, b:40, l:40, r:40}, xaxis: {title: "Time (s)", showgrid: false}, yaxis: {title: "HighCell Temp (°C)"}, yaxis2: {title: "Powertrain Temp (°C)", overlaying: "y", side: "right", showgrid: false}, legend: {orientation: "h", y: 1.1} }} config={{responsive:true}} style={{width:"100%"}} /></div>}
                     </div>
                   </div>
                 )}
@@ -1072,3 +1097,5 @@ export default function DynoPage() {
     </div>
   );
 }
+
+

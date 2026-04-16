@@ -147,7 +147,7 @@ export default function DataEnginePage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
               {["Evaluation (Test)", "Baseline (Calibration)"].map(mode => (
                 <label key={mode} style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff", cursor: "pointer", fontSize: 14 }}>
-                  <input type="radio" name="uploadMode" checked={uploadMode === mode} onChange={() => setUploadMode(mode)} style={{ accentColor: "#00CC96" }} />
+                  <input type="radio" name="uploadMode" checked={uploadMode === mode} onChange={() => setUploadMode(mode)} style={{ accentColor: "#43B3AE" }} />
                   {mode}
                 </label>
               ))}
@@ -155,9 +155,9 @@ export default function DataEnginePage() {
 
             <div style={{ fontSize: 13, color: "var(--text-sub)", marginBottom: 8 }}>Drop .xlsx file(s) here</div>
             <div onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
-              style={{ border: isHovering ? "2px dashed #00CC96" : "1px dashed rgba(255,255,255,0.2)", background: isHovering ? "rgba(0,204,150,0.05)" : "var(--card-bg)", borderRadius: 12, padding: "30px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s" }}>
+              style={{ border: isHovering ? "2px dashed #43B3AE" : "1px dashed rgba(255,255,255,0.2)", background: isHovering ? "rgba(67,179,174,0.05)" : "var(--card-bg)", borderRadius: 12, padding: "30px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-                <UploadCloud size={30} color={isHovering ? "#00CC96" : "var(--text-title)"} />
+                <UploadCloud size={30} color={isHovering ? "#43B3AE" : "var(--text-title)"} />
                 <div>
                   <div style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>Drag and drop files here</div>
                   <div style={{ color: "var(--text-sub)", fontSize: 12 }}>Limit 200MB per file • XLSX</div>
@@ -174,7 +174,7 @@ export default function DataEnginePage() {
                     <File size={14} color="#55AAFF" /> {f.name}
                   </div>
                 ))}
-                <button onClick={uploadFiles} style={{ width: "100%", background: "#00CC96", color: "#000", border: "none", padding: "10px", borderRadius: 6, fontWeight: "bold", cursor: "pointer", marginTop: 10 }}>
+                <button onClick={uploadFiles} style={{ width: "100%", background: "#43B3AE", color: "#000", border: "none", padding: "10px", borderRadius: 6, fontWeight: "bold", cursor: "pointer", marginTop: 10 }}>
                   Confirm Upload
                 </button>
               </div>
@@ -188,12 +188,12 @@ export default function DataEnginePage() {
               Engine Controls
             </h3>
             <button onClick={runProcessing} disabled={isProcessing}
-              style={{ width: "50%", padding: "12px 20px", background: "linear-gradient(90deg, #00CC96, #00b383)", color: "#000", border: "none", borderRadius: 8, fontWeight: 900, fontSize: 14, cursor: isProcessing ? "not-allowed" : "pointer", opacity: isProcessing ? 0.7 : 1, boxShadow: "0 8px 20px rgba(0, 204, 150, 0.3)" }}>
+              style={{ width: "50%", padding: "12px 20px", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", color: "#000", border: "none", borderRadius: 8, fontWeight: 900, fontSize: 14, cursor: isProcessing ? "not-allowed" : "pointer", opacity: isProcessing ? 0.7 : 1, boxShadow: "0 8px 20px rgba(67,179,174, 0.3)" }}>
               {isProcessing ? "Processing..." : "⚙️ Run Processing & DB Sync"}
             </button>
 
             <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 20 }}>
-              <a href={`${API}/api/dyno/export_db`} download="raptee_dyno.db" style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px", background: "linear-gradient(90deg, #00CC96, #00b383)", border: "none", borderRadius: 8, cursor: "pointer", color: "#000", fontSize: 14, fontWeight: 800, textDecoration: "none", marginBottom: 12 }}>
+              <a href={`${API}/api/dyno/export_db`} download="raptee_dyno.db" style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", border: "none", borderRadius: 8, cursor: "pointer", color: "#000", fontSize: 14, fontWeight: 800, textDecoration: "none", marginBottom: 12 }}>
                 <Download size={16} /> Download Master SQLite DB
               </a>
               <div onClick={handleReset} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px", background: "var(--card-bg)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, cursor: "pointer", color: "var(--text-sub)", fontSize: 14, transition: "0.2s" }}
@@ -208,7 +208,7 @@ export default function DataEnginePage() {
                 <Terminal size={20} color="#FFA15A" /> System Processing Logs
               </h3>
               <div style={{ fontSize: 12, color: "var(--text-sub)", marginBottom: 8 }}>Live Terminal Output:</div>
-              <div ref={logRef} style={{ background: "#0E0E11", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "16px", height: 200, overflowY: "auto", fontFamily: "monospace", fontSize: 13, color: "#00CC96", whiteSpace: "pre-wrap", boxShadow: "inset 0 4px 20px rgba(0,0,0,0.5)" }}>
+              <div ref={logRef} style={{ background: "#0E0E11", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "16px", height: 200, overflowY: "auto", fontFamily: "monospace", fontSize: 13, color: "#43B3AE", whiteSpace: "pre-wrap", boxShadow: "inset 0 4px 20px rgba(0,0,0,0.5)" }}>
                 {logs || "Waiting for operations..."}
               </div>
             </div>
@@ -233,7 +233,7 @@ export default function DataEnginePage() {
             </div>
           ) : (
             <div>
-              <div style={{ background: "rgba(0,204,150,0.08)", border: "1px solid rgba(0,204,150,0.2)", padding: "10px 16px", borderRadius: 8, color: "#00CC96", fontSize: 13, fontWeight: 600, marginBottom: 24 }}>
+              <div style={{ background: "rgba(67,179,174,0.08)", border: "1px solid rgba(67,179,174,0.2)", padding: "10px 16px", borderRadius: 8, color: "#43B3AE", fontSize: 13, fontWeight: 600, marginBottom: 24 }}>
                 ✅ Access Granted: Developer Mode Unlocked
               </div>
 
@@ -275,3 +275,5 @@ export default function DataEnginePage() {
     </div>
   );
 }
+
+

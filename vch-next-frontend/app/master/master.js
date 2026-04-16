@@ -112,7 +112,7 @@ export default function DashboardHome() {
             href: "/dyno",
             cta: "Launch Dyno Engine",
             badge: "QC Gatekeeper",
-            badgeColor: "#00cc96",
+            badgeColor: "#43B3AE",
             description:
                 "Strict Quality Control engine that evaluates stationary Dewesoft telemetry against mathematically calculated Golden Standards.",
             features: [
@@ -120,8 +120,8 @@ export default function DashboardHome() {
                 { label: "QC Gatekeeper", desc: "Dynamic power & early deration tracking." },
                 { label: "Automated Docs", desc: "1-Click Executive Word Report generator." },
             ],
-            accent: "rgba(0,204,150,0.1)",
-            accentBorder: "rgba(0,204,150,0.28)",
+            accent: "rgba(67,179,174,0.1)",
+            accentBorder: "rgba(67,179,174,0.28)",
         },
         {
             title: "Road Suite",
@@ -186,7 +186,7 @@ export default function DashboardHome() {
         .feature-item:last-child { border-bottom: none; padding-bottom: 0; }
         .feature-dot {
           width: 6px; height: 6px; border-radius: 50%;
-          background: #00cc96; margin-top: 7px; flex-shrink: 0;
+          background: #43B3AE; margin-top: 7px; flex-shrink: 0;
         }
 
         /* pill button */
@@ -198,11 +198,11 @@ export default function DashboardHome() {
           background: rgba(255,255,255,0.06); color: #FFF; cursor: pointer;
         }
         .pill-btn:hover {
-          background: rgba(0,204,150,0.18);
-          border-color: rgba(0,204,150,0.4);
-          color: #00cc96;
+          background: rgba(67,179,174,0.18);
+          border-color: rgba(67,179,174,0.4);
+          color: #43B3AE;
           transform: translateY(-1px);
-          box-shadow: 0 8px 20px rgba(0,204,150,0.15);
+          box-shadow: 0 8px 20px rgba(67,179,174,0.15);
         }
 
         /* admin zone */
@@ -214,9 +214,9 @@ export default function DashboardHome() {
           display: flex; align-items: center; gap: 7px;
         }
         .admin-tab.active {
-          background: rgba(0,204,150,0.12);
-          border-color: rgba(0,204,150,0.28);
-          color: #00cc96;
+          background: rgba(67,179,174,0.12);
+          border-color: rgba(67,179,174,0.28);
+          color: #43B3AE;
         }
         .admin-tab:hover:not(.active) {
           color: #FFF; background: rgba(255,255,255,0.04);
@@ -248,7 +248,7 @@ export default function DashboardHome() {
           color: #FFF; font-size: 13px; font-family: 'Outfit', sans-serif;
           outline: none; width: 100%; transition: border-color 0.2s;
         }
-        .form-inp:focus { border-color: rgba(0,204,150,0.45); }
+        .form-inp:focus { border-color: rgba(67,179,174,0.45); }
 
         .role-sel {
           background: rgba(10,12,18,0.7);
@@ -264,13 +264,13 @@ export default function DashboardHome() {
           border: 1px solid; transition: all 0.2s;
         }
 
-        .msg-ok  { color: #00cc96; background: rgba(0,204,150,0.08); border-color: rgba(0,204,150,0.25); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+        .msg-ok  { color: #43B3AE; background: rgba(67,179,174,0.08); border-color: rgba(67,179,174,0.25); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
         .msg-err { color: #FF6B6B; background: rgba(255,75,75,0.08); border-color: rgba(255,75,75,0.25); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
 
         .status-dot {
           width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px;
         }
-        .status-dot.active { background: #00cc96; box-shadow: 0 0 6px #00cc96; }
+        .status-dot.active { background: #43B3AE; box-shadow: 0 0 6px #43B3AE; }
         .status-dot.terminated { background: #FF4B4B; }
 
         @keyframes fadeUp {
@@ -300,17 +300,17 @@ export default function DashboardHome() {
                         <h1 style={{ fontSize: 52, fontWeight: 900, letterSpacing: "-1.5px", marginBottom: 8, lineHeight: 1.1 }}>
                             Raptee Thermal Suite
                         </h1>
-                        <div style={{ fontSize: 17, fontWeight: 700, color: "#00cc96", marginBottom: 10 }}>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: "#43B3AE", marginBottom: 10 }}>
                             Thermal & Dynamics Analytics Engine V4
                         </div>
                         <div style={{ color: "var(--text-sub)", fontSize: 14 }}>
                             Logged in as:{" "}
-                            <span style={{ color: "#00cc96", fontWeight: 700 }}>{authState.username}</span>
+                            <span style={{ color: "#43B3AE", fontWeight: 700 }}>{authState.username}</span>
                             {isAdmin && (
                                 <span style={{
                                     marginLeft: 10, fontSize: 11, fontWeight: 800, textTransform: "uppercase",
-                                    background: "rgba(0,204,150,0.12)", border: "1px solid rgba(0,204,150,0.28)",
-                                    color: "#00cc96", padding: "3px 8px", borderRadius: 6, letterSpacing: 1,
+                                    background: "rgba(67,179,174,0.12)", border: "1px solid rgba(67,179,174,0.28)",
+                                    color: "#43B3AE", padding: "3px 8px", borderRadius: 6, letterSpacing: 1,
                                 }}>Admin</span>
                             )}
                         </div>
@@ -419,7 +419,7 @@ export default function DashboardHome() {
                                             <div key={uname} className="user-row">
                                                 <div>
                                                     <div style={{ fontWeight: 700, fontSize: 14 }}>{uname}</div>
-                                                    <div style={{ fontSize: 11, color: "#00cc96", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                                                    <div style={{ fontSize: 11, color: "#43B3AE", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>
                                                         {udata.role}
                                                     </div>
                                                 </div>
@@ -469,8 +469,8 @@ export default function DashboardHome() {
                                                 className="act-btn"
                                                 onClick={createUser}
                                                 style={{
-                                                    borderColor: "rgba(0,204,150,0.35)", color: "#00cc96",
-                                                    background: "rgba(0,204,150,0.08)", padding: "11px 18px",
+                                                    borderColor: "rgba(67,179,174,0.35)", color: "#43B3AE",
+                                                    background: "rgba(67,179,174,0.08)", padding: "11px 18px",
                                                 }}
                                             >
                                                 <Plus size={13} style={{ display: "inline", marginRight: 5 }} />
@@ -548,3 +548,4 @@ export default function DashboardHome() {
         </>
     );
 }
+

@@ -11,6 +11,8 @@ import sys
 import logging
 import psutil  # New: For Admin Panel system health
 import re      # New: For smarter date parsing
+import numpy as np # For NaN/Inf handling
+import math
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +54,16 @@ def health_check():
         "dyno_db_exists": os.path.exists(DYNO_DB),
         "road_db_exists": os.path.exists(ROAD_DB)
     }
+
+def sanitize_data(df):
+    """Sanitize DataFrame for JSON compliance: Replace NaN/Inf with None (null in JSON)."""
+    # Replace NaN, Inf, -Inf with None
+    clean_df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+    return {col: [v if not (isinstance(v, float) and (math.isnan(v) or math.isinf(v))) else None for v in clean_df[col].tolist()] for col in clean_df.columns}
+
+def sanitize_records(df):
+    """Sanitize DataFrame records for JSON compliance."""
+    return df.replace({np.nan: None, np.inf: None, -np.inf: None}).to_dict(orient="records")
 
 # ====================================================================
 # 🏠 NEW: MASTER DASHBOARD & ADMIN ENDPOINTS
@@ -136,7 +148,7 @@ def get_dyno_summaries():
     conn = sqlite3.connect(DYNO_DB)
     df = pd.read_sql_query("SELECT * FROM dyno_summaries", conn)
     conn.close()
-    return df.to_dict(orient="records")
+    return sanitize_records(df)
 
 @app.get("/api/dyno/telemetry/{test_name}")
 def get_dyno_telemetry(test_name: str):
@@ -148,7 +160,7 @@ def get_dyno_telemetry(test_name: str):
     csv_path = row.iloc[0]["Processed_CSV_Path"]
     p_path = csv_path.replace('.csv', '.parquet')
     df = pd.read_parquet(p_path) if os.path.exists(p_path) else pd.read_csv(csv_path)
-    return {col: df[col].tolist() for col in df.columns}
+    return sanitize_data(df)
 
 @app.get("/api/dyno/envelope/{channel}")
 def get_dyno_envelope(channel: str):
@@ -168,7 +180,7 @@ def get_dyno_envelope(channel: str):
         
         df = pd.read_sql_query(f'SELECT * FROM "{table_name}"', conn)
         conn.close()
-        return {col: df[col].tolist() for col in df.columns}
+        return sanitize_data(df)
     except Exception as e:
         return {"error": f"Failed to load envelope for {channel}: {str(e)}"}
 
@@ -199,7 +211,7 @@ def get_dyno_raw_telemetry(test_name: str):
     if not raw_path: return {"error": f"Raw file not found for '{test_name}'"}
     
     df = pd.read_excel(raw_path) if raw_path.endswith('.xlsx') else pd.read_csv(raw_path)
-    return {col: df[col].tolist() for col in df.columns}
+    return sanitize_data(df)
 
 @app.get("/api/dyno/fleet")
 def get_dyno_fleet():
@@ -223,7 +235,7 @@ def get_road_summaries():
         df = pd.read_sql_query("SELECT * FROM ride_summaries", conn)
         conn.close()
         logger.info(f"Returning {len(df)} road summaries")
-        return df.to_dict(orient="records")
+        return sanitize_records(df)
     except Exception as e:
         logger.error(f"Error getting road summaries: {e}")
         return {"error": str(e)}
@@ -237,20 +249,22 @@ def get_road_telemetry(ride_name: str):
         return {"error": "Road database not found"}
     
     try:
+        import urllib.parse
+        decoded_name = urllib.parse.unquote(ride_name)
         conn = sqlite3.connect(ROAD_DB)
-        row = pd.read_sql_query("SELECT Processed_CSV_Path FROM ride_summaries WHERE Ride_Name = ?", conn, params=(ride_name,))
+        row = pd.read_sql_query("SELECT Processed_CSV_Path FROM ride_summaries WHERE Ride_Name = ?", conn, params=(decoded_name,))
         conn.close()
         
         if row.empty:
-            logger.warning(f"Ride not found: {ride_name}")
-            return {"error": f"Ride '{ride_name}' not found"}
+            logger.warning(f"Ride not found: {decoded_name}")
+            return {"error": f"Ride '{decoded_name}' not found"}
         
         csv_path = row.iloc[0]["Processed_CSV_Path"]
         logger.info(f"CSV path from DB: {csv_path}")
         
         if not csv_path or not os.path.exists(csv_path):
             logger.warning(f"Processed file not found: {csv_path}")
-            return {"error": f"Processed file not found for '{ride_name}'"}
+            return {"error": f"Processed file not found for '{decoded_name}'"}
         
         # Try parquet first, then CSV
         p_path = csv_path.replace('.csv', '.parquet')
@@ -261,9 +275,12 @@ def get_road_telemetry(ride_name: str):
             df = pd.read_csv(csv_path)
             logger.info(f"Loaded CSV with {len(df)} rows")
         
-        return {col: df[col].tolist() for col in df.columns}
+        logger.info(f"Returning sanitized data with {len(df.columns)} columns")
+        return sanitize_data(df)
     except Exception as e:
+        import traceback
         logger.error(f"Error loading telemetry: {e}")
+        logger.error(traceback.format_exc())
         return {"error": str(e)}
 
 @app.get("/api/road/events/{ride_name}")

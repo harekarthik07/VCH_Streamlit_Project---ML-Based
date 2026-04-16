@@ -108,7 +108,7 @@ export default function MasterDashboard() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#0b0c10", color: "#fff" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Loading...</div>
-          <div style={{ fontSize: 14, color: "#00cc96" }}>VCH Systems</div>
+          <div style={{ fontSize: 14, color: "#43B3AE" }}>VCH Systems</div>
         </div>
       </div>
     );
@@ -116,33 +116,37 @@ export default function MasterDashboard() {
 
   const isAdmin = authState.role === "admin";
 
-  return (
+return (
     <div className="app-container">
       <Sidebar />
 
       <main className="main-content" style={{ maxWidth: "none", paddingLeft: "40px", paddingRight: "40px" }}>
         <div className="fade-in">
-          {/* Logo */}
-          <div style={{
-            width: 180, height: 56,
-            background: "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(220,220,220,0.88))",
-            borderRadius: 12, display: "flex", alignItems: "center",
-            justifyContent: "center", marginBottom: 24,
-          }}>
-            <span style={{ fontWeight: 900, fontSize: 26, color: "#111", letterSpacing: 1 }}>RAPTEE</span>
+          {/* Logo & Title Section */}
+          <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 24 }}>
+            <div style={{
+              width: 160, height: 48,
+              background: "linear-gradient(135deg, #fff 0%, #ccc 100%)",
+              borderRadius: 10, display: "flex", alignItems: "center",
+              justifyContent: "center",
+            }}>
+              <span style={{ fontWeight: 900, fontSize: 22, color: "#111", letterSpacing: 1 }}>RAPTEE</span>
+            </div>
+            <div>
+              <div style={{ fontSize: 13, color: "rgba(160,160,171,0.5)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>
+                Thermal Suite
+              </div>
+              <div style={{ fontSize: 14, color: "#43B3AE", fontWeight: 600 }}>
+                Analytics Engine V4
+              </div>
+            </div>
           </div>
 
-          {/* Hero Title */}
-          <h1 style={{ fontSize: 56, fontWeight: 900, letterSpacing: "-2px", marginBottom: 8, lineHeight: 1.1, color: "#fff" }}>
-            Raptee Thermal Suite
-          </h1>
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#00cc96", marginBottom: 12 }}>
-            Thermal & Dynamics Analytics Engine V4
-          </div>
-          <div style={{ color: "rgba(160,160,171,0.7)", fontSize: 14, marginBottom: 8 }}>
-            Logged in as: <span style={{ color: "#00cc96", fontWeight: 700 }}>{authState.username}</span>
+          {/* User Info */}
+          <div style={{ color: "rgba(160,160,171,0.6)", fontSize: 13, marginBottom: 24 }}>
+            Logged in as: <span style={{ color: "#43B3AE", fontWeight: 700 }}>{authState.username}</span>
             {isAdmin && (
-              <span style={{ marginLeft: 10, fontSize: 11, fontWeight: 800, textTransform: "uppercase", background: "rgba(0,204,150,0.12)", border: "1px solid rgba(0,204,150,0.28)", color: "#00cc96", padding: "3px 8px", borderRadius: 6, letterSpacing: 1 }}>
+              <span style={{ marginLeft: 12, fontSize: 10, fontWeight: 800, textTransform: "uppercase", background: "rgba(67,179,174,0.12)", border: "1px solid rgba(67,179,174,0.28)", color: "#43B3AE", padding: "3px 8px", borderRadius: 6, letterSpacing: 1 }}>
                 Admin
               </span>
             )}
@@ -159,9 +163,9 @@ export default function MasterDashboard() {
           {/* Nav Cards - Side by Side */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 40 }}>
             {/* Dyno Suite Card */}
-            <div className="nav-card" style={{ "--card-accent-border": "rgba(0,204,150,0.28)" }}>
+            <div className="nav-card" style={{ "--card-accent-border": "rgba(67,179,174,0.28)" }}>
               <div style={{ position: "absolute", top: 20, right: 24 }}>
-                <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, padding: "5px 10px", borderRadius: 8, background: "rgba(0,204,150,0.15)", border: "1px solid rgba(0,204,150,0.4)", color: "#00cc96" }}>
+                <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, padding: "5px 10px", borderRadius: 8, background: "rgba(67,179,174,0.15)", border: "1px solid rgba(67,179,174,0.4)", color: "#43B3AE" }}>
                   QC Gatekeeper
                 </span>
               </div>
@@ -184,7 +188,7 @@ export default function MasterDashboard() {
                 </li>
               </ul>
 
-              <Link href="/dyno" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 24px", borderRadius: 12, background: "rgba(0,204,150,0.12)", border: "1px solid rgba(0,204,150,0.3)", color: "#00cc96", fontWeight: 800, fontSize: 14, textDecoration: "none", transition: "all 0.25s" }}>
+              <Link href="/dyno" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 24px", borderRadius: 12, background: "rgba(67,179,174,0.12)", border: "1px solid rgba(67,179,174,0.3)", color: "#43B3AE", fontWeight: 800, fontSize: 14, textDecoration: "none", transition: "all 0.25s" }}>
                 <Activity size={18} /> Launch Dyno Engine
               </Link>
             </div>
@@ -260,7 +264,7 @@ export default function MasterDashboard() {
                           <div key={uname} className="user-row">
                             <div>
                               <div style={{ fontWeight: 700, fontSize: 15, color: "#fff" }}>{uname}</div>
-                              <div style={{ fontSize: 11, color: "#00cc96", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{udata.role}</div>
+                              <div style={{ fontSize: 11, color: "#43B3AE", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{udata.role}</div>
                             </div>
                             {uname !== "admin" && (
                               <button className="act-btn" onClick={() => deleteUser(uname)} style={{ borderColor: "rgba(255,75,75,0.35)", color: "#FF6B6B", background: "rgba(255,75,75,0.06)", padding: "8px 16px" }}>
@@ -281,7 +285,7 @@ export default function MasterDashboard() {
                             <option value="user">User</option>
                             <option value="admin">Admin</option>
                           </select>
-                          <button className="act-btn" onClick={createUser} style={{ borderColor: "rgba(0,204,150,0.35)", color: "#00cc96", background: "rgba(0,204,150,0.08)", padding: "12px 18px", fontSize: 13 }}>
+                          <button className="act-btn" onClick={createUser} style={{ borderColor: "rgba(67,179,174,0.35)", color: "#43B3AE", background: "rgba(67,179,174,0.08)", padding: "12px 18px", fontSize: 13 }}>
                             <Plus size={14} style={{ display: "inline", marginRight: 6 }} /> Create User
                           </button>
                         </div>
@@ -338,3 +342,5 @@ export default function MasterDashboard() {
     </div>
   );
 }
+
+

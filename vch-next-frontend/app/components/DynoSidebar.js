@@ -92,14 +92,14 @@ export default function DynoSidebar({
   const chipStyle = (isActive) => ({
     display: "inline-flex", alignItems: "center", gap: 4,
     padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700,
-    border: `1px solid ${isActive ? "#00CC96" : "rgba(255,255,255,0.1)"}`,
-    background: isActive ? "rgba(0,204,150,0.2)" : "transparent",
-    color: isActive ? "#00CC96" : "#B4B4C0",
+    border: `1px solid ${isActive ? "#43B3AE" : "rgba(255,255,255,0.1)"}`,
+    background: isActive ? "rgba(67,179,174,0.2)" : "transparent",
+    color: isActive ? "#43B3AE" : "#B4B4C0",
     cursor: "pointer", transition: "all 0.2s ease", margin: "2px",
   });
 
   const channelChipStyle = (ch, isActive) => {
-    const colors = { IGBT: "#636EFA", Motor: "#EF553B", HighCell: "#00CC96", AFE: "#FFA15A" };
+    const colors = { IGBT: "#636EFA", Motor: "#EF553B", HighCell: "#43B3AE", AFE: "#FFA15A" };
     const c = colors[ch] || "#fff";
     return {
       display: "inline-flex", alignItems: "center", gap: 4,
@@ -150,9 +150,9 @@ export default function DynoSidebar({
       </button>
       {/* Brand */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: collapsed ? 10 : 20, paddingRight: 40 }}>
-        <Zap size={18} style={{ color: "#00CC96" }} />
+        <Zap size={18} style={{ color: "#43B3AE" }} />
         {!collapsed && (
-          <span style={{ color: "#00CC96", fontSize: 14, fontWeight: 900, letterSpacing: 2 }}>
+          <span style={{ color: "#43B3AE", fontSize: 14, fontWeight: 900, letterSpacing: 2 }}>
             VCH SYSTEMS
           </span>
         )}
@@ -216,16 +216,16 @@ export default function DynoSidebar({
             style={{
               display: "flex", alignItems: "center", gap: 8, padding: "6px 0",
               cursor: "pointer", fontSize: 13, fontWeight: 600,
-              color: appMode === mode ? "#00CC96" : "#B4B4C0",
+              color: appMode === mode ? "#43B3AE" : "#B4B4C0",
             }}
           >
             <span style={{
               width: 14, height: 14, borderRadius: "50%",
-              border: `2px solid ${appMode === mode ? "#00CC96" : "#555"}`,
+              border: `2px solid ${appMode === mode ? "#43B3AE" : "#555"}`,
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
               {appMode === mode && (
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#00CC96" }} />
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#43B3AE" }} />
               )}
             </span>
             {mode}
@@ -240,8 +240,8 @@ export default function DynoSidebar({
         onClick={onRefresh}
         style={{
           width: "100%", padding: "8px 12px", borderRadius: 8,
-          background: "rgba(0,204,150,0.15)", border: "1px solid rgba(0,204,150,0.3)",
-          color: "#00CC96", fontSize: 12, fontWeight: 700, fontFamily: "inherit",
+          background: "rgba(67,179,174,0.15)", border: "1px solid rgba(67,179,174,0.3)",
+          color: "#43B3AE", fontSize: 12, fontWeight: 700, fontFamily: "inherit",
           cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
           marginBottom: 14, transition: "all 0.2s ease",
         }}
@@ -402,16 +402,16 @@ export default function DynoSidebar({
               style={{
                 display: "flex", alignItems: "center", gap: 8, padding: "4px 0",
                 cursor: "pointer", fontSize: 12, fontWeight: 600,
-                color: envelopeMode === mode ? "#00CC96" : "#B4B4C0",
+                color: envelopeMode === mode ? "#43B3AE" : "#B4B4C0",
               }}
             >
               <span style={{
                 width: 13, height: 13, borderRadius: "50%",
-                border: `2px solid ${envelopeMode === mode ? "#00CC96" : "#555"}`,
+                border: `2px solid ${envelopeMode === mode ? "#43B3AE" : "#555"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 {envelopeMode === mode && (
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#00CC96" }} />
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#43B3AE" }} />
                 )}
               </span>
               {mode}
@@ -481,3 +481,5 @@ export default function DynoSidebar({
     </aside>
   );
 }
+
+
