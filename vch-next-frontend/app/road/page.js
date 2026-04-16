@@ -465,59 +465,125 @@ export default function RoadSuitePage() {
 
       <main className="main-content">
         <div className="fade-in">
-          {/* Header */}
-          <div style={{ marginBottom: 20 }}>
-            <h1 style={{ fontSize: 36, fontWeight: 900, color: "#fff", letterSpacing: -1, marginBottom: 4 }}>
-              Road Test Monitor
-            </h1>
-            <div style={{ fontSize: 14, color: "#A0A0AB" }}>
-              Target: <span style={{ color: "#43B3AE", fontWeight: 700 }}>{selectedRide || "No ride selected"}</span>
+          {/* Header — Streamlit Parity */}
+          <div style={{
+            background: "rgba(25,27,32,0.8)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 18,
+            padding: "24px 28px",
+            marginBottom: 24,
+            boxShadow: "0 12px 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)"
+          }}>
+            {/* Top row: Logo + Title + Export Button */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: selectedRideData ? 20 : 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                {/* Raptee Logo */}
+                <div style={{
+                  width: 100, height: 48, borderRadius: 8,
+                  background: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                  overflow: "hidden",
+                  padding: "4px"
+                }}>
+                  <img 
+                    src="/raptee_logo.png" 
+                    alt="Raptee Logo" 
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }} 
+                  />
+                </div>
+                <div>
+                  <h1 style={{ fontSize: 28, fontWeight: 900, color: "#fff", letterSpacing: -0.8, margin: 0, lineHeight: 1.1 }}>
+                    VCH — Road Test Monitor
+                  </h1>
+                  <div style={{ fontSize: 13, color: "#A0A0AB", marginTop: 4 }}>
+                    Target: <span style={{ color: "#43B3AE", fontWeight: 700 }}>{selectedRide || "No ride selected"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Export Button */}
+              <button
+                onClick={() => {
+                  if (!rideData) return;
+                  exportCSV(rideData, `${selectedRide}_FULL_2Hz_Trace.csv`);
+                }}
+                disabled={!rideData}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "10px 18px", borderRadius: 10,
+                  background: rideData ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.02)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: rideData ? "#fff" : "#555",
+                  fontSize: 13, fontWeight: 700, cursor: rideData ? "pointer" : "not-allowed",
+                  transition: "all 0.2s ease",
+                  flexShrink: 0
+                }}
+                onMouseEnter={e => { if (rideData) e.currentTarget.style.background = "rgba(67,179,174,0.12)"; e.currentTarget.style.borderColor = "#43B3AE"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = rideData ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.02)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export FULL 2Hz Trace
+              </button>
             </div>
+
+            {/* Stats Bar */}
+            {selectedRideData && (
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0,
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                paddingTop: 16,
+                flexWrap: "wrap"
+              }}>
+                {[
+                  {
+                    label: "Test Route",
+                    value: currentRouteType,
+                    color: "#43B3AE",
+                    icon: "🏁"
+                  },
+                  {
+                    label: "Metadata",
+                    value: `${selectedRideData.Rider || "Dev Team"} | ${selectedRideData.Ambient_Temp_C != null ? selectedRideData.Ambient_Temp_C.toFixed(1) : "N/A"}°C`,
+                    color: "#fff",
+                    icon: "🏍️"
+                  },
+                  {
+                    label: "Distance / Time",
+                    value: `${selectedRideData.Total_Distance_km != null ? parseFloat(selectedRideData.Total_Distance_km).toFixed(2) : "0.00"} km  |  ${rideData?.Time ? Math.round(Math.max(...rideData.Time)) : 0} s`,
+                    color: "#fff",
+                    icon: "📍"
+                  },
+                  {
+                    label: "ML Drive Score",
+                    value: `${selectedRideData.Drive_Score != null ? parseFloat(selectedRideData.Drive_Score).toFixed(1) : "0.0"} (${selectedRideData.Ride_Class || "Unknown"})`,
+                    color: "#43B3AE",
+                    icon: "🎯"
+                  },
+                ].map((item, idx, arr) => (
+                  <React.Fragment key={item.label}>
+                    <div style={{ flex: 1, minWidth: 120, padding: "0 16px" }}>
+                      <div style={{ fontSize: 10, textTransform: "uppercase", color: "#A0A0AB", fontWeight: 700, letterSpacing: 0.8, marginBottom: 5 }}>
+                        {item.icon} {item.label}
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: item.color }}>
+                        {item.value}
+                      </div>
+                    </div>
+                    {idx < arr.length - 1 && (
+                      <div style={{ width: 1, height: 36, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Route Info Bar */}
-          {selectedRideData && (
-            <div style={{
-              background: "rgba(25,27,32,0.7)", 
-              backdropFilter: "blur(20px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 18, 
-              padding: "18px 24px", 
-              marginBottom: 30,
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
-              gap: 20, 
-              flexWrap: "wrap",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.05)"
-            }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", color: "#A0A0AB", fontWeight: 700, marginBottom: 4 }}>Test Route</div>
-                <div style={{ color: "#43B3AE", fontWeight: 700, fontSize: 14 }}>{currentRouteType}</div>
-              </div>
-              <div style={{ borderLeft: "1px solid rgba(255,255,255,0.1)", height: 30 }} />
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", color: "#A0A0AB", fontWeight: 700, marginBottom: 4 }}>Rider / Temp</div>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
-                  {selectedRideData.Rider || "Unknown"} / {selectedRideData.Ambient_Temp_C || 0}°C
-                </div>
-              </div>
-              <div style={{ borderLeft: "1px solid rgba(255,255,255,0.1)", height: 30 }} />
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", color: "#A0A0AB", fontWeight: 700, marginBottom: 4 }}>Distance / Time</div>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
-                  {selectedRideData.Total_Distance_km || 0} km / {rideData?.Time ? Math.round(Math.max(...rideData.Time)) : 0} s
-                </div>
-              </div>
-              <div style={{ borderLeft: "1px solid rgba(255,255,255,0.1)", height: 30 }} />
-              <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 11, textTransform: "uppercase", color: "#A0A0AB", fontWeight: 700, marginBottom: 4 }}>ML Drive Score</div>
-                <div style={{ color: "#43B3AE", fontWeight: 700, fontSize: 14 }}>
-                  {selectedRideData.Drive_Score || 0} ({selectedRideData.Ride_Class || "Unknown"})
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Error State */}
           {dataError && (

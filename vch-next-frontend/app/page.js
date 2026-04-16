@@ -154,14 +154,14 @@ return (
 
           <hr className="soft-divider" />
 
-          {/* Section Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+{/* Section Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, marginTop: 32 }}>
             <Rocket size={22} color="#ff8a5b" />
             <h2 style={{ fontSize: 24, fontWeight: 700, color: "#fff" }}>Active Testing Environments</h2>
           </div>
 
           {/* Nav Cards - Side by Side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 40 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 80 }}>
             {/* Dyno Suite Card */}
             <div className="nav-card" style={{ "--card-accent-border": "rgba(67,179,174,0.28)" }}>
               <div style={{ position: "absolute", top: 20, right: 24 }}>

@@ -97,14 +97,24 @@ export default function RoadSidebar({
       {/* Brand Header */}
       <div style={{ padding: "24px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => router.push("/")}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: "rgba(67,179,174,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Activity size={20} color="#43B3AE" />
+          <div style={{ 
+            width: 48, height: 32, borderRadius: 6, 
+            background: "#fff", 
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden",
+            padding: "2px"
+          }}>
+            <img 
+              src="/raptee_logo.png" 
+              alt="Raptee Logo" 
+              style={{ width: "100%", height: "100%", objectFit: "contain" }} 
+            />
           </div>
           {!collapsed && <span style={{ color: "#fff", fontWeight: 900, fontSize: 16, letterSpacing: -0.5 }}>VCH ROAD <span style={{ color: "#43B3AE" }}>SUITE</span></span>}
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "visible", padding: "0 16px 20px" }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "visible", padding: "40px 16px 20px" }}>
         {!collapsed && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             
