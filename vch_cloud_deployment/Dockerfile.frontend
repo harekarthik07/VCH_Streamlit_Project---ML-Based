@@ -1,0 +1,24 @@
+FROM node:22-slim
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json (if it exists)
+COPY vch-next-frontend/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the frontend code
+COPY vch-next-frontend/ .
+
+# Build the Next.js app
+# Note: This requires the API URL to be available or managed via env
+ENV NEXT_PUBLIC_API=http://localhost:8001
+RUN npm run build
+
+# Expose the port
+EXPOSE 3000
+
+# Start the Next.js app
+CMD ["npm", "run", "start"]

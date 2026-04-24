@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: vch_cloud_deployment/Dockerfile.backend
+    ports:
+      - "8001:8001"
+      - "8501:8501"
+    volumes:
+      - ..:/app
+      - ./db_copies/raptee_dyno.db:/app/dyno_backend/raptee_dyno.db
+      - ./db_copies/raptee_rides.db:/app/road_backend/raptee_rides.db
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: vch_cloud_deployment/Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API=http://localhost:8001
+    restart: always

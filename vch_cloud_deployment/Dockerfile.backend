@@ -1,0 +1,30 @@
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy the requirements file into the container at /app
+COPY vch_cloud_deployment/requirements.backend.txt requirements.backend.txt
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir -r requirements.backend.txt
+
+# Copy the rest of the application code into the container
+# We will use volume mounting for development, but copy for the "blueprint"
+COPY . .
+
+# Expose the ports for FastAPI and Streamlit
+EXPOSE 8001
+EXPOSE 8501
+
+# Command to run the backend (FastAPI)
+# We use a shell script or multiple commands to handle different needs
+CMD ["uvicorn", "fastapi_server:app", "--host", "0.0.0.0", "--port", "8001"]

@@ -1,0 +1,5 @@
+vch-next-frontend/node_modules
+vch-next-frontend/.next
+__pycache__
+*.pyc
+

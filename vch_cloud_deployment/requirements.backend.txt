@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pandas
+numpy
+psutil
+python-multipart
+openpyxl
+pyarrow
+streamlit
+plotly
+docxtpl
+streamlit-option_menu
+python-dotenv
