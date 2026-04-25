@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs wc:*)",
+      "Bash(while read:*)",
+      "Bash(do wc:*)",
+      "Bash(done)",
+      "Bash(find '/d/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/.claude/worktrees/condescending-fermi' -type f \\\\\\(-name *.db -o -name .gitignore \\\\\\))"
+    ]
+  }
+}
