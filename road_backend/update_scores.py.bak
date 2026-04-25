@@ -1,0 +1,41 @@
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+
+import db_bridge
+from thermal_ride import ThermalRide
+
+RAW_DIR = "Raw_Data"
+
+print("Updating all rides with new hybrid algorithm...")
+
+files = [f for f in os.listdir(RAW_DIR) if f.endswith('.xlsx')]
+updated = 0
+
+for file_name in files:
+    try:
+        ride = ThermalRide(os.path.join(RAW_DIR, file_name))
+        ride.ingest().sync().compute_features().compute_ride_metrics()
+        
+        k = ride.ride_metrics
+        
+        db_bridge.execute_sql('''
+            UPDATE ride_summaries SET 
+                Drive_Score = ?, Ride_Class = ?,
+                Penalty_Throttle = ?, Penalty_Velocity = ?, Penalty_Regen = ?, 
+                Penalty_Brake = ?, Brake_Switch_Count = ?
+            WHERE Ride_Name = ?
+        ''', params=(
+            k['Drive_Score'], k['Ride_Class'],
+            k.get('Penalty_Throttle', 0), k.get('Penalty_Velocity', 0), k.get('Penalty_Regen', 0),
+            k.get('Penalty_Brake', 0), k.get('Brake_Switch_Count', 0),
+            file_name
+        ), db_path="raptee_rides.db")
+        
+        print(f"  {file_name}: Score={k['Drive_Score']:.1f}")
+        updated += 1
+    except Exception as e:
+        print(f"  ERROR {file_name}: {e}")
+
+print(f"Updated {updated} rides!")

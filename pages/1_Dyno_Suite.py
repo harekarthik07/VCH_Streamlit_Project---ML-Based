@@ -526,7 +526,7 @@ elif app_mode == "Monitor Dashboard":
             </div>
             """, unsafe_allow_html=True)
 
-    if first_deration_comp: st.markdown(f"<div class='deration-banner'>⚠️ First Deration Detected: {first_deration_comp} crossed safety limit at {first_deration_time} s {first_deration_cell_str}</div>", unsafe_allow_html=True)
+    if first_deration_comp: st.markdown(f"<div class='deration-banner'>⚠️ First Deration: <b>{first_deration_comp}</b> exceeded <b>{limit_map[first_deration_comp]}°C</b> safety limit at <b>{first_deration_time}s</b>{(' — ' + first_deration_cell_str) if first_deration_cell_str else ''}</div>", unsafe_allow_html=True)
     st.markdown("---")
 
     tab_dtdt, tab_delta, tab_custom, tab_power, tab_battery, tab_repo, tab_fleet = st.tabs(["⚡ Rise Rate (dT/dt)", "📈 Cumulative Rise (ΔT)", "🗺️ Dynamic 3D Plotter", "🔋 Power Analysis", "🪫 Battery Health", "📋 Test Repository", "🏍️ Fleet Registry"])
@@ -835,8 +835,8 @@ elif app_mode == "Monitor Dashboard":
         with col_f3:
             repo_tol = 20
             if repo_env == "Tolerance (%)": repo_tol = st.selectbox("Tolerance Range", [5, 10, 15, 20], index=3, format_func=lambda x: f"± {x}%")
-        with col_f4: repo_target = st.selectbox("🎯 Target Data", ["All Data", "IGBT", "Motor", "HighCell", "AFE", "Electrical Power"])
-        with col_f5: repo_metric = st.selectbox("📉 Assessment", ["All Assessments", "dT/dt", "dT", "Power Based"])
+        with col_f4: repo_target = st.multiselect("🎯 Target Channel", ["All Data", "IGBT", "Motor", "HighCell", "AFE", "Electrical Power"], default=["All Data"])
+        with col_f5: repo_metric = st.multiselect("📉 Assessment Metric", ["All Assessments", "dT/dt", "dT", "Power Based"], default=["All Assessments"])
 
         try:
             golden_powers = []
@@ -899,43 +899,35 @@ elif app_mode == "Monitor Dashboard":
                 if t_eval_row.empty: continue
                 
                 repo_row = {"Test Name": test_name, "Type": bike_type}
-                failed_dt, failed_dtdt = [], []
+                failures = []
 
                 for ch in ["IGBT", "Motor", "HighCell", "AFE"]:
                     val_dtdt = t_eval_row[dtdt_map[ch]].values[0] if dtdt_map[ch] in t_eval_row.columns else 0
                     val_dt = t_eval_row[deltat_map[ch]].values[0] if deltat_map[ch] in t_eval_row.columns else 0
                     repo_row[f"{ch} dTdt"] = round(val_dtdt, 3)
                     repo_row[f"{ch} dT"] = round(val_dt, 2)
-                    
-                    if repo_target not in ["All Data", ch] or repo_metric == "Power Based": continue
+
+                    if "All Data" not in repo_target and ch not in repo_target: continue
+                    if "Power Based" in repo_metric and len(repo_metric) == 1: continue
 
                     if envelope_data and ch in envelope_data:
                         env_row = envelope_data[ch][envelope_data[ch]["Time (s)"] == repo_time_s]
                         if not env_row.empty:
                             up_dtdt = env_row[f"dTdt_Upper_{repo_tol}Pct"].values[0] if repo_env == "Tolerance (%)" else env_row["dTdt_Upper_2Sigma"].values[0]
-                            low_dtdt = env_row[f"dTdt_Lower_{repo_tol}Pct"].values[0] if repo_env == "Tolerance (%)" else env_row["dTdt_Lower_2Sigma"].values[0]
                             up_dt = env_row[f"dT_Upper_{repo_tol}Pct"].values[0] if repo_env == "Tolerance (%)" else env_row["dT_Upper_2Sigma"].values[0]
-                            low_dt = env_row[f"dT_Lower_{repo_tol}Pct"].values[0] if repo_env == "Tolerance (%)" else env_row["dT_Lower_2Sigma"].values[0]
-                            
-                            if repo_metric in ["All Assessments", "dT/dt"] and val_dtdt > up_dtdt: failed_dtdt.append(ch)
-                            if repo_metric in ["All Assessments", "dT"] and val_dt > up_dt: failed_dt.append(ch)
+
+                            if ("All Assessments" in repo_metric or "dT/dt" in repo_metric) and val_dtdt > up_dtdt:
+                                failures.append(f"{ch} Rise Rate {val_dtdt:.3f} > {up_dtdt:.3f}°C/s")
+                            if ("All Assessments" in repo_metric or "dT" in repo_metric) and val_dt > up_dt:
+                                failures.append(f"{ch} Cumm Rise {val_dt:.2f} > {up_dt:.2f}°C")
 
                 repo_row["Power Rating (kW)"] = round(bike_power, 2)
 
-                derated_early = False
-                if repo_metric != "Power Based":
-                    for ch in ["IGBT", "Motor", "HighCell", "AFE"]:
-                        if repo_target in ["All Data", ch] and str(row.get(f"{ch}_Deration_Time", "SAFE")) != "SAFE" and float(row[f"{ch}_Deration_Time"]) < repo_time_s:
-                            derated_early = True; break
+                if ("All Data" in repo_target or "Electrical Power" in repo_target) and ("All Assessments" in repo_metric or "Power Based" in repo_metric):
+                    if not (pwr_lower <= bike_power <= pwr_upper):
+                        failures.append(f"Power {bike_power:.1f}kW outside {pwr_lower:.1f}–{pwr_upper:.1f}kW")
 
-                power_passed = True
-                if repo_target in ["All Data", "Electrical Power"] and repo_metric in ["All Assessments", "Power Based"]:
-                    if not (pwr_lower <= bike_power <= pwr_upper): power_passed = False
-
-                if derated_early: repo_row["Final Conclusion"] = "FAIL (Early Deration)"
-                elif len(failed_dt) > 0: repo_row["Final Conclusion"] = f"FAIL (Cumm Temp: {', '.join(failed_dt)})"
-                elif len(failed_dtdt) > 0: repo_row["Final Conclusion"] = f"FAIL (Rise Rate: {', '.join(failed_dtdt)})"
-                elif not power_passed: repo_row["Final Conclusion"] = f"FAIL (Power Dev: {bike_power:.1f}kW)"
+                if failures: repo_row["Final Conclusion"] = f"FAIL ({'; '.join(failures)})"
                 else: repo_row["Final Conclusion"] = "PASS"
 
                 if bike_type == "Golden Baseline": repo_row["Final Conclusion"] = "PASS (Golden Base)"
@@ -943,14 +935,15 @@ elif app_mode == "Monitor Dashboard":
                 
             final_repo_df = pd.DataFrame(repo_results)
             cols_order = ["Test Name", "Type"]
-            active_channels = ["IGBT", "Motor", "HighCell", "AFE"] if repo_target == "All Data" else [repo_target] if repo_target in ["IGBT", "Motor", "HighCell", "AFE"] else []
-
-            if repo_metric != "Power Based":
+            active_channels = ["IGBT", "Motor", "HighCell", "AFE"] if "All Data" in repo_target else [ch for ch in ["IGBT", "Motor", "HighCell", "AFE"] if ch in repo_target]
+            
+            if any(m in repo_metric for m in ["All Assessments", "dT/dt", "dT"]):
                 for ch in active_channels:
-                    if repo_metric in ["All Assessments", "dT/dt"]: cols_order.append(f"{ch} dTdt")
-                    if repo_metric in ["All Assessments", "dT"]: cols_order.append(f"{ch} dT")
+                    if "All Assessments" in repo_metric or "dT/dt" in repo_metric: cols_order.append(f"{ch} dTdt")
+                    if "All Assessments" in repo_metric or "dT" in repo_metric: cols_order.append(f"{ch} dT")
 
-            if repo_target in ["All Data", "Electrical Power"] or repo_metric == "Power Based": cols_order.append("Power Rating (kW)")
+            if "All Data" in repo_target or "Electrical Power" in repo_target or "Power Based" in repo_metric or "All Assessments" in repo_metric: 
+                cols_order.append("Power Rating (kW)")
             cols_order.append("Final Conclusion")
             
             final_repo_df = final_repo_df[[c for c in cols_order if c in final_repo_df.columns]]

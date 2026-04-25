@@ -13,8 +13,8 @@ const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 const API = process.env.NEXT_PUBLIC_API || "http://localhost:8001";
 
 const LIMIT_MAP = { IGBT: 95, Motor: 125, HighCell: 50, AFE: 50 };
-// AFE uses 'AFE_Mean_dTdt' / 'AFE_Mean_dT' in the processed data, not 'AFE_dTdt' / 'AFE_dT'
-const COL_MAP = { IGBT: { dTdt: "IGBT_dTdt", dT: "IGBT_dT" }, Motor: { dTdt: "Motor_dTdt", dT: "Motor_dT" }, HighCell: { dTdt: "HighCell_dTdt", dT: "HighCell_dT" }, AFE: { dTdt: "AFE_Mean_dTdt", dT: "AFE_Mean_dT" } };
+// AFE uses 'AFE_dTdt_Max' / 'AFE_dT_Max' in the processed data, not 'AFE_dTdt' / 'AFE_dT'
+const COL_MAP = { IGBT: { dTdt: "IGBT_dTdt", dT: "IGBT_dT" }, Motor: { dTdt: "Motor_dTdt", dT: "Motor_dT" }, HighCell: { dTdt: "HighCell_dTdt", dT: "HighCell_dT" }, AFE: { dTdt: "AFE_dTdt_Max", dT: "AFE_dT_Max" } };
 const CARD_ACCENTS = { 
   IGBT: "#43B3AE", 
   Motor: "#FFD700", 
@@ -106,10 +106,9 @@ export default function DynoPage() {
   const [qcTimeS, setQcTimeS] = useState(120);
   const [qcEnvMethod, setQcEnvMethod] = useState("Tolerance (%)");
   const [qcTolerance, setQcTolerance] = useState(20);
-  const [qcTarget, setQcTarget] = useState("All Data");
-  const [qcMetric, setQcMetric] = useState("All Assessments");
-  const [qcResults, setQcResults] = useState(null);
-  const [loadingQC, setLoadingQC] = useState(false);
+  const [qcTarget, setQcTarget] = useState(["All Data"]);
+  const [qcMetric, setQcMetric] = useState(["All Assessments"]);
+  const [repoSearch, setRepoSearch] = useState("");
 
   const [fleetData, setFleetData] = useState({});
   const [selectedBike, setSelectedBike] = useState(null);
@@ -525,6 +524,7 @@ export default function DynoPage() {
       
       <DynoSidebar
         appMode={appMode} setAppMode={setAppMode}
+        activeTab={activeTab} setActiveTab={setActiveTab}
         summaries={summaries}
         selectedTest={selectedTest} setSelectedTest={setSelectedTest}
         compareTests={compareTests} setCompareTests={setCompareTests}
@@ -604,7 +604,7 @@ export default function DynoPage() {
               })}
             </div>
 
-            {firstDerationComp && <div className="deration-banner-glass" style={{ borderRadius: 12, padding: "13px 20px", marginBottom: 20, textAlign: "center", fontSize: 13, fontWeight: 800, color: "#FF5E5E" }}>⚠️ First Deration Detected: {firstDerationComp} crossed safety limit at {firstDerationTime} s {firstDerationCellStr}</div>}
+            {firstDerationComp && <div className="deration-banner-glass" style={{ borderRadius: 12, padding: "13px 20px", marginBottom: 20, textAlign: "center", fontSize: 13, fontWeight: 800, color: "#FF5E5E" }}>⚠️ First Deration: <strong>{firstDerationComp}</strong> exceeded <strong>{LIMIT_MAP[firstDerationComp]}°C</strong> safety limit at <strong>{firstDerationTime}s</strong>{firstDerationCellStr ? ` — ${firstDerationCellStr}` : ""}</div>}
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", marginBottom: 20 }} />
 
             <div className="tab-shell">
@@ -927,22 +927,66 @@ export default function DynoPage() {
             })()}
 
             {activeTab === "battery_health" && (() => {
-               const gDCIR = 227.42; const dLimit = gDCIR * 1.15;
-               const vCol = telemetry ? Object.keys(telemetry).find(k => k.toLowerCase().includes("voltage") || k.includes("V_") || k.includes("Pack_V")) : null;
-               const cCol = telemetry ? Object.keys(telemetry).find(k => k.toLowerCase().includes("current") || k.includes("I_") || k.includes("Pack_I")) : null;
-               const bPwrs = summaries.filter(s => s.Pack_DCIR_mOhm).sort((a,b)=>a.Pack_DCIR_mOhm-b.Pack_DCIR_mOhm);
-               const passed = bPwrs.filter(s => s.Pack_DCIR_mOhm <= dLimit);
-               const failed = bPwrs.filter(s => s.Pack_DCIR_mOhm > dLimit);
+                const gBikes = ["2025_10_22-07-BK", "2025_10_09-14-BK", "2025_10_25-09-BK", "2025_10_20-15-BK", "2025_10_19-17-BK", "2025_10_25-04-BK"];
+                const gDCIRs = summaries.filter(s => gBikes.some(g => s.Test_Name?.includes(g)) && s.Pack_DCIR_mOhm > 0).map(s => s.Pack_DCIR_mOhm);
+                const gDCIR = gDCIRs.length ? gDCIRs.reduce((a,b)=>a+b,0)/gDCIRs.length : 50.0;
+                const dLimit = gDCIR * 1.15;
+                const vCol = batteryData ? Object.keys(batteryData).find(k => k.toLowerCase().includes("voltage") || k.includes("V_") || k.includes("Pack_V") || k.includes("Cumm_Volatge") || k.includes("Cumm_Voltage") || k.includes("DC_Volatge") || k.includes("DC_Voltage")) : null;
+                const cCol = batteryData ? Object.keys(batteryData).find(k => k.toLowerCase().includes("current") || k.includes("I_") || k.includes("Pack_I") || k.includes("FG_Current") || k.includes("DC_Current")) : null;
+                const bPwrs = summaries.filter(s => s.Pack_DCIR_mOhm).sort((a,b)=>a.Pack_DCIR_mOhm-b.Pack_DCIR_mOhm);
+                const passed = bPwrs.filter(s => s.Pack_DCIR_mOhm <= dLimit);
+                const failed = bPwrs.filter(s => s.Pack_DCIR_mOhm > dLimit);
+
+                let dynDCIR = 0, restPt = null, loadPt = null;
+                if (batteryData && vCol && cCol) {
+                  try {
+                    const times = batteryData["Time (s)"];
+                    const curs = batteryData[cCol];
+                    const vols = batteryData[vCol];
+                    const firstCrossIdx = curs.findIndex(v => Math.abs(v) > 30.0);
+                    if (firstCrossIdx !== -1) {
+                      const start = Math.max(0, firstCrossIdx - 60);
+                      let minCur = Infinity, rIdx = firstCrossIdx;
+                      for (let i=start; i<=firstCrossIdx; i++) {
+                        if (Math.abs(curs[i]) < minCur) { minCur = Math.abs(curs[i]); rIdx = i; }
+                      }
+                      const end = Math.min(curs.length - 1, firstCrossIdx + 60);
+                      const meanCur = curs.reduce((a,b)=>a+b,0)/curs.length;
+                      let lIdx = firstCrossIdx;
+                      if (meanCur < 0) {
+                        let minV = Infinity;
+                        for (let i=firstCrossIdx; i<=end; i++) { if (curs[i] < minV) { minV = curs[i]; lIdx = i; } }
+                      } else {
+                        let maxV = -Infinity;
+                        for (let i=firstCrossIdx; i<=end; i++) { if (curs[i] > maxV) { maxV = curs[i]; lIdx = i; } }
+                      }
+                      const dI = Math.abs(curs[lIdx] - curs[rIdx]);
+                      if (dI > 15.0) {
+                        dynDCIR = (Math.abs(vols[rIdx] - vols[lIdx]) / dI) * 1000;
+                        restPt = { t: times[rIdx], v: vols[rIdx], i: curs[rIdx] };
+                        loadPt = { t: times[lIdx], v: vols[lIdx], i: curs[lIdx] };
+                      }
+                    }
+                  } catch(e) { console.error(e); }
+                }
 
                return (
                   <div>
-                    <div style={{fontSize:16,fontWeight:800,color:"var(--text-main)",marginBottom:16}}>🪫 Interactive Battery Health & DCIR Diagnostics</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:20}}><div className="metric-card" style={{padding:"16px 20px"}}><div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>👑 Golden Mean DCIR</div><div style={{fontSize:22,fontWeight:900,color:"#FFD700"}}>{gDCIR} mΩ</div></div><div className="metric-card" style={{padding:"16px 20px"}}><div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>⚠️ Degradation Limit (+15%)</div><div style={{fontSize:22,fontWeight:900,color:"#FF4B4B"}}>{dLimit.toFixed(2)} mΩ</div></div></div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginBottom:20}}>
+                      <div className="metric-card" style={{padding:"16px 20px"}}><div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>📊 Computed DCIR Result</div><div style={{fontSize:22,fontWeight:900,color:dynDCIR>0?"#43B3AE":"var(--text-sub)"}}>{dynDCIR > 0 ? `${dynDCIR.toFixed(2)} mΩ` : "N/A"}</div></div>
+                      <div className="metric-card" style={{padding:"16px 20px"}}><div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>👑 Golden Mean DCIR</div><div style={{fontSize:22,fontWeight:900,color:"#FFD700"}}>{gDCIR.toFixed(2)} mΩ</div></div>
+                      <div className="metric-card" style={{padding:"16px 20px"}}><div style={{fontSize:12,color:"var(--text-sub)",marginBottom:6}}>⚠️ Degradation Limit (+15%)</div><div style={{fontSize:22,fontWeight:900,color:"#FF4B4B"}}>{dLimit.toFixed(2)} mΩ</div></div>
+                    </div>
                     <div className="metric-card" style={{padding:"16px",marginBottom:20}}>
                         <div style={{fontWeight:700,marginBottom:12,display:"flex",alignItems:"center",justifyContent:"space-between"}}><span>⚡ Voltage Sag vs. Current Draw — {selectedTest}</span><button onClick={loadBatteryData} disabled={loadingBattery} style={{background:"rgba(67,179,174,0.15)",border:"1px solid rgba(67,179,174,0.3)",color:"#43B3AE",padding:"6px 14px",borderRadius:6,cursor:"pointer",fontSize:12,fontWeight:700}}>{loadingBattery ? "Loading..." : "Load Raw Data"}</button></div>
                         {batteryData ? (
-                          <Plot data={[{x:batteryData["Time (s)"],y:batteryData[cCol || "Current (A)"],type:"scatter",mode:"lines",name:"Current (A)",line:{color:"#FF4B4B",width:2}}, {x:batteryData["Time (s)"],y:batteryData[vCol || "Voltage (V)"],type:"scatter",mode:"lines",name:"Voltage (V)",yaxis:"y2",line:{color:"#43B3AE",width:2}}]} layout={{ ...DARK_TOOLTIP, paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color:"#E0E0E0",size:11},height:400,hovermode:"x unified",margin:{t:20,b:50,l:60,r:60},xaxis:{title:"Time (s)",showgrid:false},yaxis:{title:"Current (A)"},yaxis2:{title:"Voltage (V)",overlaying:"y",side:"right",showgrid:false},legend:{orientation:"h",y:-0.15} }} config={{responsive:true}} style={{width:"100%"}} />
-                        ) : <div style={{textAlign:"center",padding:50,color:"var(--text-sub)"}}>Click Load Raw Data to fetch high-resolution traces.</div>}
+                          <Plot data={[
+                            {x:batteryData["Time (s)"],y:batteryData[cCol || "Current (A)"],type:"scatter",mode:"lines",name:"Current (A)",line:{color:"#FF4B4B",width:2}}, 
+                            {x:batteryData["Time (s)"],y:batteryData[vCol || "Voltage (V)"],type:"scatter",mode:"lines",name:"Voltage (V)",yaxis:"y2",line:{color:"#43B3AE",width:2}},
+                            restPt && {x:[restPt.t, loadPt.t], y:[restPt.i, loadPt.i], type:"scatter", mode:"markers", name:"Current Pts", marker:{color:"yellow", size:10, symbol:"x"}},
+                            restPt && {x:[restPt.t, loadPt.t], y:[restPt.v, loadPt.v], type:"scatter", mode:"markers", name:"Voltage Pts", yaxis:"y2", marker:{color:"yellow", size:10, symbol:"circle-open", line:{width:2}}}
+                          ].filter(Boolean)} layout={{ ...DARK_TOOLTIP, paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color:"#E0E0E0",size:11},height:450,hovermode:"x unified",margin:{t:20,b:50,l:60,r:60},xaxis:{title:"Time (s)",showgrid:false},yaxis:{title:"Current (A)",gridcolor:"rgba(255,255,255,0.05)"},yaxis2:{title:"Voltage (V)",overlaying:"y",side:"right",showgrid:false},legend:{orientation:"h",y:1.05} }} config={{responsive:true, displaylogo:false}} style={{width:"100%"}} />
+                        ) : <div style={{textAlign:"center",padding:50,color:"var(--text-sub)"}}>Click Load Raw Data to fetch high-resolution traces and compute live DCIR.</div>}
                     </div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}><div className="metric-card" style={{padding:16}}><div style={{color:"#43B3AE",fontWeight:800,marginBottom:10}}>✅ DCIR Validated Vehicles ({passed.length})</div><div style={{maxHeight:300,overflowY:"auto"}}><table><thead><tr><th>Vehicle</th><th>DCIR (mΩ)</th><th>Verdict</th></tr></thead><tbody>{passed.map(s=><tr key={s.Test_Name}><td>{getBikeNo(s.Test_Name)}</td><td>{s.Pack_DCIR_mOhm.toFixed(2)}</td><td style={{color:"#43B3AE",fontWeight:700}}>PASS</td></tr>)}</tbody></table></div></div><div className="metric-card" style={{padding:16}}><div style={{color:"#FF4B4B",fontWeight:800,marginBottom:10}}>❌ Excessive Battery Sag/DCIR ({failed.length})</div><div style={{maxHeight:300,overflowY:"auto"}}><table><thead><tr><th>Vehicle</th><th>DCIR (mΩ)</th><th>Verdict</th></tr></thead><tbody>{failed.map(s=><tr key={s.Test_Name}><td>{getBikeNo(s.Test_Name)}</td><td>{s.Pack_DCIR_mOhm.toFixed(2)}</td><td style={{color:"#FF4B4B",fontWeight:700}}>FAIL</td></tr>)}</tbody></table></div></div></div>
                   </div>
@@ -950,37 +994,200 @@ export default function DynoPage() {
             })()}
 
             {activeTab === "test_repository" && (() => {
-               const goldenBikes = ["2025_10_22-07-BK", "2025_10_09-14-BK", "2025_10_25-09-BK (Nw-BB)", "2025_10_20-15-BK", "2025_10_19-17-BK", "2025_10_25-04-BK (Nw-BB)"];
-               const bikePwrs = summaries.filter(s => goldenBikes.some(g => s.Test_Name?.includes(g))).map(s => s.Power_Avg_120s || 0).filter(p => p >= 19 && p <= 20.5);
-               const mPwr = bikePwrs.length > 0 ? bikePwrs.reduce((a, b) => a + b, 0) / bikePwrs.length : 19.5;
-               const pUp = mPwr * 1.10, pLow = mPwr * 0.90;
-               const tExp = qcTolerance; const isT = qcEnvMethod === "Tolerance (%)";
-               const getE = (ch) => { const env = envelopes[ch]; if (!env || !env["Time (s)"]) return null; const times = env["Time (s)"]; const idx = times.findIndex(t => t === qcTimeS); if (idx < 0) return null; const row = {}; Object.keys(env).forEach(k => { row[k] = env[k][idx]; }); return row; };
+               const GOLDEN_BIKES_REPO = ["2025_10_22-07-BK", "2025_10_09-14-BK", "2025_10_25-09-BK", "2025_10_20-15-BK", "2025_10_19-17-BK", "2025_10_25-04-BK"];
+               const isT = qcEnvMethod === "Tolerance (%)";
+               const tKey = isT ? `_${qcTolerance}Pct` : "_2Sigma";
 
-               const pRes = qcResults?.filter(r => r["Final Conclusion"]?.startsWith("PASS")) || [];
-               const fRes = qcResults?.filter(r => r["Final Conclusion"]?.startsWith("FAIL")) || [];
+               // Golden power range
+               const goldenPwrs = (summaries || []).filter(s => GOLDEN_BIKES_REPO.some(g => s.Test_Name?.includes(g))).map(s => Number(s.Power_Avg_120s || 0)).filter(p => p >= 19 && p <= 20.5);
+               const mPwr = goldenPwrs.length ? goldenPwrs.reduce((a,b) => a+b, 0) / goldenPwrs.length : 19.5;
+               const pUp = mPwr * 1.10, pLow = mPwr * 0.90;
+
+               const getEnvRow = (ch) => {
+                 const env = envelopes[ch]; if (!env || !env["Time (s)"]) return null;
+                 const idx = env["Time (s)"].findIndex(t => Number(t) === qcTimeS);
+                 if (idx < 0) return null;
+                 const row = {}; Object.keys(env).forEach(k => { row[k] = env[k][idx]; }); return row;
+               };
+
+               const activeChs = qcTarget.includes("All Data") ? ["IGBT","Motor","HighCell","AFE"] : ["IGBT","Motor","HighCell","AFE"].filter(ch => qcTarget.includes(ch));
+               const showDtdt  = !qcMetric.includes("Power Based") && (qcMetric.includes("All Assessments") || qcMetric.includes("dT/dt"));
+               const showDt    = !qcMetric.includes("Power Based") && (qcMetric.includes("All Assessments") || qcMetric.includes("dT"));
+               const showPower = qcTarget.includes("All Data") || qcTarget.includes("Electrical Power") || qcMetric.includes("Power Based");
+
+               const visibleCols = ["Test Name", "Type"];
+               activeChs.forEach(ch => {
+                 if (showDtdt) visibleCols.push(`${ch} dTdt`);
+                 if (showDt)   visibleCols.push(`${ch} dT`);
+               });
+               if (showPower) visibleCols.push("Power (kW)");
+               visibleCols.push("Conclusion");
+
+               const repoResults = (summaries || []).map(row => {
+                 const testName  = row.Test_Name || "";
+                 const bikeType  = row.Type || "Evaluation";
+                 const bikePower = Number(row.Power_Avg_120s || 0);
+                 const result    = { "Test Name": testName, "Type": bikeType, "Power (kW)": bikePower };
+
+                 ["IGBT","Motor","HighCell","AFE"].forEach(ch => {
+                   const dtdtKey = `${ch}_dTdt_Max`;
+                   const dtKey   = `${ch}_dT_Max`;
+                   result[`${ch} dTdt`] = Number(row[dtdtKey] || 0);
+                   result[`${ch} dT`]   = Number(row[dtKey]   || 0);
+                 });
+
+                 const failures = [];
+                 if (qcMetric.length > 0 && !qcMetric.includes("Power Based")) {
+                   ["IGBT","Motor","HighCell","AFE"].forEach(ch => {
+                     if (!qcTarget.includes("All Data") && !qcTarget.includes(ch)) return;
+                     const envRow = getEnvRow(ch); if (!envRow) return;
+                     const upDtdt = Number(envRow[`dTdt_Upper${tKey}`] || 999);
+                     const upDt   = Number(envRow[`dT_Upper${tKey}`]   || 999);
+                     const valDtdt = result[`${ch} dTdt`];
+                     const valDt   = result[`${ch} dT`];
+                     if ((qcMetric.includes("All Assessments") || qcMetric.includes("dT/dt")) && valDtdt > upDtdt)
+                       failures.push(`${ch} Rise Rate ${valDtdt.toFixed(3)} > ${upDtdt.toFixed(3)}°C/s`);
+                     if ((qcMetric.includes("All Assessments") || qcMetric.includes("dT")) && valDt > upDt)
+                       failures.push(`${ch} Cumm Rise ${valDt.toFixed(2)} > ${upDt.toFixed(2)}°C`);
+                   });
+                 }
+                 if ((qcTarget.includes("All Data") || qcTarget.includes("Electrical Power")) && (qcMetric.includes("All Assessments") || qcMetric.includes("Power Based"))) {
+                   if (!(pLow <= bikePower && bikePower <= pUp))
+                     failures.push(`Power ${bikePower.toFixed(1)}kW outside ${pLow.toFixed(1)}–${pUp.toFixed(1)}kW`);
+                 }
+
+                 if (bikeType === "Golden Baseline") {
+                   result["Conclusion"] = "PASS (Golden Base)";
+                   result._pass = true;
+                 } else {
+                   result["Conclusion"] = failures.length ? `FAIL (${failures[0]})` : "PASS";
+                   result._pass = failures.length === 0;
+                 }
+                 return result;
+               }).filter(r => !repoSearch || r["Test Name"].toLowerCase().includes(repoSearch.toLowerCase()));
+
+               const pRes = repoResults.filter(r => r._pass);
+               const fRes = repoResults.filter(r => !r._pass);
+
+               const thS = { padding:"8px 12px", textAlign:"left", fontSize:11, fontWeight:700, color:"var(--text-sub)", borderBottom:"1px solid rgba(255,255,255,0.08)", whiteSpace:"nowrap", background:"var(--card-bg)" };
+               const tdS = { padding:"7px 12px", fontSize:12, borderBottom:"1px solid rgba(255,255,255,0.05)", whiteSpace:"nowrap" };
+
+               const RepoTable = ({ rows, accent }) => (
+                 <div style={{overflowX:"auto",borderRadius:10,border:`1px solid ${accent}22`,marginBottom:24}}>
+                   <table style={{width:"100%",borderCollapse:"collapse"}}>
+                     <thead>
+                       <tr>
+                         {visibleCols.map(h => <th key={h} style={thS}>{h}</th>)}
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {rows.length === 0
+                         ? <tr><td colSpan={visibleCols.length} style={{...tdS, textAlign:"center", color:"var(--text-sub)", padding:20}}>No results</td></tr>
+                         : rows.map((r,i) => (
+                           <tr key={i} style={{background: i%2===0 ? "transparent" : "rgba(255,255,255,0.015)"}}>
+                             {visibleCols.map(col => {
+                               if (col === "Conclusion") return <td key={col} style={{...tdS, color: r._pass ? "#43B3AE" : "#FF4B4B", fontWeight:700, whiteSpace:"normal", maxWidth:340}}>{r[col]}</td>;
+                               if (col === "Test Name") return <td key={col} style={{...tdS, fontFamily:"monospace", fontSize:11}}>{r[col]}</td>;
+                               if (col === "Type")      return <td key={col} style={{...tdS, color:"var(--text-sub)"}}>{r[col]}</td>;
+                               const v = r[col];
+                               const decimals = col.includes("dTdt") ? 3 : 2;
+                               return <td key={col} style={tdS}>{typeof v === "number" ? v.toFixed(decimals) : (v ?? "—")}</td>;
+                             })}
+                           </tr>
+                         ))
+                       }
+                     </tbody>
+                   </table>
+                 </div>
+               );
+
+               const envCards = (label, colSuffix) => {
+                 const dec = colSuffix === "dTdt" ? 3 : 2;
+                 return (
+                   <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:10}}>
+                     {["IGBT","Motor","HighCell","AFE"].map(ch => {
+                       const e = getEnvRow(ch);
+                       const up   = Number(e?.[`${colSuffix}_Upper${tKey}`] || 0);
+                       const low  = Number(e?.[`${colSuffix}_Lower${tKey}`] || 0);
+                       const mean = Number(e?.[`${colSuffix}_Mean`] || 0);
+                       return (
+                         <div key={ch} className="metric-card" style={{padding:"10px 14px",textAlign:"center"}}>
+                           <div style={{fontSize:10,color:"var(--text-sub)",fontWeight:700,marginBottom:4,textTransform:"uppercase"}}>{ch} {label}</div>
+                           <div style={{fontSize:13,fontWeight:800}}>
+                             <span style={{color:"#43B3AE"}}>{up.toFixed(dec)}</span>
+                             <span style={{color:"var(--text-sub)",margin:"0 4px"}}>|</span>
+                             <span>{mean.toFixed(dec)}</span>
+                             <span style={{color:"var(--text-sub)",margin:"0 4px"}}>|</span>
+                             <span style={{color:"#43B3AE"}}>{low.toFixed(dec)}</span>
+                           </div>
+                         </div>
+                       );
+                     })}
+                   </div>
+                 );
+               };
 
                return (
-                <div>
-                  <div style={{fontSize:16,fontWeight:800,color:"var(--text-main)",marginBottom:16}}>📂 Quality Control (QC) Gatekeeper</div>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:20}}>
-                    <div className="metric-card" style={{padding:12}}><div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>⏳ QC Timestamp</div><StreamlitSelect value={`${qcTimeS}s (${qcTimeS/60} min)`} onChange={v=>setQcTimeS(parseInt(v))} options={["60s (1 min)","120s (2 min)","180s (3 min)"]} /></div>
-                    <div className="metric-card" style={{padding:12}}><div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>📏 Env Method</div><StreamlitSelect value={qcEnvMethod} onChange={setQcEnvMethod} options={["Tolerance (%)","Statistical (2-Sigma)"]} /></div>
-                    <div className="metric-card" style={{padding:12}}><div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>🎯 Target Data</div><StreamlitSelect value={qcTarget} onChange={setQcTarget} options={["All Data","IGBT","Motor","HighCell","AFE","Electrical Power"]} /></div>
-                    <div className="metric-card" style={{padding:12}}><div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>📉 Assessment</div><StreamlitSelect value={qcMetric} onChange={setQcMetric} options={["All Assessments","dT/dt","dT","Power Based"]} /></div>
-                  </div>
-                  {isT && <div className="metric-card" style={{padding:12,marginBottom:16,display:"flex",alignItems:"center",gap:16}}><div style={{fontSize:12,color:"var(--text-sub)",fontWeight:700}}>Tolerance Range:</div>{[5,10,15,20].map(t=><button key={t} onClick={()=>setQcTolerance(t)} style={{padding:"6px 14px",borderRadius:6,border:`1px solid ${qcTolerance===t?"#43B3AE":"rgba(255,255,255,0.1)"}`,background:qcTolerance===t?"rgba(67,179,174,0.15)":"transparent",color:qcTolerance===t?"#43B3AE":"var(--text-sub)",cursor:"pointer",fontWeight:700,fontSize:13}}>±{t}%</button>)}</div>}
+                 <div>
+                   <div style={{fontSize:16,fontWeight:800,color:"var(--text-main)",marginBottom:16}}>📂 Test Repository — QC Evaluation</div>
 
-                  <div style={{marginBottom:24}}><div style={{fontSize:16,fontWeight:800,color:"var(--text-main)",marginBottom:12}}>Master Golden Criteria @ {qcTimeS/60} min ({qcTimeS}s) 👑</div>
-                    <div style={{background:"var(--card-bg)",borderTop:"4px solid #FFD700",borderRadius:16,padding:"18px 24px",marginBottom:16,boxShadow:"0 4px 20px rgba(0,0,0,0.3)"}}><div style={{fontSize:12,color:"var(--text-sub)",textTransform:"uppercase",fontWeight:600,marginBottom:6}}>⚡ Electrical Power Validation (0s to 120s)</div><div style={{fontSize:22,fontWeight:800}}><span style={{color:"#43B3AE"}}>{pUp.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span>{mPwr.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span style={{color:"#43B3AE"}}>{pLow.toFixed(2)} kW</span></div></div>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:12}}>{["IGBT","Motor","HighCell","AFE"].map(ch=>{const e=getE(ch); const up=(isT ? e?.[`dTdt_Upper_${tExp}Pct`] : e?.["dTdt_Upper_2Sigma"]) ?? 0; const low=(isT ? e?.[`dTdt_Lower_${tExp}Pct`] : e?.["dTdt_Lower_2Sigma"]) ?? 0; return <div key={ch} className="metric-card" style={{padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"var(--text-sub)",fontWeight:600}}>{ch} dT/dt</div><div style={{fontSize:15,fontWeight:800,marginTop:4}}><span style={{color:"#43B3AE"}}>{up?.toFixed(3)}</span> | {e?.["dTdt_Mean"]?.toFixed(3)} | <span style={{color:"#43B3AE"}}>{low?.toFixed(3)}</span></div></div>})}</div>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12}}>{["IGBT","Motor","HighCell","AFE"].map(ch=>{const e=getE(ch); const up=(isT ? e?.[`dT_Upper_${tExp}Pct`] : e?.["dT_Upper_2Sigma"]) ?? 0; const low=(isT ? e?.[`dT_Lower_${tExp}Pct`] : e?.["dT_Lower_2Sigma"]) ?? 0; return <div key={ch} className="metric-card" style={{padding:14,textAlign:"center"}}><div style={{fontSize:10,color:"var(--text-sub)",fontWeight:600}}>{ch} ΔT</div><div style={{fontSize:15,fontWeight:800,marginTop:4}}><span style={{color:"#FF4B4B"}}>{up?.toFixed(2)}</span> | {e?.["dT_Mean"]?.toFixed(2)} | <span style={{color:"#FF4B4B"}}>{low?.toFixed(2)}</span></div></div>})}</div>
-                  </div>
+                   <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:12,marginBottom:12, position: "relative", zIndex: 20}}>
+                     <div className="metric-card" style={{padding:12}}>
+                       <div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>⏳ QC Timestamp</div>
+                       <StreamlitSelect value={`${qcTimeS}s`} onChange={v => setQcTimeS(parseInt(v))} options={["60s","120s","180s"]} />
+                     </div>
+                     <div className="metric-card" style={{padding:12}}>
+                       <div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>📏 Envelope Method</div>
+                       <StreamlitSelect value={qcEnvMethod} onChange={setQcEnvMethod} options={["Tolerance (%)","Statistical (2-Sigma)"]} />
+                     </div>
+                     <div className="metric-card" style={{padding:12}}>
+                       <div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>🎯 Target Channel</div>
+                       <StreamlitMultiSelect value={qcTarget} onChange={setQcTarget} options={["All Data","IGBT","Motor","HighCell","AFE","Electrical Power"]} />
+                     </div>
+                     <div className="metric-card" style={{padding:12}}>
+                       <div style={{fontSize:11,color:"var(--text-sub)",marginBottom:6,fontWeight:700}}>📉 Assessment Metric</div>
+                       <StreamlitMultiSelect value={qcMetric} onChange={setQcMetric} options={["All Assessments","dT/dt","dT","Power Based"]} />
+                     </div>
+                   </div>
 
-                  <button onClick={async () => { setLoadingQC(true); try { const res = await axios.post(`${API}/api/dyno/qc_eval`, { time_s: qcTimeS, env_method: qcEnvMethod, tolerance_pct: qcTolerance, target: qcTarget, metric: qcMetric }); setQcResults(res.data); } catch(e) {} setLoadingQC(false); }} disabled={loadingQC} style={{background:"linear-gradient(90deg,#43B3AE,#3B9F9A)",color:"#000",border:"none",padding:"11px 28px",borderRadius:8,fontWeight:900,fontSize:14,cursor:loadingQC?"not-allowed":"pointer",marginBottom:24}}> {loadingQC ? "Evaluating…" : "⚙️ Run QC Evaluation"} </button>
+                   <div style={{display:"flex",gap:12,marginBottom:20,alignItems:"center",flexWrap:"wrap"}}>
+                     {isT && <div className="metric-card" style={{padding:"8px 14px",display:"flex",alignItems:"center",gap:10}}>
+                       <span style={{fontSize:12,color:"var(--text-sub)",fontWeight:700}}>Tolerance:</span>
+                       {[5,10,15,20].map(t => (
+                         <button key={t} onClick={() => setQcTolerance(t)} style={{padding:"5px 12px",borderRadius:6,border:`1px solid ${qcTolerance===t?"#43B3AE":"rgba(255,255,255,0.1)"}`,background:qcTolerance===t?"rgba(67,179,174,0.15)":"transparent",color:qcTolerance===t?"#43B3AE":"var(--text-sub)",cursor:"pointer",fontWeight:700,fontSize:12}}>±{t}%</button>
+                       ))}
+                     </div>}
+                     <div style={{flex:1,minWidth:200}} className="metric-card">
+                       <input value={repoSearch} onChange={e => setRepoSearch(e.target.value)} placeholder="🔍 Filter by test name…" style={{width:"100%",background:"transparent",border:"none",outline:"none",color:"var(--text-main)",fontSize:13,padding:"8px 14px"}} />
+                     </div>
+                   </div>
 
-                  {qcResults && <div><div style={{color:"#43B3AE",fontWeight:800,marginBottom:12,display:"flex",alignItems:"center",gap:8}}><ClipboardList size={20}/> Passed QC Criteria ({pRes.length})</div><div style={{background:"rgba(67,179,174,0.03)",border:"1px solid rgba(67,179,174,0.1)",borderRadius:12,padding:8,marginBottom:24,maxHeight:400,overflowY:"auto"}}><table><thead><tr><th>Test Name</th><th>Type</th><th>IGBT dT</th><th>Motor dT</th><th>HighCell dT</th><th>AFE dT</th><th>Power (kW)</th><th>Conclusion</th></tr></thead><tbody>{pRes.map((r,i)=><tr key={i}><td>{r["Test Name"]}</td><td>{r["Type"]}</td><td>{r["IGBT_dT"]?.toFixed(2)}</td><td>{r["Motor_dT"]?.toFixed(2)}</td><td>{r["HighCell_dT"]?.toFixed(2)}</td><td>{r["AFE_dT"]?.toFixed(2)}</td><td>{r["Power Rating (kW)"]?.toFixed(2)}</td><td style={{color:"#43B3AE",fontWeight:700}}>{r["Final Conclusion"]}</td></tr>)}</tbody></table></div><div style={{color:"#FF4B4B",fontWeight:800,marginBottom:12,display:"flex",alignItems:"center",gap:8}}><XCircle size={20}/> Failed QC Criteria ({fRes.length})</div><div style={{background:"rgba(255,75,75,0.03)",border:"1px solid rgba(255,75,75,0.1)",borderRadius:12,padding:8,maxHeight:400,overflowY:"auto"}}><table><thead><tr><th>Test Name</th><th>Type</th><th>IGBT dT</th><th>Motor dT</th><th>HighCell dT</th><th>AFE dT</th><th>Power (kW)</th><th>Conclusion</th></tr></thead><tbody>{fRes.map((r,i)=><tr key={i}><td>{r["Test Name"]}</td><td>{r["Type"]}</td><td>{r["IGBT_dT"]?.toFixed(2)}</td><td>{r["Motor_dT"]?.toFixed(2)}</td><td>{r["HighCell_dT"]?.toFixed(2)}</td><td>{r["AFE_dT"]?.toFixed(2)}</td><td>{r["Power Rating (kW)"]?.toFixed(2)}</td><td style={{color:"#FF4B4B",fontWeight:700}}>{r["Final Conclusion"]}</td></tr>)}</tbody></table></div></div>}
-                </div>
+                   {/* Golden Criteria */}
+                   <div style={{marginBottom:24}}>
+                     <div style={{fontSize:13,fontWeight:800,color:"#FFD700",marginBottom:10}}>👑 Master Golden Criteria @ {qcTimeS/60} min ({qcTimeS}s)</div>
+                     <div style={{background:"var(--card-bg)",border:"1px solid rgba(255,215,0,0.2)",borderLeft:"4px solid #FFD700",borderRadius:12,padding:"12px 18px",marginBottom:12}}>
+                       <div style={{fontSize:11,color:"var(--text-sub)",textTransform:"uppercase",fontWeight:600,marginBottom:4}}>⚡ Electrical Power Validation (0s to 120s)</div>
+                       <div style={{fontSize:18,fontWeight:800}}><span style={{color:"#43B3AE"}}>{pUp.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span>{mPwr.toFixed(2)} kW</span><span style={{color:"var(--text-sub)",margin:"0 8px"}}>|</span><span style={{color:"#43B3AE"}}>{pLow.toFixed(2)} kW</span></div>
+                     </div>
+                     {envCards("Rise Rate (°C/s)","dTdt")}
+                     {envCards("Cumulative Rise (°C)","dT")}
+                   </div>
+
+                   {/* Summary counts */}
+                   <div style={{display:"flex",gap:12,marginBottom:16}}>
+                     <div style={{background:"rgba(67,179,174,0.1)",border:"1px solid rgba(67,179,174,0.25)",borderRadius:8,padding:"8px 18px",fontWeight:800,color:"#43B3AE",fontSize:13}}>✅ PASS: {pRes.length}</div>
+                     <div style={{background:"rgba(255,75,75,0.1)",border:"1px solid rgba(255,75,75,0.25)",borderRadius:8,padding:"8px 18px",fontWeight:800,color:"#FF4B4B",fontSize:13}}>❌ FAIL: {fRes.length}</div>
+                     <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 18px",fontWeight:700,color:"var(--text-sub)",fontSize:13}}>Total: {repoResults.length}</div>
+                   </div>
+
+                   {/* PASS table */}
+                   <div style={{fontSize:13,fontWeight:800,color:"#43B3AE",marginBottom:8,display:"flex",alignItems:"center",gap:8}}><ClipboardList size={16}/> Passed Tests ({pRes.length})</div>
+                   <RepoTable rows={pRes} accent="#43B3AE" />
+
+                   {/* FAIL table */}
+                   <div style={{fontSize:13,fontWeight:800,color:"#FF4B4B",marginBottom:8,display:"flex",alignItems:"center",gap:8}}><XCircle size={16}/> Failed Tests ({fRes.length})</div>
+                   <RepoTable rows={fRes} accent="#FF4B4B" />
+                 </div>
                );
             })()}
 
@@ -1007,11 +1214,6 @@ export default function DynoPage() {
                 const failures = [];
                 let passed = true;
 
-                if (!(pDn <= bikePower && bikePower <= pUp)) {
-                  passed = false;
-                  failures.push(`Power=${bikePower.toFixed(1)}kW`);
-                }
-
                 const times = historicalTelemetry["Time (s)"] || [];
                 const nearestIndex = times.reduce((bestIdx, t, idx) => {
                   if (bestIdx === -1) return idx;
@@ -1019,12 +1221,6 @@ export default function DynoPage() {
                 }, -1);
 
                 ["IGBT", "Motor", "HighCell", "AFE"].forEach((ch) => {
-                  const dTime = testRow[`${ch}_Deration_Time`];
-                  if (dTime && String(dTime) !== "SAFE" && Number(dTime) < 120) {
-                    passed = false;
-                    failures.push(`Early Deration (${ch})`);
-                  }
-
                   const env = envelopes[ch];
                   let envRow = null;
                   if (env && env["Time (s)"]) {
@@ -1045,13 +1241,18 @@ export default function DynoPage() {
 
                   if (valDtdt > upDtdt) {
                     passed = false;
-                    failures.push(`${ch} dT/dt`);
+                    failures.push(`${ch} Rise Rate ${valDtdt.toFixed(3)} > ${upDtdt.toFixed(3)}°C/s`);
                   }
                   if (valDt > upDt) {
                     passed = false;
-                    failures.push(`${ch} ΔT`);
+                    failures.push(`${ch} Cumm Rise ${valDt.toFixed(2)} > ${upDt.toFixed(2)}°C`);
                   }
                 });
+
+                if (!(pDn <= bikePower && bikePower <= pUp)) {
+                  passed = false;
+                  failures.push(`Power ${bikePower.toFixed(1)}kW outside ${pDn.toFixed(1)}–${pUp.toFixed(1)}kW`);
+                }
 
                 if (String(testRow.Type || "").includes("Golden")) {
                   return {
@@ -1067,7 +1268,7 @@ export default function DynoPage() {
                 return {
                   icon: passed ? "✅" : "❌",
                   title: passed ? "PASS" : "FAIL",
-                  detail: passed ? "" : `Failed Rules: ${failures.join(", ")}`,
+                  detail: passed ? "" : `Failed Rules: ${failures[0]}`,
                   color: passed ? "#43B3AE" : "#FF4B4B",
                   background: passed ? "rgba(67,179,174,0.15)" : "rgba(255,75,75,0.15)",
                   borderLeft: passed ? "4px solid #43B3AE" : "4px solid #FF4B4B"
@@ -1118,15 +1319,15 @@ export default function DynoPage() {
                   <button onClick={() => setSelectedBike(null)} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "#43B3AE", cursor: "pointer", marginBottom: 16, fontWeight: 700 }}><ChevronLeft size={16} /> Back to Fleet</button>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}><h2 style={{ fontSize: 28, fontWeight: 900, color: "#FFF" }}>{selectedFleet.vin || "UNKNOWN_VIN"}</h2><span style={{ color: "var(--text-sub)", fontSize: 18 }}>| {selectedBike}</span></div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#FFF", marginBottom: 16 }}>Hardware Registry Details</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 30 }}>
-                    <div className="hw-box"><div className="hw-label">Tests Evaluated</div><div className="hw-value">{bikeTests.length}</div></div>
-                    <div className="hw-box"><div className="hw-label">Motor ID</div><div className="hw-value">{selectedFleet.motor_id || "N/A"}</div></div>
-                    <div className="hw-box"><div className="hw-label">Battery Box ID</div><div className="hw-value">{selectedFleet.battery_box_id || "N/A"}</div></div>
-                    <div className="hw-box"><div className="hw-label">Left Module ID</div><div className="hw-value">{selectedFleet.left_module_id || "N/A"}</div></div>
-                    <div className="hw-box"><div className="hw-label">Right Module ID</div><div className="hw-value">{selectedFleet.right_module_id || "N/A"}</div></div>
-                    <div className="hw-box"><div className="hw-label">BMS Firmware ID</div><div className="hw-value">{selectedFleet.bms_id || "N/A"}</div></div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 30 }}>
+                    <div className="hw-box" style={{ background: "rgba(67,179,174,0.05)", border: "1px solid rgba(67,179,174,0.15)" }}><div className="hw-label" style={{ color: "#43B3AE" }}>Tests Evaluated</div><div className="hw-value" style={{ color: "#fff" }}>{bikeTests.length}</div></div>
+                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Motor ID</div><div className="hw-value">{selectedFleet.motor_id || "N/A"}</div></div>
+                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Battery Box ID</div><div className="hw-value">{selectedFleet.battery_box_id || "N/A"}</div></div>
+                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Left Module ID</div><div className="hw-value">{selectedFleet.left_module_id || "N/A"}</div></div>
+                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Right Module ID</div><div className="hw-value">{selectedFleet.right_module_id || "N/A"}</div></div>
+                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">BMS Firmware ID</div><div className="hw-value">{selectedFleet.bms_id || "N/A"}</div></div>
                   </div>
-                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 20 }}>
+                  <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 30, position: "relative", zIndex: 10 }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: "#FFF", marginBottom: 16 }}>Historical Test Inspection</div>
                     
                     {bikeTests.length === 0 ? (
@@ -1162,31 +1363,7 @@ export default function DynoPage() {
               );
             })()}
 
-            {false && activeTab === "fleet_registry" && (
-              <div>
-                {!selectedBike ? (
-                  <div>
-                    <div style={{fontSize:16,fontWeight:800,color:"var(--text-main)",marginBottom:16}}>🏍️ Fleet Hardware Registry</div>
-                    <div style={{marginBottom:20}}><StreamlitMultiSelect value={searchBikes} onChange={setSearchBikes} options={["All Vehicles", ...Object.keys(fleetData)]} /></div>
-                    <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:16}}>{Object.keys(fleetData).filter(b => searchBikes.includes("All Vehicles") || searchBikes.includes(b)).map(bikeId => (
-                      <div key={bikeId} className="fleet-card" onClick={() => { setSelectedBike(bikeId); const bikeTests = summaries.filter(s => getBikeNo(s.Test_Name) === bikeId.split("-")[1].replace(/^0+/, "")); if (bikeTests.length > 0) setHistoricalTest(bikeTests[0].Test_Name); }}>
-                        <div className="fleet-icon"><Bike size={32} /></div><div className="fleet-vin">{fleetData[bikeId].vin || "UNKNOWN_VIN"}</div><div className="fleet-id">{bikeId} • {summaries.filter(s => getBikeNo(s.Test_Name) === bikeId.split("-")[1].replace(/^0+/, "")).length} Tests</div>
-                      </div>
-                    ))}</div>
-                  </div>
-                ) : (
-                  <div>
-                    <button onClick={() => setSelectedBike(null)} style={{display:"flex", alignItems:"center", gap:6, background:"transparent", border:"none", color:"#43B3AE", cursor:"pointer", marginBottom:16, fontWeight:700}}><ChevronLeft size={16} /> Back to Fleet</button>
-                    <div style={{display:"flex", alignItems:"baseline", gap:12, marginBottom:20}}><h2 style={{fontSize:28, fontWeight:900, color:"#FFF"}}>{fleetData[selectedBike]?.vin}</h2><span style={{color:"var(--text-sub)", fontSize:18}}>| {selectedBike}</span></div>
-                    <div style={{fontSize:16, fontWeight:800, color:"#FFF", display:"flex", alignItems:"center", gap:8, marginBottom:16}}>⚙️ Hardware Registry Details</div>
-                    <div style={{display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:16, marginBottom:30}}><div className="hw-box"><div className="hw-label">Tests Evaluated</div><div className="hw-value">{summaries.filter(s => getBikeNo(s.Test_Name) === selectedBike.split("-")[1].replace(/^0+/, "")).length}</div></div><div className="hw-box"><div className="hw-label">Motor ID</div><div className="hw-value">{fleetData[selectedBike]?.motor_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">Battery Box ID</div><div className="hw-value">{fleetData[selectedBike]?.battery_box_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">Left Module ID</div><div className="hw-value">{fleetData[selectedBike]?.left_module_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">Right Module ID</div><div className="hw-value">{fleetData[selectedBike]?.right_module_id || "N/A"}</div></div><div className="hw-box"><div className="hw-label">BMS Firmware ID</div><div className="hw-value">{fleetData[selectedBike]?.bms_id || "N/A"}</div></div></div>
-                    <div style={{borderTop:"1px solid rgba(255,255,255,0.1)", paddingTop:20}}><div style={{fontSize:18, fontWeight:800, color:"#FFF", marginBottom:16}}>🔍 Historical Test Inspection</div><div style={{maxWidth:400, marginBottom:20}}><StreamlitSelect value={historicalTest} onChange={setHistoricalTest} options={summaries.filter(s => getBikeNo(s.Test_Name) === selectedBike.split("-")[1].replace(/^0+/, "")).map(s => s.Test_Name)} /></div>
-                      {historicalTelemetry && <div className="metric-card" style={{padding:16}}><div style={{fontWeight:700, marginBottom:12}}>📈 Thermal Profile — {historicalTest}</div><Plot data={[{x: historicalTelemetry["Time (s)"], y: historicalTelemetry["HighCell_Temp"], name: "HighCell", line: {color: "#FF4B4B"}}, {x: historicalTelemetry["Time (s)"], y: historicalTelemetry["IGBT_Temp"], name: "IGBT", line: {color: "#43B3AE"}, yaxis: "y2"}, {x: historicalTelemetry["Time (s)"], y: historicalTelemetry["Motor_Temp"], name: "Motor", line: {color: "cyan"}, yaxis: "y2"}]} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: {color: "#A0A0AB", size: 10}, height: 450, margin: {t:20, b:40, l:40, r:40}, xaxis: {title: "Time (s)", showgrid: false}, yaxis: {title: "HighCell Temp (°C)"}, yaxis2: {title: "Powertrain Temp (°C)", overlaying: "y", side: "right", showgrid: false}, legend: {orientation: "h", y: 1.1} }} config={{responsive:true}} style={{width:"100%"}} /></div>}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+
             {activeTab === "data_engine" && (
           <div style={{ paddingBottom: 40 }}>
             <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 20, color: "#FFF" }}>Data Engine</h2>

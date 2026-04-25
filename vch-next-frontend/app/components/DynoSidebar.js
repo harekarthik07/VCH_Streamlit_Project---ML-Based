@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Zap, FolderOpen, Settings, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen, Home, Route } from "lucide-react";
+import { Zap, FolderOpen, Settings, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen, Home, Route, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function DynoSidebar({
@@ -20,6 +20,8 @@ export default function DynoSidebar({
   onRefresh,
   appMode,
   setAppMode,
+  activeTab,
+  setActiveTab,
 }) {
   const [missionOpen, setMissionOpen] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
@@ -197,18 +199,20 @@ export default function DynoSidebar({
             <Route size={16} /> Road Suite
           </button>
           <button
-            onClick={() => router.push("/data-engine")}
+            onClick={() => { setActiveTab("data_engine"); setAppMode("Monitor Dashboard"); }}
             style={{
               width: "100%", padding: "10px 12px", borderRadius: 10,
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-              color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+              background: activeTab === "data_engine" ? "rgba(67,179,174,0.15)" : "rgba(255,255,255,0.03)", 
+              border: `1px solid ${activeTab === "data_engine" ? "#43B3AE" : "rgba(255,255,255,0.08)"}`,
+              color: activeTab === "data_engine" ? "#FFF" : "#B4B4C0", 
+              fontSize: 13, fontWeight: 700, fontFamily: "inherit",
               cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 10,
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = activeTab === "data_engine" ? "rgba(67,179,174,0.15)" : "rgba(255,255,255,0.03)"; e.currentTarget.style.color = activeTab === "data_engine" ? "#FFF" : "#B4B4C0"; }}
           >
-            <RefreshCw size={16} /> Data Engine (Upload)
+            <UploadCloud size={16} /> Data Engine (Upload)
           </button>
         </div>
       )}

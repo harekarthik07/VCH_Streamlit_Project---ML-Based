@@ -374,7 +374,132 @@ def export_road_db():
         return {"error": "Road database not found"}
     return FileResponse(ROAD_DB, media_type="application/octet-stream", filename="raptee_rides.db")
 
-# (All other existing upload, process, and road routes from your original file go here...)
+# ====================================================================
+# 📊 QC EVALUATION ENDPOINT
+# ====================================================================
+
+CHANNEL_LIMITS = {"IGBT": 95, "Motor": 125, "HighCell": 50, "AFE": 50}
+GOLDEN_BIKES = ["2025_10_22-07-BK", "2025_10_09-14-BK", "2025_10_25-09-BK", "2025_10_20-15-BK", "2025_10_19-17-BK", "2025_10_25-04-BK"]
+
+@app.post("/api/dyno/qc_eval")
+def run_qc_eval(payload: dict):
+    """Run QC evaluation across all dyno tests and return pass/fail verdicts."""
+    time_s = int(payload.get("time_s", 120))
+    env_method = payload.get("env_method", "Tolerance (%)")
+    tolerance_pct = int(payload.get("tolerance_pct", 20))
+    target = payload.get("target", "All Data")
+    metric = payload.get("metric", "All Assessments")
+
+    if not db_bridge.DATABASE_URL and not os.path.exists(DYNO_DB):
+        return {"error": "Dyno database not found"}
+
+    try:
+        df = db_bridge.query_to_df("SELECT * FROM dyno_summaries", db_path=DYNO_DB)
+        if df.empty:
+            return []
+
+        # Load envelopes for each channel
+        envelopes = {}
+        for ch in ["IGBT", "Motor", "HighCell", "AFE"]:
+            try:
+                env_df = db_bridge.query_to_df(f'SELECT * FROM "envelope_{ch}"', db_path=DYNO_DB)
+                if not env_df.empty:
+                    envelopes[ch] = env_df
+            except Exception:
+                pass
+
+        # Compute golden power range
+        golden_powers = []
+        for _, row in df.iterrows():
+            if any(g in str(row.get("Test_Name", "")) for g in GOLDEN_BIKES):
+                p = float(row.get("Power_Avg_120s") or 0)
+                if 19 <= p <= 20.5:
+                    golden_powers.append(p)
+        mgp = sum(golden_powers) / len(golden_powers) if golden_powers else 19.5
+        pwr_upper, pwr_lower = mgp * 1.10, mgp * 0.90
+
+        results = []
+        for _, row in df.iterrows():
+            test_name = row.get("Test_Name", "")
+            is_golden = any(g in str(test_name) for g in GOLDEN_BIKES)
+            bike_power = float(row.get("Power_Avg_120s") or 0)
+
+            row_result = {
+                "Test Name": test_name,
+                "Type": row.get("Type", "Evaluation"),
+                "Power Rating (kW)": round(bike_power, 2),
+            }
+
+            # Add per-channel dT values
+            for ch in ["IGBT", "Motor", "HighCell", "AFE"]:
+                dt_key = f"{ch}_dT" if ch != "AFE" else "AFE_Mean_dT"
+                row_result[f"{ch}_dT"] = row.get(dt_key)
+
+            if is_golden:
+                row_result["Final Conclusion"] = "PASS (Golden Reference)"
+                results.append(row_result)
+                continue
+
+            failures = []
+
+            # Check envelope breach (rise rate + cumulative rise)
+            if metric != "Power Based":
+                for ch in ["IGBT", "Motor", "HighCell", "AFE"]:
+                    if target not in ["All Data", ch]:
+                        continue
+                    if ch not in envelopes:
+                        continue
+                    env_df = envelopes[ch]
+                    env_row = env_df[env_df["Time (s)"] == time_s]
+                    if env_row.empty:
+                        continue
+
+                    tol_key = f"_{tolerance_pct}Pct" if env_method == "Tolerance (%)" else "_2Sigma"
+                    up_dtdt_col = f"dTdt_Upper{tol_key}"
+                    up_dt_col = f"dT_Upper{tol_key}"
+
+                    ch_dtdt_col = f"{ch}_dTdt_Max"
+                    ch_dt_col = f"{ch}_dT_Max"
+
+                    val_dtdt = float(row.get(ch_dtdt_col) or 0)
+                    val_dt = float(row.get(ch_dt_col) or 0)
+                    up_dtdt = float(env_row[up_dtdt_col].values[0]) if up_dtdt_col in env_row else 999
+                    up_dt = float(env_row[up_dt_col].values[0]) if up_dt_col in env_row else 999
+
+                    if metric in ["All Assessments", "dT/dt"] and val_dtdt > up_dtdt:
+                        failures.append(f"{ch} Rise Rate {val_dtdt:.3f} > {up_dtdt:.3f}°C/s")
+                    if metric in ["All Assessments", "dT"] and val_dt > up_dt:
+                        failures.append(f"{ch} Cumm Rise {val_dt:.2f} > {up_dt:.2f}°C")
+
+            # Check power
+            if target in ["All Data", "Electrical Power"] and metric in ["All Assessments", "Power Based"]:
+                if not (pwr_lower <= bike_power <= pwr_upper):
+                    failures.append(f"Power {bike_power:.1f}kW outside {pwr_lower:.1f}–{pwr_upper:.1f}kW range")
+
+            if failures:
+                row_result["Final Conclusion"] = f"FAIL ({failures[0]})"
+            else:
+                row_result["Final Conclusion"] = "PASS"
+
+            results.append(row_result)
+
+        # Sanitize for JSON
+        clean = []
+        for r in results:
+            cr = {}
+            for k, v in r.items():
+                if v is None or (isinstance(v, float) and (math.isnan(v) or math.isinf(v))):
+                    cr[k] = None
+                else:
+                    cr[k] = v
+            clean.append(cr)
+        return clean
+
+    except Exception as e:
+        import traceback
+        logger.error(traceback.format_exc())
+        return {"error": str(e)}
+
 
 if __name__ == "__main__":
     import uvicorn

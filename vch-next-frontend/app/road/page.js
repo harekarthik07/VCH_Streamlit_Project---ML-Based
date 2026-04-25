@@ -5,7 +5,8 @@ import axios from "axios";
 import RoadSidebar from "../components/RoadSidebar";
 import {
   Thermometer, Zap, Activity, Gauge, Battery, Cpu, FolderOpen,
-  AlertTriangle, Bike, ChevronRight, Download, BarChart2, TrendingUp, Box, Repeat, UploadCloud, Database
+  AlertTriangle, Bike, ChevronRight, Download, BarChart2, TrendingUp, Box, Repeat, UploadCloud, Database,
+  User, MapPin, Route, Terminal, Lock, XCircle, File, Settings, Trash2
 } from "lucide-react";
 import StreamlitSelect from "../components/StreamlitSelect";
 import StreamlitMultiSelect from "../components/StreamlitMultiSelect";
@@ -62,6 +63,28 @@ export default function RoadSuitePage() {
   const [showSecondSandboxPlot, setShowSecondSandboxPlot] = useState(false);
   const [secondLeftYAxis, setSecondLeftYAxis] = useState(["Motor_Torque [Nm]"]);
   const [secondRightYAxis, setSecondRightYAxis] = useState(["Front_Speed [kph]"]);
+  
+  // Data Engine State
+  const [roadMeta, setRoadMeta] = useState({
+    rider: "System Test",
+    temp: "25",
+    location: "Chennai",
+    route: "Office Full Push"
+  });
+  const [roadFiles, setRoadFiles] = useState([]);
+  const [roadLogs, setRoadLogs] = useState("");
+  const [roadIsProcessing, setRoadIsProcessing] = useState(false);
+  const [roadPassword, setRoadPassword] = useState("");
+  const [roadDevUnlocked, setRoadDevUnlocked] = useState(false);
+  const [roadDelRide, setRoadDelRide] = useState("");
+  const [isHovering, setIsHovering] = useState(false);
+  
+  const roadLogRef = React.useRef(null);
+  const roadFileInputRef = React.useRef(null);
+
+  useEffect(() => {
+    if (roadLogRef.current) roadLogRef.current.scrollTop = roadLogRef.current.scrollHeight;
+  }, [roadLogs]);
 
   useEffect(() => {
     loadRides();
@@ -183,6 +206,80 @@ export default function RoadSuitePage() {
 
   const selectedRideData = rides.find(r => r.Ride_Name === selectedRide);
   const currentRouteType = getRouteType(selectedRide);
+
+  const appendRoadLog = (msg) => setRoadLogs(prev => prev + `> ${msg}\n`);
+
+  const handleFilesAdded = (fileList) => {
+    const newFiles = Array.from(fileList).filter(f => f.name.endsWith('.xlsx'));
+    setRoadFiles(prev => [...prev, ...newFiles]);
+    appendRoadLog(newFiles.length > 0 ? `Queued ${newFiles.length} file(s) for upload.` : `Error: Please upload .xlsx files only.`);
+  };
+
+  const uploadRoadFiles = async () => {
+    if (roadFiles.length === 0) return;
+    appendRoadLog(`Starting Road upload sequence for ${roadFiles.length} file(s)...`);
+    
+    for (const file of roadFiles) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("rider", roadMeta.rider);
+      formData.append("temp", roadMeta.temp);
+      formData.append("location", roadMeta.location);
+      formData.append("route", roadMeta.route);
+
+      try {
+        await axios.post(`${API}/api/road/upload`, formData, { headers: { "Content-Type": "multipart/form-data" } });
+        appendRoadLog(`✅ Uploaded: ${file.name}`);
+      } catch (e) { appendRoadLog(`❌ Failed to upload ${file.name}: ${e.message}`); }
+    }
+    setRoadFiles([]);
+    appendRoadLog(`Upload sequence complete.`);
+  };
+
+  const runRoadProcessing = async () => {
+    setRoadIsProcessing(true);
+    appendRoadLog(`--- Initiating Road Processing Engine ---`);
+    try {
+      const res = await axios.post(`${API}/api/road/process`);
+      if (res.data.logs) setRoadLogs(prev => prev + res.data.logs + "\n");
+      if (res.data.error) appendRoadLog(`[ERROR]: ${res.data.error}`);
+      else {
+        const count = res.data.result?.processed_count || 0;
+        appendRoadLog(`✅ Processing complete. Synchronized ${count} files.`);
+        loadRides(); // Refresh list
+      }
+    } catch (e) { appendRoadLog(`[FATAL]: Cannot connect to Engine Backend. (${e.message})`); }
+    setRoadIsProcessing(false);
+  };
+
+  const handleRoadReset = async () => {
+    if (confirm(`WARNING: This will wipe out the entire Road DB and processed files. Are you sure?`)) {
+      try {
+        await axios.post(`${API}/api/road/reset`);
+        appendRoadLog(`⚠️ FACTORY RESET COMPLETE. Road Database has been wiped.`);
+        loadRides();
+      } catch (e) { appendRoadLog(`Failed to reset DB: ${e.message}`); }
+    }
+  };
+
+  const handleRoadDeleteRide = async () => {
+    if (!roadDelRide) return;
+    if (!confirm(`Delete ride "${roadDelRide}" and all its processed data?`)) return;
+    try {
+      const res = await axios.post(`${API}/api/road/delete_ride`, { ride_name: roadDelRide });
+      appendRoadLog(res.data.message || res.data.error);
+      loadRides();
+    } catch (e) { appendRoadLog(`Failed: ${e.message}`); }
+  };
+
+  const handleRoadPasswordSubmit = () => {
+    if (roadPassword === "test@123") {
+      setRoadDevUnlocked(true);
+      appendRoadLog("🔓 Developer Mode Unlocked.");
+    } else {
+      appendRoadLog("❌ Invalid password.");
+    }
+  };
 
   const getThermalData = (channel) => {
     const map = THERMAL_MAP[channel];
@@ -1706,6 +1803,12 @@ export default function RoadSuitePage() {
                     marginBottom: 20,
                     boxShadow: "0 15px 45px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)"
                   }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                      <h4 style={{ margin: 0, color: "#43B3AE", fontSize: 14, fontWeight: 800 }}>PRIMARY PLOT AREA</h4>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <button onClick={() => setShowSecondSandboxPlot(!showSecondSandboxPlot)} style={{ background: showSecondSandboxPlot ? "rgba(255,75,75,0.15)" : "rgba(67,179,174,0.15)", border: "1px solid", borderColor: showSecondSandboxPlot ? "rgba(255,75,75,0.3)" : "rgba(67,179,174,0.3)", color: showSecondSandboxPlot ? "#FF4B4B" : "#43B3AE", padding: "6px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{showSecondSandboxPlot ? "REMOVE SECOND PLOT" : "ADD SECOND PLOT"}</button>
+                      </div>
+                    </div>
                     {plotterMode === "3d" ? (
                       <Plot
                         data={leftYAxis.flatMap((col, i) => {
@@ -1812,10 +1915,41 @@ export default function RoadSuitePage() {
                           fontSize: 12, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8
                         }}
                       >
-                        <Download size={16} /> Export Sandbox Data (CSV)
+                        <Download size={16} /> Export Primary Sandbox Data (CSV)
                       </button>
                     </div>
                   </div>
+
+                  {showSecondSandboxPlot && (
+                    <div className="fade-in" style={{ marginTop: 24 }}>
+                      <div className="sandbox-panel" style={{ background: "rgba(25,27,32,0.65)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,96,128,0.18)", borderRadius: 20, padding: 24, marginBottom: 20, boxShadow: "0 15px 45px rgba(0,0,0,0.3)" }}>
+                        <h4 style={{ color: "#FF6080", fontSize: 14, fontWeight: 800, marginBottom: 20 }}>SECONDARY PLOT AREA</h4>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 20 }}>
+                          <div>
+                            <label style={{ fontSize: 11, color: "#A0A0AB", fontWeight: 700, marginBottom: 8, display: "block" }}>X Axis 2</label>
+                            <select value={xAxis} onChange={(e) => setXAxis(e.target.value)} style={{ width: "100%", padding: "10px 12px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#fff", fontSize: 13, outline: "none" }}>{getNumericColumns().map(col => <option key={col} value={col}>{col}</option>)}</select>
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 11, color: "#FF6080", fontWeight: 700, marginBottom: 8, display: "block" }}>Left Y Axis 2</label>
+                            <StreamlitMultiSelect value={secondLeftYAxis} onChange={setSecondLeftYAxis} options={getNumericColumns()} placeholder="Select columns" />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 11, color: "#ab63fa", fontWeight: 700, marginBottom: 8, display: "block" }}>Right Y Axis 2</label>
+                            <StreamlitMultiSelect value={secondRightYAxis} onChange={setSecondRightYAxis} options={getNumericColumns()} placeholder="Select columns" />
+                          </div>
+                        </div>
+                        <Plot
+                          data={[
+                            ...secondLeftYAxis.map((col, i) => ({ x: getFilteredTimeData(xAxis), y: getFilteredTimeData(col), type: "scatter", mode: "lines", name: col, line: { color: ["#FF6080", "#ab63fa", "#00CC96", "#43B3AE"][i % 4], width: 2.5 }, yaxis: "y" })),
+                            ...secondRightYAxis.map((col, i) => ({ x: getFilteredTimeData(xAxis), y: getFilteredTimeData(col), type: "scatter", mode: "lines", name: col, line: { color: ["#FFA15A", "#CFFF60", "#fff", "#888"][i % 4], width: 2.5, dash: "dot" }, yaxis: "y2" }))
+                          ]}
+                          layout={{ autosize: true, height: 450, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#fff", family: "'Outfit', sans-serif" }, ...DARK_TOOLTIP, margin: { l: 70, r: 70, t: 30, b: 60 }, xaxis: { showgrid: true, gridcolor: "rgba(255,255,255,0.1)", title: { text: xAxis, font: { weight: 800 } } }, yaxis: { showgrid: true, gridcolor: "rgba(255,255,255,0.1)", title: { text: "Secondary L-Axis", font: { weight: 800 } } }, yaxis2: { overlaying: "y", side: "right", showgrid: false, title: { text: "Secondary R-Axis", font: { weight: 800 } } }, legend: { orientation: "h", y: -0.15, x: 0.5, xanchor: "center" }, hovermode: "x unified" }}
+                          config={{ displayModeBar: true, responsive: true }}
+                          style={{ width: "100%", height: 450 }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -2141,17 +2275,17 @@ export default function RoadSuitePage() {
                   textAlign: "center",
                   boxShadow: "0 15px 35px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)"
                 }}>
-                   <h3 style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 20 }}>Predicted Aggression Indice</h3>
+                   <h3 style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 20 }}>Predicted Aggression Index</h3>
                    <Plot
                     data={[{
                       type: "indicator",
                       mode: "gauge+number",
                       value: selectedRideData.Drive_Score || 0,
                       number: { font: { color: "#fff", size: 40, weight: 800 } },
-                      gauge: {
-                        axis: { range: [0, 100], tickwidth: 1, tickcolor: "#fff" },
-                        bar: { color: "rgba(255,255,255,0.1)" },
-                        bgcolor: "rgba(0,0,0,0.2)",
+                       gauge: {
+                        axis: { range: [0, 100], tickwidth: 1, tickcolor: "#fff", tickfont: { color: "#fff", size: 12, weight: 800 } },
+                        bar: { color: "rgba(255,255,255,0.2)" },
+                        bgcolor: "rgba(255,255,255,0.05)",
                         steps: [
                           { range: [0, 30], color: "#00CC96" },
                           { range: [30, 60], color: "#FFD700" },
@@ -2172,7 +2306,7 @@ export default function RoadSuitePage() {
                     config={{ displayModeBar: true }}
                     style={{ width: "100%", height: 320 }}
                   />
-                  <div style={{ color: "#888", fontSize: 13, fontWeight: 600, marginTop: 12 }}>ML Inference: RandomForest Classifier</div>
+                  <div style={{ color: "#fff", fontSize: 13, fontWeight: 800, marginTop: 12, letterSpacing: "0.5px" }}>ML Inference: RandomForest Classifier</div>
                 </div>
 
                 <div style={{ 
@@ -2205,8 +2339,8 @@ export default function RoadSuitePage() {
                       paper_bgcolor: "rgba(0,0,0,0)",
                       polar: {
                         bgcolor: "rgba(0,0,0,0.2)",
-                        radialaxis: { visible: true, range: [0, 100], tickfont: { size: 10, color: "#888" }, gridcolor: "rgba(255,255,255,0.1)" },
-                        angularaxis: { tickfont: { size: 11, color: "#fff", weight: 600 }, gridcolor: "rgba(255,255,255,0.1)" }
+                        radialaxis: { visible: true, range: [0, 100], tickfont: { size: 10, color: "#fff", weight: 700 }, gridcolor: "rgba(255,255,255,0.1)" },
+                        angularaxis: { tickfont: { size: 11, color: "#fff", weight: 700 }, gridcolor: "rgba(255,255,255,0.1)" }
                       },
                       margin: { t: 40, b: 40, l: 60, r: 60 }
                     }}
@@ -2347,37 +2481,65 @@ export default function RoadSuitePage() {
               </div>
               
               {rides.length > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
-                  {rides.slice(0, 10).map((ride, i) => (
-                    <div key={i} style={{ 
-                      padding: "16px 24px", 
-                      background: "rgba(255,255,255,0.02)", 
-                      border: "1px solid rgba(255,255,255,0.05)", 
-                      borderRadius: 16, 
-                      display: "flex", 
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      transition: "all 0.3s ease",
-                      cursor: "pointer",
-                      hover: { background: "rgba(255,255,255,0.05)" }
-                    }} className="repo-item">
-                      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(255,255,255,0.03)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#666" }}>
-                          {i + 1}
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 15, color: "#fff", fontWeight: 700 }}>{ride.Ride_Name}</div>
-                          <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>{ride.Rider || "System Test"} | {ride.Total_Distance_km?.toFixed(1) || 0} km | {new Date().toLocaleDateString()}</div>
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 11, textTransform: "uppercase", color: "#666", fontWeight: 700, marginBottom: 4 }}>Drive Score</div>
-                        <div style={{ fontSize: 20, fontWeight: 900, color: (ride.Drive_Score || 0) > 60 ? "#FF6080" : "#43B3AE" }}>{ride.Drive_Score || 0}</div>
-                      </div>
-                    </div>
-                  ))}
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 8px" }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "left", padding: "12px 24px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Ride Name</th>
+                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Dist (km)</th>
+                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Wh/km</th>
+                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>ML Score</th>
+                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Class</th>
+                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Motor Max</th>
+                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>IGBT Max</th>
+                        <th style={{ textAlign: "right", padding: "12px 24px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Pack Max</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rides.map((ride, i) => (
+                        <tr key={i} onClick={() => setSelectedRide(ride.Ride_Name)} style={{ background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "0.2s" }} className="repo-row-hover">
+                          <td style={{ padding: "16px 24px", borderRadius: "12px 0 0 12px", borderLeft: "2px solid rgba(255,255,255,0.05)" }}>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{ride.Ride_Name}</div>
+                            <div style={{ fontSize: 11, color: "#666", marginTop: 2 }}>{ride.Rider || "System Test"}</div>
+                          </td>
+                          <td style={{ textAlign: "center", padding: "16px", fontSize: 13, color: "#A0A0AB", fontWeight: 600 }}>{ride.Total_Distance_km?.toFixed(1) || 0}</td>
+                          <td style={{ textAlign: "center", padding: "16px", fontSize: 13, color: "#CFFF60", fontWeight: 700 }}>{ride.Overall_Wh_km?.toFixed(1) || 0}</td>
+                          <td style={{ textAlign: "center", padding: "16px" }}>
+                            <span style={{ padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 800, background: (ride.Drive_Score || 0) > 60 ? "rgba(255,96,128,0.1)" : "rgba(67,179,174,0.1)", color: (ride.Drive_Score || 0) > 60 ? "#FF6080" : "#43B3AE" }}>
+                              {ride.Drive_Score || 0}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: "center", padding: "16px", fontSize: 12, color: "#fff", fontWeight: 600 }}>{ride.Ride_Class || "N/A"}</td>
+                          <td style={{ textAlign: "center", padding: "16px", fontSize: 13, color: (ride.Max_Motor_Temp_C || 0) > 120 ? "#FF4B4B" : "#fff" }}>{ride.Max_Motor_Temp_C?.toFixed(1) || 0}°C</td>
+                          <td style={{ textAlign: "center", padding: "16px", fontSize: 13, color: (ride.Max_IGBT_Temp_C || 0) > 90 ? "#FF4B4B" : "#fff" }}>{ride.Max_IGBT_Temp_C?.toFixed(1) || 0}°C</td>
+                          <td style={{ textAlign: "right", padding: "16px 24px", borderRadius: "0 12px 12px 0", fontSize: 13, color: (ride.Max_Pack_Temp_C || 0) > 48 ? "#FF4B4B" : "#fff" }}>{ride.Max_Pack_Temp_C?.toFixed(1) || 0}°C</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
+              
+              <div style={{ marginTop: 32, display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => {
+                    const headers = ["Ride Name", "Distance (km)", "Wh/km", "ML Score", "Class", "Max Motor", "Max IGBT", "Max Pack"];
+                    const csv = [headers.join(","), ...rides.map(r => [r.Ride_Name, r.Total_Distance_km, r.Overall_Wh_km, r.Drive_Score, r.Ride_Class, r.Max_Motor_Temp_C, r.Max_IGBT_Temp_C, r.Max_Pack_Temp_C].join(","))].join("\n");
+                    const blob = new Blob([csv], { type: "text/csv" });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.setAttribute("hidden", "");
+                    a.setAttribute("href", url);
+                    a.setAttribute("download", "Road_Test_Master_Repository.csv");
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  style={{ padding: "12px 24px", background: "rgba(239,85,59,0.15)", border: "1px solid rgba(239,85,59,0.3)", borderRadius: 12, color: "#EF553B", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <Download size={16} /> Export Master Repository (CSV)
+                </button>
+              </div>
             </div>
           )}
 
@@ -2406,72 +2568,199 @@ export default function RoadSuitePage() {
 
               {/* Info Banner */}
               <div style={{ background: "rgba(55,140,255,0.08)", border: "1px solid rgba(55,140,255,0.25)", padding: "16px 20px", borderRadius: 12, marginBottom: 32, fontSize: 13, color: "#A0C8FF", lineHeight: 1.6 }}>
-                <b>ℹ️ How Road Data is Ingested:</b> Road ride logs (CAN bus / Excel) are processed through the Python backend pipeline
-                (<code style={{ background: "rgba(255,255,255,0.08)", padding: "2px 6px", borderRadius: 4 }}>road_backend/db_manager.py</code>).
-                Run the Streamlit Road Suite or the CLI processor to import new rides into the database.
-                Once processed, rides appear automatically in the Mission Control selector above.
+                <b>ℹ️ Road Data Pipeline:</b> Upload raw CAN/Excel logs, enrich with rider metadata, and run the processing engine to index rides into Mission Control.
               </div>
 
-              {/* Database Actions */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 36 }}>
-                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 24 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <Database size={20} color="#43B3AE" />
-                    <span style={{ fontWeight: 800, fontSize: 15, color: "#fff" }}>Export Road Database</span>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, marginBottom: 40 }}>
+                {/* Section 1: Upload */}
+                <div>
+                  <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+                    <span style={{ background: "#55AAFF", color: "#000", width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold" }}>1</span>
+                    Upload Raw Road Data
+                  </h3>
+
+                  {/* Metadata Form */}
+                  <div style={{ background: "rgba(255,255,255,0.03)", padding: 24, borderRadius: 16, border: "1px solid rgba(255,255,255,0.06)", marginBottom: 24 }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: "#43B3AE", textTransform: "uppercase", marginBottom: 20, letterSpacing: 1.5, display: "flex", alignItems: "center", gap: 8 }}>
+                       <Activity size={14} /> Ride Metadata Enrichment
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                      <div>
+                        <label style={{ fontSize: 11, color: "#888", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}><User size={12}/> Rider Name</label>
+                        <input value={roadMeta.rider} onChange={e => setRoadMeta({...roadMeta, rider: e.target.value})} style={{ width: "100%", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 13 }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, color: "#888", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}><Thermometer size={12}/> Ambient (°C)</label>
+                        <input type="number" value={roadMeta.temp} onChange={e => setRoadMeta({...roadMeta, temp: e.target.value})} style={{ width: "100%", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 13 }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, color: "#888", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}><MapPin size={12}/> Location</label>
+                        <input value={roadMeta.location} onChange={e => setRoadMeta({...roadMeta, location: e.target.value})} style={{ width: "100%", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 13 }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 11, color: "#888", display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}><Route size={12}/> Route Tag</label>
+                        <select value={roadMeta.route} onChange={e => setRoadMeta({...roadMeta, route: e.target.value})} style={{ width: "100%", background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "10px 12px", color: "#fff", fontSize: 13, appearance: "none" }}>
+                          <option>Office Full Push</option>
+                          <option>Road Full Push</option>
+                          <option>Highway Sprint</option>
+                          <option>City Traffic</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                  <p style={{ fontSize: 13, color: "#A0A0AB", marginBottom: 16, lineHeight: 1.5 }}>
-                    Download the full <code style={{ color: "#43B3AE" }}>raptee_rides.db</code> SQLite file containing all processed ride summaries and metadata.
-                  </p>
-                  <a
-                    href={`${API}/api/road/export_db`}
-                    download="raptee_rides.db"
-                    style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "12px 20px", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", border: "none", borderRadius: 8, cursor: "pointer", color: "#000", fontSize: 14, fontWeight: 800, textDecoration: "none" }}
+
+                  {/* Dropzone */}
+                  <div 
+                    onDragOver={(e) => { e.preventDefault(); setIsHovering(true); }} 
+                    onDragLeave={() => setIsHovering(false)} 
+                    onDrop={(e) => { e.preventDefault(); setIsHovering(false); handleFilesAdded(e.dataTransfer.files); }}
+                    style={{ 
+                      border: isHovering ? "2px dashed #43B3AE" : "1px dashed rgba(255,255,255,0.15)", 
+                      background: isHovering ? "rgba(67,179,174,0.05)" : "rgba(255,255,255,0.02)", 
+                      borderRadius: 16, padding: "40px 24px", textAlign: "center", transition: "all 0.3s ease" 
+                    }}
                   >
-                    <Download size={16} /> Download Road SQLite DB
-                  </a>
+                    <UploadCloud size={40} color={isHovering ? "#43B3AE" : "#666"} style={{ marginBottom: 16, opacity: 0.8 }} />
+                    <div style={{ color: "#fff", fontWeight: 700, fontSize: 16, marginBottom: 8 }}>Drag and drop ride logs here</div>
+                    <div style={{ color: "#666", fontSize: 12, marginBottom: 20 }}>Support for .xlsx telemetry files (Max 200MB)</div>
+                    <button onClick={() => roadFileInputRef.current?.click()} style={{ padding: "10px 24px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", borderRadius: 10, cursor: "pointer", fontSize: 13, fontWeight: 700 }}>Browse Files</button>
+                    <input type="file" multiple accept=".xlsx" ref={roadFileInputRef} style={{ display: "none" }} onChange={(e) => handleFilesAdded(e.target.files)} />
+                  </div>
+
+                  {roadFiles.length > 0 && (
+                    <div style={{ marginTop: 24, animation: "fadeIn 0.3s ease" }}>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                        <File size={14} color="#55AAFF" /> {roadFiles.length} File(s) Queued
+                      </div>
+                      <div style={{ maxHeight: 150, overflowY: "auto", marginBottom: 16 }}>
+                        {roadFiles.map((f, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.04)", padding: "8px 12px", borderRadius: 8, marginBottom: 6, fontSize: 12, color: "#A0A0AB" }}>
+                            {f.name}
+                          </div>
+                        ))}
+                      </div>
+                      <button onClick={uploadRoadFiles} style={{ width: "100%", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", color: "#000", border: "none", padding: "14px", borderRadius: 12, fontWeight: 900, cursor: "pointer", fontSize: 14, boxShadow: "0 10px 20px rgba(67,179,174,0.2)" }}>
+                        Confirm Upload to Road Suite
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 24 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-                    <Activity size={20} color="#ab63fa" />
-                    <span style={{ fontWeight: 800, fontSize: 15, color: "#fff" }}>Database Status</span>
+                {/* Section 2: Controls & Logs */}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 8, marginBottom: 24 }}>
+                    <span style={{ background: "#55AAFF", color: "#000", width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold" }}>2</span>
+                    Engine Controls
+                  </h3>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16, marginBottom: 32 }}>
+                    <button 
+                      onClick={runRoadProcessing} 
+                      disabled={roadIsProcessing}
+                      style={{ 
+                        padding: "16px 24px", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", 
+                        color: "#000", border: "none", borderRadius: 12, fontWeight: 900, fontSize: 15, 
+                        cursor: roadIsProcessing ? "not-allowed" : "pointer", opacity: roadIsProcessing ? 0.7 : 1,
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                        boxShadow: "0 10px 25px rgba(67,179,174,0.25)" 
+                      }}
+                    >
+                      {roadIsProcessing ? <div className="spinner"></div> : <Settings size={20} />}
+                      {roadIsProcessing ? "Processing Pipeline..." : "⚙️ Run Road Processing Engine"}
+                    </button>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <a 
+                        href={`${API}/api/road/export_db`} 
+                        download="raptee_rides.db" 
+                        style={{ 
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "14px", 
+                          background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", 
+                          borderRadius: 10, cursor: "pointer", color: "#fff", fontSize: 13, fontWeight: 700, 
+                          textDecoration: "none" 
+                        }}
+                      >
+                        <Download size={16} /> Export SQLite DB
+                      </a>
+                      <button 
+                        onClick={handleRoadReset}
+                        style={{ 
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "14px", 
+                          background: "rgba(255,75,75,0.05)", border: "1px solid rgba(255,75,75,0.2)", 
+                          borderRadius: 10, cursor: "pointer", color: "#FF4B4B", fontSize: 13, fontWeight: 700 
+                        }}
+                      >
+                        <Trash2 size={16} /> Factory Reset
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: "grid", gap: 10 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
-                      <span style={{ fontSize: 13, color: "#A0A0AB" }}>Total Rides Indexed</span>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: "#43B3AE" }}>{rides.length}</span>
+
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: "#FFA15A", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                      <Terminal size={16} /> System Processing Logs
                     </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
-                      <span style={{ fontSize: 13, color: "#A0A0AB" }}>Active Ride Loaded</span>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: selectedRide ? "#43B3AE" : "#A0A0AB" }}>
-                        {selectedRide ? selectedRide.slice(0, 20) + "..." : "None"}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
-                      <span style={{ fontSize: 13, color: "#A0A0AB" }}>DB Engine</span>
-                      <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>SQLite3 + Parquet</span>
+                    <div 
+                      ref={roadLogRef}
+                      style={{ 
+                        flex: 1, minHeight: 250, background: "#0E0E11", border: "1px solid rgba(255,255,255,0.1)", 
+                        borderRadius: 16, padding: "20px", fontFamily: "'Fira Code', monospace", fontSize: 12, 
+                        color: "#43B3AE", whiteSpace: "pre-wrap", overflowY: "auto",
+                        boxShadow: "inset 0 10px 30px rgba(0,0,0,0.5)" 
+                      }}
+                    >
+                      {roadLogs || "> Ready for input..."}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Pipeline Info */}
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 28 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 16 }}>Processing Pipeline</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-                  {[
-                    { step: "1", label: "Raw CAN / Excel", desc: "Input telemetry file from vehicle", color: "#55AAFF" },
-                    { step: "2", label: "Python Backend", desc: "thermal_ride.py processes & scores", color: "#43B3AE" },
-                    { step: "3", label: "Parquet Archive", desc: "Compressed time-series stored", color: "#ab63fa" },
-                    { step: "4", label: "SQLite Index", desc: "Summary row added to DB", color: "#FFD700" },
-                  ].map(({ step, label, desc, color }) => (
-                    <div key={step} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${color}22`, borderRadius: 12, padding: 16, textAlign: "center" }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}22`, border: `1px solid ${color}44`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 14, fontWeight: 900, color }}>{step}</div>
-                      <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginBottom: 4 }}>{label}</div>
-                      <div style={{ fontSize: 11, color: "#A0A0AB" }}>{desc}</div>
+              {/* Section 3: Developer Tools */}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 40 }}>
+                <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+                  <Lock size={20} color="#FF4B4B" /> Developer Access: Road Test Management
+                </h3>
+                
+                {!roadDevUnlocked ? (
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <input 
+                      type="password" value={roadPassword} onChange={(e) => setRoadPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleRoadPasswordSubmit()}
+                      placeholder="Enter Developer Password"
+                      style={{ flex: 1, maxWidth: 400, padding: "14px 20px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "#FFF", fontSize: 14, outline: "none" }} />
+                    <button onClick={handleRoadPasswordSubmit} style={{ padding: "14px 28px", background: "rgba(255,75,75,0.15)", border: "1px solid rgba(255,75,75,0.3)", color: "#FF4B4B", borderRadius: 12, cursor: "pointer", fontWeight: 800, fontSize: 14 }}>
+                      Unlock Tools
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ animation: "fadeIn 0.4s ease" }}>
+                    <div style={{ background: "rgba(67,179,174,0.08)", border: "1px solid rgba(67,179,174,0.2)", padding: "12px 20px", borderRadius: 10, color: "#43B3AE", fontSize: 13, fontWeight: 700, marginBottom: 32, display: "inline-flex", alignItems: "center", gap: 10 }}>
+                      <Activity size={16} /> Developer Mode Unlocked: Advanced Test Manipulation Enabled
                     </div>
-                  ))}
-                </div>
+                    
+                    <div style={{ maxWidth: 600 }}>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
+                        <XCircle size={18} color="#FF4B4B" /> Purge Specific Ride Data
+                      </div>
+                      <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>Permanently remove a processed ride from the SQLite index and archive.</p>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <div style={{ flex: 1 }}>
+                          <StreamlitSelect 
+                            value={roadDelRide} 
+                            onChange={setRoadDelRide} 
+                            options={rides.map(r => r.Ride_Name)} 
+                            placeholder="Select ride to purge..." 
+                          />
+                        </div>
+                        <button 
+                          onClick={handleRoadDeleteRide}
+                          style={{ padding: "10px 24px", background: "rgba(255,75,75,0.15)", border: "1px solid rgba(255,75,75,0.3)", color: "#FF4B4B", borderRadius: 10, cursor: "pointer", fontWeight: 800, fontSize: 13 }}
+                        >
+                          Purge Data
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

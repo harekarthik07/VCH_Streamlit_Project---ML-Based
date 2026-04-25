@@ -5,9 +5,11 @@ import pandas as pd
 from thermal_ride import ThermalRide 
 
 class DatabaseManager:
-    def __init__(self, db_name="raptee_rides.db", processed_folder="Processed_Rides"):
-        self.db_name = db_name
-        self.processed_folder = processed_folder
+    def __init__(self, db_name=None, processed_folder=None):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.db_name = db_name or os.path.join(base_dir, "raptee_rides.db")
+        self.processed_folder = processed_folder or os.path.join(base_dir, "Processed_Rides")
+        
         if not os.path.exists(self.processed_folder): os.makedirs(self.processed_folder)
         self._initialize_db()
 
@@ -24,7 +26,8 @@ class DatabaseManager:
                 Rider TEXT, Ambient_Temp_C REAL, Location TEXT, Bike_ID TEXT,
                 Avg_Torque_Nm REAL, Peak_Torque_Bursts INTEGER, Accel_Freq INTEGER, 
                 Speed_Osc_Index REAL, Pct_Sprint REAL, Torque_Burst_Idx REAL, 
-                Drive_Score REAL, Ride_Class TEXT
+                Drive_Score REAL, Ride_Class TEXT,
+                Penalty_Throttle REAL, Penalty_Velocity REAL, Penalty_Regen REAL, Penalty_Brake REAL, Brake_Switch_Count INTEGER
             )
         ''', db_path=self.db_name)
         
@@ -60,7 +63,7 @@ class DatabaseManager:
                 
                 db_bridge.execute_sql('''
                     INSERT INTO ride_summaries VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
                 ''', params=(
                     file_name, k['Total_Distance_km'], k['Total_Energy_Wh'], k['Overall_Wh_km'],
@@ -71,7 +74,9 @@ class DatabaseManager:
                     k['High_Torque_Time_sec'], processed_csv_path,
                     metadata["rider"], metadata["temp"], metadata["loc"], bike_id,
                     k['Avg_Torque_Nm'], k['Peak_Torque_Bursts'], k['Accel_Freq'], k['Speed_Osc_Index'], 
-                    k['Pct_Sprint'], k['Torque_Burst_Idx'], k['Drive_Score'], k['Ride_Class']
+                    k['Pct_Sprint'], k['Torque_Burst_Idx'], k['Drive_Score'], k['Ride_Class'],
+                    k.get('Penalty_Throttle', 0), k.get('Penalty_Velocity', 0), k.get('Penalty_Regen', 0), 
+                    k.get('Penalty_Brake', 0), k.get('Brake_Switch_Count', 0)
                 ), db_path=self.db_name)
                 
                 for ev in ride.ride_events:

@@ -139,18 +139,20 @@ export default function RoadSidebar({
               <Home size={16} /> Dyno VCH Suite
             </button>
             <button
-              onClick={() => router.push("/data-engine")}
+              onClick={() => setActiveChannel("data_engine")}
               style={{
                 width: "100%", padding: "10px 12px", borderRadius: 10,
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+                background: activeChannel === "data_engine" ? "rgba(67,179,174,0.15)" : "rgba(255,255,255,0.03)", 
+                border: `1px solid ${activeChannel === "data_engine" ? "#43B3AE" : "rgba(255,255,255,0.08)"}`,
+                color: activeChannel === "data_engine" ? "#FFF" : "#B4B4C0", 
+                fontSize: 13, fontWeight: 700, fontFamily: "inherit",
                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 10,
                 transition: "all 0.2s ease",
               }}
               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = activeChannel === "data_engine" ? "rgba(67,179,174,0.15)" : "rgba(255,255,255,0.03)"; e.currentTarget.style.color = activeChannel === "data_engine" ? "#FFF" : "#B4B4C0"; }}
             >
-              <Activity size={16} /> Data Engine (Upload)
+              <UploadCloud size={16} /> Data Engine (Upload)
             </button>
           </div>
         )}

@@ -243,7 +243,12 @@ class ThermalRide:
         spd_osc = df['Accel [kph/s]'].std()
 
         feature_vector = [float(avg_torque), float(accel_freq_per_min), float(pct_sprint), float(overall_wh_km), float(spd_osc)]
-        drive_score = float(ml_engine.predict_score(feature_vector))
+        
+        # Calculate MATLAB-style penalties from raw telemetry
+        penalty_dict = ml_engine.calculate_penalties(df)
+        
+        # Hybrid score: ML base adjusted by penalties
+        drive_score = float(ml_engine.predict_score(feature_vector, penalty_dict))
 
         if drive_score <= 30: ride_class = "Efficient"
         elif drive_score <= 60: ride_class = "Road Mixed"
@@ -275,7 +280,12 @@ class ThermalRide:
             "Speed_Osc_Index": float(round(spd_osc, 2)), 
             "Torque_Burst_Idx": float(round(torque_burst_idx, 1)),
             "Drive_Score": float(drive_score), 
-            "Ride_Class": str(ride_class)
+            "Ride_Class": str(ride_class),
+            "Penalty_Throttle": penalty_dict.get("p_thr_max", 0),
+            "Penalty_Velocity": penalty_dict.get("p_v_max", 0),
+            "Penalty_Regen": penalty_dict.get("p_rgn_max", 0),
+            "Penalty_Brake": penalty_dict.get("p_bs_max", 0),
+            "Brake_Switch_Count": penalty_dict.get("bs_count", 0)
         }
         
         events = []
