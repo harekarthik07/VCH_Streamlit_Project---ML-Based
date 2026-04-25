@@ -6,7 +6,7 @@ import Image from "next/image";
 import DynoSidebar from "../components/DynoSidebar";
 import StreamlitSelect from "../components/StreamlitSelect";
 import StreamlitMultiSelect from "../components/StreamlitMultiSelect";
-import { Download, Zap, TrendingUp, Box, BatteryCharging, HeartPulse, ClipboardList, Gauge, Bike, ChevronLeft, Activity, Info, XCircle } from "lucide-react";
+import { Download, Zap, TrendingUp, Box, BatteryCharging, HeartPulse, ClipboardList, Gauge, Bike, ChevronLeft, Activity, Info, XCircle, UploadCloud, File, Trash2, Terminal, Lock, Star } from "lucide-react";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -72,7 +72,8 @@ const TABS = [
   { id: "power_analysis", label: "Power Analysis", icon: <BatteryCharging size={14} color="#CFFF60"/> },
   { id: "battery_health", label: "Battery Health", icon: <HeartPulse size={14} color="#FF6080"/> },
   { id: "test_repository", label: "Test Repository", icon: <ClipboardList size={14} color="#FFA15A"/> },
-  { id: "fleet_registry", label: "Fleet Registry", icon: <Gauge size={14} color="#EF553B"/> }
+  { id: "fleet_registry", label: "Fleet Registry", icon: <Gauge size={14} color="#EF553B"/> },
+  { id: "data_engine", label: "Data Engine", icon: <UploadCloud size={14} color="#55AAFF"/> }
 ];
 
 export default function DynoPage() {
@@ -116,6 +117,102 @@ export default function DynoPage() {
   const [historicalTest, setHistoricalTest] = useState("");
   const [historicalTelemetry, setHistoricalTelemetry] = useState(null);
   const [loadingHistorical, setLoadingHistorical] = useState(false);
+
+  // Data Engine state
+  const GOLDEN_BIKES_STR = "2025_10_22-07-BK, 2025_10_09-14-BK, 2025_10_25-09-BK (Nw-BB), 2025_10_20-15-BK, 2025_10_19-17-BK, 2025_10_25-04-BK (Nw-BB)";
+  const [deUploadMode, setDeUploadMode] = useState("Evaluation (Test)");
+  const [deIsHovering, setDeIsHovering] = useState(false);
+  const [deFiles, setDeFiles] = useState([]);
+  const [deLogs, setDeLogs] = useState("");
+  const [deIsProcessing, setDeIsProcessing] = useState(false);
+  const [dePassword, setDePassword] = useState("");
+  const [deDevUnlocked, setDeDevUnlocked] = useState(false);
+  const [deProcessedTests, setDeProcessedTests] = useState([]);
+  const [deDelTest, setDeDelTest] = useState("");
+  const [dePromoTest, setDePromoTest] = useState("");
+  const deFileInputRef = useRef(null);
+  const deLogRef = useRef(null);
+
+  useEffect(() => { if (deLogRef.current) deLogRef.current.scrollTop = deLogRef.current.scrollHeight; }, [deLogs]);
+
+  const deLoadProcessedTests = async () => {
+    try {
+      const res = await axios.get(`${API}/api/dyno/processed_tests`);
+      const tests = Array.isArray(res.data) ? res.data : [];
+      setDeProcessedTests(tests);
+      if (tests.length > 0) { setDeDelTest(tests[0].Test_Name); setDePromoTest(tests[0].Test_Name); }
+    } catch (e) {}
+  };
+  useEffect(() => { if (deDevUnlocked) deLoadProcessedTests(); }, [deDevUnlocked]);
+
+  const deAppendLog = (msg) => setDeLogs(prev => prev + `> ${msg}\n`);
+
+  const deUploadFiles = async () => {
+    if (deFiles.length === 0) return;
+    deAppendLog(`Starting upload sequence for ${deFiles.length} file(s)...`);
+    for (const file of deFiles) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("mode", deUploadMode);
+      try {
+        await axios.post(`${API}/api/dyno/upload`, formData, { headers: { "Content-Type": "multipart/form-data" } });
+        deAppendLog(`✅ Uploaded: ${file.name}`);
+      } catch (e) { deAppendLog(`❌ Failed: ${file.name}: ${e.message}`); }
+    }
+    setDeFiles([]);
+    deAppendLog("Upload sequence complete.");
+  };
+
+  const deRunProcessing = async () => {
+    setDeIsProcessing(true);
+    deAppendLog("--- Initiating Core Processing Engine ---");
+    try {
+      const res = await axios.post(`${API}/api/dyno/process`);
+      if (res.data.logs) setDeLogs(prev => prev + res.data.logs + "\n");
+      if (res.data.error) deAppendLog(`[ERROR]: ${res.data.error}`);
+      else deAppendLog(`✅ Processing complete. Synchronized ${res.data.result?.Processed || 0} files.`);
+    } catch (e) { deAppendLog(`[FATAL]: Cannot connect to Engine Backend. (${e.message})`); }
+    setDeIsProcessing(false);
+  };
+
+  const deHandleReset = async () => {
+    if (confirm("WARNING: This will wipe out the entire DB and processed files. Are you sure?")) {
+      try {
+        await axios.post(`${API}/api/dyno/reset`);
+        deAppendLog("⚠️ FACTORY RESET COMPLETE. Database has been wiped.");
+        setDeProcessedTests([]);
+      } catch (e) { deAppendLog(`Failed to reset DB: ${e.message}`); }
+    }
+  };
+
+  const deHandleDeleteTest = async () => {
+    if (!deDelTest) return;
+    if (!confirm(`Delete test "${deDelTest}" and all its processed data?`)) return;
+    try {
+      const res = await axios.post(`${API}/api/dyno/delete_test`, { test_name: deDelTest });
+      deAppendLog(res.data.message || res.data.error);
+      deLoadProcessedTests();
+    } catch (e) { deAppendLog(`Failed: ${e.message}`); }
+  };
+
+  const deHandlePromoteTest = async () => {
+    if (!dePromoTest) return;
+    try {
+      const res = await axios.post(`${API}/api/dyno/promote_test`, { test_name: dePromoTest });
+      deAppendLog(res.data.message || res.data.error);
+    } catch (e) { deAppendLog(`Failed: ${e.message}`); }
+  };
+
+  const deHandlePasswordSubmit = () => {
+    if (dePassword === "test@123") { setDeDevUnlocked(true); deAppendLog("🔓 Developer Mode Unlocked."); }
+    else deAppendLog("❌ Invalid password.");
+  };
+
+  const deHandleFilesAdded = (fileList) => {
+    const newFiles = Array.from(fileList).filter(f => f.name.endsWith('.xlsx'));
+    setDeFiles(prev => [...prev, ...newFiles]);
+    deAppendLog(newFiles.length > 0 ? `Queued ${newFiles.length} file(s) for ${deUploadMode}.` : "Error: .xlsx files only.");
+  };
 
   const loadData = () => {
     setLoading(true);
@@ -1090,9 +1187,147 @@ export default function DynoPage() {
                 )}
               </div>
             )}
+            {activeTab === "data_engine" && (
+          <div style={{ paddingBottom: 40 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 900, marginBottom: 20, color: "#FFF" }}>Data Engine</h2>
+
+            <div style={{ background: "rgba(55,140,255,0.1)", border: "1px solid rgba(55,140,255,0.3)", padding: "12px 16px", borderRadius: 8, marginBottom: 30, fontSize: 13, color: "#A0C8FF", display: "flex", alignItems: "center", gap: 10 }}>
+              💡 <b>Active Golden Standard:</b> The Engine uses these bikes to build the Statistical Envelope: {GOLDEN_BIKES_STR}.
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40, marginBottom: 30 }}>
+              {/* Upload */}
+              <div>
+                <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                  <span style={{ background: "#55AAFF", color: "#000", width: 24, height: 24, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold" }}>1</span>
+                  Upload Raw Data
+                </h3>
+                <div style={{ fontSize: 13, color: "var(--text-sub)", marginBottom: 12 }}>Select Test Type</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                  {["Evaluation (Test)", "Baseline (Calibration)"].map(mode => (
+                    <label key={mode} style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff", cursor: "pointer", fontSize: 14 }}>
+                      <input type="radio" name="deUploadMode" checked={deUploadMode === mode} onChange={() => setDeUploadMode(mode)} style={{ accentColor: "#43B3AE" }} />
+                      {mode}
+                    </label>
+                  ))}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--text-sub)", marginBottom: 8 }}>Drop .xlsx file(s) here</div>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDeIsHovering(true); }}
+                  onDragLeave={() => setDeIsHovering(false)}
+                  onDrop={(e) => { e.preventDefault(); setDeIsHovering(false); deHandleFilesAdded(e.dataTransfer.files); }}
+                  style={{ border: deIsHovering ? "2px dashed #43B3AE" : "1px dashed rgba(255,255,255,0.2)", background: deIsHovering ? "rgba(67,179,174,0.05)" : "var(--card-bg)", borderRadius: 12, padding: "30px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s" }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
+                    <UploadCloud size={30} color={deIsHovering ? "#43B3AE" : "var(--text-title)"} />
+                    <div>
+                      <div style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>Drag and drop files here</div>
+                      <div style={{ color: "var(--text-sub)", fontSize: 12 }}>Limit 200MB per file • XLSX</div>
+                    </div>
+                  </div>
+                  <button onClick={() => deFileInputRef.current?.click()} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 16px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>Browse files</button>
+                  <input type="file" multiple accept=".xlsx" ref={deFileInputRef} style={{ display: "none" }} onChange={(e) => deHandleFilesAdded(e.target.files)} />
+                </div>
+                {deFiles.length > 0 && (
+                  <div style={{ marginTop: 15 }}>
+                    {deFiles.map((f, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.05)", padding: "6px 12px", borderRadius: 6, marginBottom: 8, fontSize: 13, color: "#fff" }}>
+                        <File size={14} color="#55AAFF" /> {f.name}
+                      </div>
+                    ))}
+                    <button onClick={deUploadFiles} style={{ width: "100%", background: "#43B3AE", color: "#000", border: "none", padding: "10px", borderRadius: 6, fontWeight: "bold", cursor: "pointer", marginTop: 10 }}>
+                      Confirm Upload
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Engine Controls & Logs */}
+              <div>
+                <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+                  <span style={{ background: "#55AAFF", color: "#000", width: 24, height: 24, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold" }}>2</span>
+                  Engine Controls
+                </h3>
+                <button onClick={deRunProcessing} disabled={deIsProcessing}
+                  style={{ width: "50%", padding: "12px 20px", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", color: "#000", border: "none", borderRadius: 8, fontWeight: 900, fontSize: 14, cursor: deIsProcessing ? "not-allowed" : "pointer", opacity: deIsProcessing ? 0.7 : 1, boxShadow: "0 8px 20px rgba(67,179,174,0.3)" }}>
+                  {deIsProcessing ? "Processing..." : "⚙️ Run Processing & DB Sync"}
+                </button>
+                <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 20 }}>
+                  <a href={`${API}/api/dyno/export_db`} download="raptee_dyno.db" style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", border: "none", borderRadius: 8, cursor: "pointer", color: "#000", fontSize: 14, fontWeight: 800, textDecoration: "none", marginBottom: 12 }}>
+                    <Download size={16} /> Download Master SQLite DB
+                  </a>
+                  <div onClick={deHandleReset} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px", background: "var(--card-bg)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: 8, cursor: "pointer", color: "var(--text-sub)", fontSize: 14, transition: "0.2s" }}
+                    onMouseEnter={(e) => e.currentTarget.style.border = "1px solid #FF4B4B"}
+                    onMouseLeave={(e) => e.currentTarget.style.border = "1px solid rgba(255,255,255,0.05)"}>
+                    <Trash2 size={16} /> <b>Factory Reset Database</b>
+                  </div>
+                </div>
+                <div style={{ marginTop: 40 }}>
+                  <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 8, marginBottom: 15 }}>
+                    <Terminal size={20} color="#FFA15A" /> System Processing Logs
+                  </h3>
+                  <div style={{ fontSize: 12, color: "var(--text-sub)", marginBottom: 8 }}>Live Terminal Output:</div>
+                  <div ref={deLogRef} style={{ background: "#0E0E11", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "16px", height: 200, overflowY: "auto", fontFamily: "monospace", fontSize: 13, color: "#43B3AE", whiteSpace: "pre-wrap", boxShadow: "inset 0 4px 20px rgba(0,0,0,0.5)" }}>
+                    {deLogs || "Waiting for operations..."}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Developer Access */}
+            <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 30 }}>
+              <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 8, marginBottom: 15 }}>
+                <Lock size={20} color="#FF4B4B" /> Developer Access: Test Management
+              </h3>
+              {!deDevUnlocked ? (
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <input type="password" value={dePassword} onChange={(e) => setDePassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && deHandlePasswordSubmit()}
+                    placeholder="Enter Developer Password"
+                    style={{ flex: 1, maxWidth: 350, padding: "12px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#FFF", fontSize: 14 }} />
+                  <button onClick={deHandlePasswordSubmit} style={{ padding: "12px 20px", background: "rgba(255,75,75,0.15)", border: "1px solid rgba(255,75,75,0.3)", color: "#FF4B4B", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 14 }}>
+                    Unlock
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ background: "rgba(67,179,174,0.08)", border: "1px solid rgba(67,179,174,0.2)", padding: "10px 16px", borderRadius: 8, color: "#43B3AE", fontSize: 13, fontWeight: 600, marginBottom: 24 }}>
+                    ✅ Access Granted: Developer Mode Unlocked
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 30 }}>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                        <XCircle size={18} color="#FF4B4B" /> Delete Specific Test
+                      </div>
+                      <div style={{ marginBottom: 12 }}>
+                        <StreamlitSelect value={deDelTest} onChange={setDeDelTest} options={deProcessedTests.map(t => t.Test_Name)} placeholder="Select test to delete" />
+                      </div>
+                      <button onClick={deHandleDeleteTest} style={{ padding: "10px 20px", background: "rgba(255,75,75,0.15)", border: "1px solid rgba(255,75,75,0.3)", color: "#FF4B4B", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
+                        🗑️ Delete Selected Test
+                      </button>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                        <Star size={18} color="#FFD700" /> Promote to Golden Baseline
+                      </div>
+                      <div style={{ fontSize: 12, color: "var(--text-sub)", marginBottom: 12, padding: "8px 12px", background: "rgba(55,140,255,0.1)", border: "1px solid rgba(55,140,255,0.2)", borderRadius: 6 }}>
+                        Moves an evaluated test into the Calibration folder to widen the statistical envelope.
+                      </div>
+                      <div style={{ marginBottom: 12 }}>
+                        <StreamlitSelect value={dePromoTest} onChange={setDePromoTest} options={deProcessedTests.map(t => t.Test_Name)} placeholder="Select test to promote" />
+                      </div>
+                      <button onClick={deHandlePromoteTest} style={{ padding: "10px 20px", background: "rgba(255,215,0,0.15)", border: "1px solid rgba(255,215,0,0.3)", color: "#FFD700", borderRadius: 8, cursor: "pointer", fontWeight: 700, fontSize: 13 }}>
+                        ⭐ Promote & Reprocess
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+            )}
           </div>
         )}
-        {appMode === "Data Engine" && <div style={{ padding: 20, color: "#FFF" }}><h2>Data Engine</h2><p>Access the Data Engine page from the sidebar.</p></div>}
       </main>
     </div>
   );

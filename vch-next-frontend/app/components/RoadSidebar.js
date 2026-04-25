@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { 
-  Zap, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen, 
-  Home, Activity, Thermometer, Zap as ZapIcon, TrendingUp, Battery, Cpu, 
-  AlertTriangle, ClipboardList, Route, FolderOpen, ChevronRight, Download
+import {
+  Zap, ChevronDown, ChevronUp, RefreshCw, PanelLeftClose, PanelLeftOpen,
+  Home, Activity, Thermometer, Zap as ZapIcon, TrendingUp, Battery, Cpu,
+  AlertTriangle, ClipboardList, Route, FolderOpen, ChevronRight, Download, UploadCloud
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import StreamlitSelect from "./StreamlitSelect";
@@ -17,6 +17,7 @@ const CHANNEL_TABS = [
   { id: "driver", label: "Driver Diagnostics", icon: <Cpu size={16} />, color: "#FF6080" },
   { id: "events", label: "Ride Events & QC", icon: <AlertTriangle size={16} />, color: "#FFA15A" },
   { id: "repository", label: "Master Repository", icon: <FolderOpen size={16} />, color: "#EF553B" },
+  { id: "data_engine", label: "Data Engine", icon: <UploadCloud size={16} />, color: "#55AAFF" },
 ];
 
 export default function RoadSidebar({

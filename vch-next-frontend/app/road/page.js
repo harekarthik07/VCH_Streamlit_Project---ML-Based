@@ -5,7 +5,7 @@ import axios from "axios";
 import RoadSidebar from "../components/RoadSidebar";
 import {
   Thermometer, Zap, Activity, Gauge, Battery, Cpu, FolderOpen,
-  AlertTriangle, Bike, ChevronRight, Download, BarChart2, TrendingUp, Box, Repeat
+  AlertTriangle, Bike, ChevronRight, Download, BarChart2, TrendingUp, Box, Repeat, UploadCloud, Database
 } from "lucide-react";
 import StreamlitSelect from "../components/StreamlitSelect";
 import StreamlitMultiSelect from "../components/StreamlitMultiSelect";
@@ -2378,6 +2378,101 @@ export default function RoadSuitePage() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeChannel === "data_engine" && (
+            <div style={{
+              background: "rgba(25,27,32,0.65)",
+              backdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: 24,
+              padding: 40,
+              boxShadow: "0 20px 50px rgba(0,0,0,0.4)"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 40 }}>
+                <div style={{
+                  width: 60, height: 60, borderRadius: 16, background: "rgba(85,170,255,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  border: "1px solid rgba(85,170,255,0.2)"
+                }}>
+                  <UploadCloud size={30} color="#55AAFF" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: 24, fontWeight: 900, color: "#fff" }}>Road Data Engine</h2>
+                  <p style={{ fontSize: 14, color: "#A0A0AB" }}>Database management and data export for road ride telemetry</p>
+                </div>
+              </div>
+
+              {/* Info Banner */}
+              <div style={{ background: "rgba(55,140,255,0.08)", border: "1px solid rgba(55,140,255,0.25)", padding: "16px 20px", borderRadius: 12, marginBottom: 32, fontSize: 13, color: "#A0C8FF", lineHeight: 1.6 }}>
+                <b>ℹ️ How Road Data is Ingested:</b> Road ride logs (CAN bus / Excel) are processed through the Python backend pipeline
+                (<code style={{ background: "rgba(255,255,255,0.08)", padding: "2px 6px", borderRadius: 4 }}>road_backend/db_manager.py</code>).
+                Run the Streamlit Road Suite or the CLI processor to import new rides into the database.
+                Once processed, rides appear automatically in the Mission Control selector above.
+              </div>
+
+              {/* Database Actions */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 36 }}>
+                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <Database size={20} color="#43B3AE" />
+                    <span style={{ fontWeight: 800, fontSize: 15, color: "#fff" }}>Export Road Database</span>
+                  </div>
+                  <p style={{ fontSize: 13, color: "#A0A0AB", marginBottom: 16, lineHeight: 1.5 }}>
+                    Download the full <code style={{ color: "#43B3AE" }}>raptee_rides.db</code> SQLite file containing all processed ride summaries and metadata.
+                  </p>
+                  <a
+                    href={`${API}/api/road/export_db`}
+                    download="raptee_rides.db"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "12px 20px", background: "linear-gradient(90deg, #43B3AE, #3B9F9A)", border: "none", borderRadius: 8, cursor: "pointer", color: "#000", fontSize: 14, fontWeight: 800, textDecoration: "none" }}
+                  >
+                    <Download size={16} /> Download Road SQLite DB
+                  </a>
+                </div>
+
+                <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <Activity size={20} color="#ab63fa" />
+                    <span style={{ fontWeight: 800, fontSize: 15, color: "#fff" }}>Database Status</span>
+                  </div>
+                  <div style={{ display: "grid", gap: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
+                      <span style={{ fontSize: 13, color: "#A0A0AB" }}>Total Rides Indexed</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "#43B3AE" }}>{rides.length}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
+                      <span style={{ fontSize: 13, color: "#A0A0AB" }}>Active Ride Loaded</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: selectedRide ? "#43B3AE" : "#A0A0AB" }}>
+                        {selectedRide ? selectedRide.slice(0, 20) + "..." : "None"}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 14px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
+                      <span style={{ fontSize: 13, color: "#A0A0AB" }}>DB Engine</span>
+                      <span style={{ fontSize: 13, fontWeight: 800, color: "#fff" }}>SQLite3 + Parquet</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pipeline Info */}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 28 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 16 }}>Processing Pipeline</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                  {[
+                    { step: "1", label: "Raw CAN / Excel", desc: "Input telemetry file from vehicle", color: "#55AAFF" },
+                    { step: "2", label: "Python Backend", desc: "thermal_ride.py processes & scores", color: "#43B3AE" },
+                    { step: "3", label: "Parquet Archive", desc: "Compressed time-series stored", color: "#ab63fa" },
+                    { step: "4", label: "SQLite Index", desc: "Summary row added to DB", color: "#FFD700" },
+                  ].map(({ step, label, desc, color }) => (
+                    <div key={step} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${color}22`, borderRadius: 12, padding: 16, textAlign: "center" }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, background: `${color}22`, border: `1px solid ${color}44`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px", fontSize: 14, fontWeight: 900, color }}>{step}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginBottom: 4 }}>{label}</div>
+                      <div style={{ fontSize: 11, color: "#A0A0AB" }}>{desc}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>

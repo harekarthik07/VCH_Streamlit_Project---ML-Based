@@ -213,40 +213,6 @@ export default function DynoSidebar({
         </div>
       )}
 
-      {/* Navigation Radio */}
-      {!collapsed && <div style={{ marginBottom: 6 }}>
-        <span style={labelStyle}>Navigation</span>
-        {["Monitor Dashboard", "Data Engine"].map((mode) => (
-          <label
-            key={mode}
-            onClick={() => {
-              setAppMode(mode);
-              if (mode === "Data Engine") {
-                router.push("/data-engine");
-              } else {
-                router.push("/dyno");
-              }
-            }}
-            style={{
-              display: "flex", alignItems: "center", gap: 8, padding: "6px 0",
-              cursor: "pointer", fontSize: 13, fontWeight: 600,
-              color: appMode === mode ? "#43B3AE" : "#B4B4C0",
-            }}
-          >
-            <span style={{
-              width: 14, height: 14, borderRadius: "50%",
-              border: `2px solid ${appMode === mode ? "#43B3AE" : "#555"}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              {appMode === mode && (
-                <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#43B3AE" }} />
-              )}
-            </span>
-            {mode}
-          </label>
-        ))}
-      </div>}
-
       {!collapsed && <div style={dividerStyle} />}
 
       {/* Refresh Button */}
