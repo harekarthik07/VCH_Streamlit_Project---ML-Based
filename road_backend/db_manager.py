@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import db_bridge
 import pandas as pd
 from thermal_ride import ThermalRide 
 
@@ -11,10 +12,7 @@ class DatabaseManager:
         self._initialize_db()
 
     def _initialize_db(self):
-        conn = sqlite3.connect(self.db_name)    
-        cursor = conn.cursor()
-        
-        cursor.execute('''
+        db_bridge.execute_sql('''
             CREATE TABLE IF NOT EXISTS ride_summaries (
                 Ride_Name TEXT PRIMARY KEY,
                 Total_Distance_km REAL, Total_Energy_Wh REAL, Overall_Wh_km REAL,
@@ -28,25 +26,20 @@ class DatabaseManager:
                 Speed_Osc_Index REAL, Pct_Sprint REAL, Torque_Burst_Idx REAL, 
                 Drive_Score REAL, Ride_Class TEXT
             )
-        ''')
+        ''', db_path=self.db_name)
         
-        cursor.execute('''
+        db_bridge.execute_sql('''
             CREATE TABLE IF NOT EXISTS ride_events (
                 Ride_Name TEXT, Event_Type TEXT, Start_Time REAL, End_Time REAL, Max_Value REAL, Description TEXT
             )
-        ''')
-        conn.commit()
-        conn.close()
+        ''', db_path=self.db_name)
 
     def process_new_files(self, raw_data_folder, metadata=None):
         if metadata is None: metadata = {"rider": "Unknown", "temp": 25.0, "loc": "Unknown"}
-        conn = sqlite3.connect(self.db_name)
-        cursor = conn.cursor()
         raw_files = [f for f in os.listdir(raw_data_folder) if f.endswith('.xlsx')]
-        
         for file_name in raw_files:
-            cursor.execute("SELECT Ride_Name FROM ride_summaries WHERE Ride_Name = ?", (file_name,))
-            if cursor.fetchone() is not None: continue
+            df_exists = db_bridge.query_to_df("SELECT Ride_Name FROM ride_summaries WHERE Ride_Name = ?", params=(file_name,), db_path=self.db_name)
+            if not df_exists.empty: continue
                 
             print(f"New file detected! Processing {file_name}...")
             file_path = os.path.join(raw_data_folder, file_name)
@@ -65,11 +58,11 @@ class DatabaseManager:
 
                 k = ride.ride_metrics
                 
-                cursor.execute('''
+                db_bridge.execute_sql('''
                     INSERT INTO ride_summaries VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
-                ''', (
+                ''', params=(
                     file_name, k['Total_Distance_km'], k['Total_Energy_Wh'], k['Overall_Wh_km'],
                     k['Max_Motor_Temp_C'], k['Max_IGBT_Temp_C'], k['Max_Pack_Temp_C'], k['Max_Pack_Spread_C'],
                     k['Max_IGBT_Rise_C'], k['Max_Motor_Rise_C'], k['Max_Pack_Rise_C'],
@@ -79,14 +72,12 @@ class DatabaseManager:
                     metadata["rider"], metadata["temp"], metadata["loc"], bike_id,
                     k['Avg_Torque_Nm'], k['Peak_Torque_Bursts'], k['Accel_Freq'], k['Speed_Osc_Index'], 
                     k['Pct_Sprint'], k['Torque_Burst_Idx'], k['Drive_Score'], k['Ride_Class']
-                ))
+                ), db_path=self.db_name)
                 
                 for ev in ride.ride_events:
-                    cursor.execute('''
+                    db_bridge.execute_sql('''
                         INSERT INTO ride_events VALUES (?, ?, ?, ?, ?, ?)
-                    ''', (file_name, ev["Event_Type"], ev["Start_Time"], ev["End_Time"], ev["Max_Value"], ev["Description"]))
-
-                conn.commit()
+                    ''', params=(file_name, ev["Event_Type"], ev["Start_Time"], ev["End_Time"], ev["Max_Value"], ev["Description"]), db_path=self.db_name)
             except Exception as e: print(f"Failed to process {file_name}: {e}")
 
         conn.close()

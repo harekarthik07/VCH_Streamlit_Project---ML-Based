@@ -56,6 +56,12 @@ export default function RoadSuitePage() {
   const [comparisonData, setComparisonData] = useState({});
   const [timeRange, setTimeRange] = useState({ start: 0, end: 0 });
   const [showTimeFilter, setShowTimeFilter] = useState(false);
+  const [rideEvents, setRideEvents] = useState([]);
+  const [routeFilter, setRouteFilter] = useState("All Routes");
+  const [dateFilter, setDateFilter] = useState("All Dates");
+  const [showSecondSandboxPlot, setShowSecondSandboxPlot] = useState(false);
+  const [secondLeftYAxis, setSecondLeftYAxis] = useState(["Motor_Torque [Nm]"]);
+  const [secondRightYAxis, setSecondRightYAxis] = useState(["Front_Speed [kph]"]);
 
   useEffect(() => {
     loadRides();
@@ -86,6 +92,22 @@ export default function RoadSuitePage() {
     }
   }, [comparisonRides]);
 
+  useEffect(() => {
+    if (activeChannel === "events" && selectedRide) {
+      fetchEvents();
+    }
+  }, [activeChannel, selectedRide]);
+
+  const fetchEvents = async () => {
+    try {
+      const res = await axios.get(`${API}/api/road/events/${encodeURIComponent(selectedRide)}`);
+      setRideEvents(Array.isArray(res.data) ? res.data : []);
+    } catch (e) {
+      console.error("Failed to fetch events:", e);
+      setRideEvents([]);
+    }
+  };
+
   const loadComparisonData = (rideName) => {
     axios.get(`${API}/api/road/telemetry/${encodeURIComponent(rideName)}`)
       .then(r => {
@@ -115,6 +137,18 @@ export default function RoadSuitePage() {
         setLoading(false);
       });
   };
+
+  const filteredRides = rides.filter(ride => {
+    const matchRoute = routeFilter === "All Routes" || ride.Route === routeFilter;
+    // For date, we'd need to parse the ride name or have a Date column. 
+    // Usually ride name has date: 2025_04_24-...
+    const rideDate = ride.Ride_Name.split('-')[0].replace(/_/g, '/');
+    const matchDate = dateFilter === "All Dates" || rideDate.includes(dateFilter);
+    return matchRoute && matchDate;
+  });
+
+  const uniqueRoutes = ["All Routes", ...new Set(rides.map(r => r.Route).filter(Boolean))];
+  const uniqueDates = ["All Dates", ...new Set(rides.map(r => r.Ride_Name.split('-')[0].replace(/_/g, '/')).filter(Boolean))];
 
   const loadRideData = (rideName) => {
     setLoadingData(true);
@@ -447,7 +481,7 @@ export default function RoadSuitePage() {
   return (
     <div className="app-container">
       <RoadSidebar
-        rides={rides}
+        rides={filteredRides}
         selectedRide={selectedRide}
         setSelectedRide={setSelectedRide}
         comparisonRides={comparisonRides}
@@ -461,6 +495,12 @@ export default function RoadSuitePage() {
         setTimeRange={setTimeRange}
         exportAllThermals={exportAllThermals}
         maxTime={rideData?.Time ? Math.max(...rideData.Time) : 0}
+        routeFilter={routeFilter}
+        setRouteFilter={setRouteFilter}
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        uniqueRoutes={uniqueRoutes}
+        uniqueDates={uniqueDates}
       />
 
       <main className="main-content">
@@ -1252,19 +1292,38 @@ export default function RoadSuitePage() {
                   }}>
                     {plotterMode === "3d" ? (
                       <Plot
-                        data={leftYAxis.flatMap((col, i) => {
-                          const xData = getFilteredTimeData(xAxis);
-                          const yData = getFilteredTimeData(col);
-                          const zData = getFilteredTimeData(zAxis);
-                          if (!xData || !yData || !zData) return [];
-                          return [{
-                            x: xData, y: yData, z: zData,
-                            type: "scatter3d",
-                            mode: "markers",
-                            name: col,
-                            marker: { size: 4, color: ["#43B3AE", "#FF6080", "#FFA15A", "#CFFF60"][i % 4], opacity: 0.8 }
-                          }];
-                        })}
+                        data={[
+                          ...leftYAxis.flatMap((col, i) => {
+                            const xData = getFilteredTimeData(xAxis);
+                            const yData = getFilteredTimeData(col);
+                            const zData = getFilteredTimeData(zAxis);
+                            if (!xData || !yData || !zData) return [];
+                            return [{
+                              x: xData, y: yData, z: zData,
+                              type: "scatter3d",
+                              mode: "markers",
+                              name: `Primary: ${col}`,
+                              marker: { size: 4, color: ["#43B3AE", "#FF6080", "#FFA15A", "#CFFF60"][i % 4], opacity: 0.8 }
+                            }];
+                          }),
+                          ...comparisonRides.flatMap((rideName) => {
+                            const data = comparisonData[rideName];
+                            if (!data) return [];
+                            return leftYAxis.flatMap((col, i) => {
+                              const xData = data[xAxis];
+                              const yData = data[col];
+                              const zData = data[zAxis];
+                              if (!xData || !yData || !zData) return [];
+                              return [{
+                                x: xData, y: yData, z: zData,
+                                type: "scatter3d",
+                                mode: "markers",
+                                name: `${rideName}: ${col}`,
+                                marker: { size: 3, color: ["#43B3AE", "#FF6080", "#FFA15A", "#CFFF60"][i % 4], opacity: 0.4 }
+                              }];
+                            });
+                          })
+                        ]}
                         layout={{
                           autosize: true, height: 700,
                           paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
@@ -1283,6 +1342,7 @@ export default function RoadSuitePage() {
                         style={{ width: "100%", height: 700 }}
                       />
                     ) : (
+                      <>
                       <Plot
                         data={[
                           ...leftYAxis.map((col, i) => ({
@@ -1290,7 +1350,7 @@ export default function RoadSuitePage() {
                             y: getFilteredTimeData(col),
                             type: "scatter",
                             mode: "lines",
-                            name: col,
+                            name: `Primary: ${col}`,
                             line: { color: ["#43B3AE", "#00CC96", "#1f77b4", "#ffa500"][i % 4], width: 3.0 },
                             yaxis: "y"
                           })),
@@ -1299,13 +1359,37 @@ export default function RoadSuitePage() {
                             y: getFilteredTimeData(col),
                             type: "scatter",
                             mode: "lines",
-                            name: col,
+                            name: `Primary: ${col}`,
                             line: { color: ["#FF6080", "#FFA15A", "#CFFF60", "#ab63fa"][i % 4], width: 3.0 },
                             yaxis: "y2"
-                          }))
+                          })),
+                          ...comparisonRides.flatMap((rideName) => {
+                            const data = comparisonData[rideName];
+                            if (!data) return [];
+                            return [
+                              ...leftYAxis.map((col, i) => ({
+                                x: data[xAxis],
+                                y: data[col],
+                                type: "scatter",
+                                mode: "lines",
+                                name: `${rideName}: ${col}`,
+                                line: { color: ["#43B3AE", "#00CC96", "#1f77b4", "#ffa500"][i % 4], width: 1.5, dash: "dot" },
+                                yaxis: "y"
+                              })),
+                              ...rightYAxis.map((col, i) => ({
+                                x: data[xAxis],
+                                y: data[col],
+                                type: "scatter",
+                                mode: "lines",
+                                name: `${rideName}: ${col}`,
+                                line: { color: ["#FF6080", "#FFA15A", "#CFFF60", "#ab63fa"][i % 4], width: 1.5, dash: "dot" },
+                                yaxis: "y2"
+                              }))
+                            ];
+                          })
                         ]}
                         layout={{
-                          autosize: true, height: 750,
+                          autosize: true, height: 600,
                           paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
                           font: { color: "#fff", family: "'Outfit', sans-serif" },
                           ...DARK_TOOLTIP,
@@ -1327,24 +1411,26 @@ export default function RoadSuitePage() {
                             side: "left",
                             range: [parseAxisValue(axisSettings.yMin) || null, parseAxisValue(axisSettings.yMax) || null]
                           },
-                          yaxis2: {
-                            showgrid: false, gridcolor: "rgba(255,255,255,0.18)",
+                          yaxis2: { 
+                            showgrid: false,
                             showline: true, linecolor: "rgba(255,255,255,0.2)", linewidth: 1,
-                            zeroline: true, zerolinecolor: "rgba(255,255,255,0.25)", zerolinewidth: 1.5,
+                            zeroline: false,
                             title: { text: "Secondary Axis", font: { color: "#FF6080", weight: 800 } },
                             tickfont: { weight: 600, color: "#fff" },
-                            side: "right", overlaying: "y",
+                            overlaying: "y",
+                            side: "right",
                             range: [parseAxisValue(axisSettings.y2Min) || null, parseAxisValue(axisSettings.y2Max) || null]
                           },
                           legend: { 
-                            orientation: "h", yanchor: "top", y: -0.15, xanchor: "center", x: 0.5, 
-                            font: { color: "#fff", weight: 600 } 
+                            orientation: "h", y: -0.15, x: 0.5, xanchor: "center", yanchor: "top",
+                            font: { color: "#fff", size: 11, weight: 600 } 
                           },
                           hovermode: "x unified",
                         }}
                         config={{ displayModeBar: true, displaylogo: false, responsive: true }}
                         style={{ width: "100%", height: 750 }}
                       />
+                      </>
                     )}
                   </div>
 
@@ -1453,12 +1539,22 @@ export default function RoadSuitePage() {
                             <Activity size={14} style={{ color }} /> {ch} Profile
                           </h3>
                           <Plot
-                            data={[{
-                              x: time, y: data,
-                              type: "scatter", mode: "lines",
-                              name: ch,
-                              line: { color, width: 2.5 }
-                            }]}
+                            data={[
+                              {
+                                x: time, y: data,
+                                type: "scatter", mode: "lines",
+                                name: `Primary: ${ch}`,
+                                line: { color, width: 2.5 }
+                              },
+                              ...comparisonRides.map(rideName => ({
+                                x: comparisonData[rideName]?.Time || [],
+                                y: comparisonData[rideName]?.[ch] || [],
+                                type: "scatter", mode: "lines",
+                                name: `${rideName}: ${ch}`,
+                                line: { color, width: 1.2, dash: "dot" },
+                                opacity: 0.5
+                              }))
+                            ]}
                             layout={{
                               autosize: true, height: 350,
                               paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
@@ -1825,17 +1921,36 @@ export default function RoadSuitePage() {
                       { 
                         x: rideData.Time, y: rideData["Motor_Torque [Nm]"], 
                         type: "scatter", mode: "lines", fill: "tozeroy", 
-                        name: "Motor Torque Demanded (Nm)", 
-                        line: { color: "#1f77b4", width: 0.8 }, 
+                        name: "Primary Torque (Nm)", 
+                        line: { color: "#1f77b4", width: 1.2 }, 
                         fillcolor: "rgba(31,119,180,0.2)" 
                       },
                       { 
                         x: rideData.Time, y: rideData["Motor_Temp [C]"], 
                         type: "scatter", mode: "lines", 
-                        name: "Motor Temp (C)", 
+                        name: "Primary Motor Temp (C)", 
                         yaxis: "y2", 
                         line: { color: "#ff4b4b", width: 2.5 } 
                       },
+                      ...comparisonRides.flatMap(r => {
+                        const cmp = comparisonData[r];
+                        if (!cmp) return [];
+                        return [
+                          {
+                            x: cmp.Time, y: cmp["Motor_Torque [Nm]"],
+                            type: "scatter", mode: "lines", name: `${r} Torque`,
+                            line: { color: "#1f77b4", width: 0.8, dash: "dot" },
+                            opacity: 0.4
+                          },
+                          {
+                            x: cmp.Time, y: cmp["Motor_Temp [C]"],
+                            type: "scatter", mode: "lines", name: `${r} Temp`,
+                            yaxis: "y2",
+                            line: { color: "#ff4b4b", width: 1.2, dash: "dot" },
+                            opacity: 0.5
+                          }
+                        ];
+                      }),
                       {
                         x: [Math.min(...rideData.Time), Math.max(...rideData.Time)],
                         y: [125, 125],
@@ -1906,8 +2021,22 @@ export default function RoadSuitePage() {
                   </h3>
                   <Plot
                     data={[
-                      { x: rideData.Time, y: rideData["Front_Speed [kph]"], type: "scatter", mode: "lines", name: "Speed (kph)", line: { color: "#43B3AE", width: 1 }, opacity: 0.4 },
-                      { x: rideData.Time, y: rideData.soc, type: "scatter", mode: "lines", name: "SOC (%)", yaxis: "y2", line: { color: "#ab63fa", width: 2.5 } }
+                      { x: rideData.Time, y: rideData["Front_Speed [kph]"], type: "scatter", mode: "lines", name: "Primary Speed (kph)", line: { color: "#43B3AE", width: 1 }, opacity: 0.4 },
+                      { x: rideData.Time, y: rideData.soc, type: "scatter", mode: "lines", name: "Primary SOC (%)", yaxis: "y2", line: { color: "#ab63fa", width: 2.5 } },
+                      ...comparisonRides.flatMap(r => {
+                        const cmp = comparisonData[r];
+                        if (!cmp) return [];
+                        return [
+                          {
+                            x: cmp.Time, y: cmp["Front_Speed [kph]"], type: "scatter", mode: "lines",
+                            name: `${r} Speed`, line: { color: "#43B3AE", width: 0.8, dash: "dot" }, opacity: 0.3
+                          },
+                          {
+                            x: cmp.Time, y: cmp.soc, type: "scatter", mode: "lines",
+                            name: `${r} SOC`, yaxis: "y2", line: { color: "#ab63fa", width: 1.2, dash: "dot" }, opacity: 0.5
+                          }
+                        ];
+                      })
                     ]}
                     layout={{
                       autosize: true, height: 450,
@@ -2119,27 +2248,78 @@ export default function RoadSuitePage() {
               backdropFilter: "blur(20px)",
               border: "1px solid rgba(255,255,255,0.08)", 
               borderRadius: 24, 
-              padding: 80, 
-              textAlign: "center",
+              padding: 40,
               boxShadow: "0 20px 50px rgba(0,0,0,0.4)"
             }}>
-              <div style={{ 
-                width: 120, height: 120, borderRadius: "50%", background: "rgba(255,161,90,0.1)", 
-                display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 32px",
-                border: "1px solid rgba(255,161,90,0.2)",
-                boxShadow: "0 0 30px rgba(255,161,90,0.1)"
-              }}>
-                <AlertTriangle size={48} color="#FFA15A" />
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <div style={{ 
+                    width: 50, height: 50, borderRadius: 12, background: "rgba(255,161,90,0.1)", 
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    border: "1px solid rgba(255,161,90,0.2)"
+                  }}>
+                    <AlertTriangle size={24} color="#FFA15A" />
+                  </div>
+                  <div>
+                    <h2 style={{ fontSize: 24, fontWeight: 900, color: "#fff" }}>Automated Event Detection</h2>
+                    <p style={{ fontSize: 13, color: "#888" }}>ML-powered anomaly detection for {selectedRide || "selected ride"}</p>
+                  </div>
+                </div>
+                <div style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(67,179,174,0.08)", border: "1px solid rgba(67,179,174,0.2)", fontSize: 12, color: "#43B3AE", fontWeight: 700 }}>
+                   {rideEvents.length} Anomalies Detected
+                </div>
               </div>
-              <h2 style={{ fontSize: 32, fontWeight: 900, color: "#fff", marginBottom: 16 }}>Automated Event Detection</h2>
-              <p style={{ fontSize: 16, color: "#A0A0AB", maxWidth: 500, margin: "0 auto", lineHeight: 1.6 }}>
-                Our ML models are scanning the telemetry for thermal derations, torque bursts, and anomalous patterns. Results will appear here once processed.
-              </p>
-              <div style={{ marginTop: 40, display: "flex", justifyContent: "center", gap: 16 }}>
-                 <div style={{ padding: "12px 24px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", fontSize: 13, color: "#666" }}>
-                    Status: <span style={{ color: "#43B3AE", fontWeight: 700 }}>Active Monitor</span>
-                 </div>
-              </div>
+
+              {rideEvents.length > 0 ? (
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 8px" }}>
+                    <thead>
+                      <tr style={{ color: "#A0A0AB", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>
+                        <th style={{ textAlign: "left", padding: "0 16px 8px" }}>Timestamp</th>
+                        <th style={{ textAlign: "left", padding: "0 16px 8px" }}>Event Type</th>
+                        <th style={{ textAlign: "left", padding: "0 16px 8px" }}>Severity</th>
+                        <th style={{ textAlign: "left", padding: "0 16px 8px" }}>Description</th>
+                        <th style={{ textAlign: "right", padding: "0 16px 8px" }}>Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rideEvents.map((event, i) => (
+                        <tr key={i} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", transition: "all 0.2s" }}>
+                          <td style={{ padding: "16px", borderRadius: "12px 0 0 12px", fontSize: 13, color: "#fff", fontWeight: 700 }}>{event.Timestamp}s</td>
+                          <td style={{ padding: "16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#fff", fontWeight: 600 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: event.Event_Type?.includes("Thermal") ? "#FF4B4B" : "#43B3AE" }}></span>
+                              {event.Event_Type}
+                            </div>
+                          </td>
+                          <td style={{ padding: "16px" }}>
+                            <span style={{ 
+                              padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 800,
+                              background: event.Severity === "Critical" ? "rgba(255,75,75,0.15)" : "rgba(255,161,90,0.15)",
+                              color: event.Severity === "Critical" ? "#FF4B4B" : "#FFA15A",
+                              border: `1px solid ${event.Severity === "Critical" ? "rgba(255,75,75,0.2)" : "rgba(255,161,90,0.2)"}`
+                            }}>
+                              {event.Severity?.toUpperCase()}
+                            </span>
+                          </td>
+                          <td style={{ padding: "16px", fontSize: 13, color: "#A0A0AB" }}>{event.Description}</td>
+                          <td style={{ padding: "16px", borderRadius: "0 12px 12px 0", textAlign: "right", fontSize: 14, fontWeight: 800, color: "#fff" }}>
+                            {event.Value?.toFixed(1)} {event.Event_Type?.includes("Thermal") ? "°C" : ""}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{ padding: "80px 0", textAlign: "center" }}>
+                   <div style={{ width: 80, height: 80, borderRadius: "50%", background: "rgba(67,179,174,0.05)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+                      <Activity size={32} color="rgba(67,179,174,0.4)" />
+                   </div>
+                   <h3 style={{ fontSize: 18, color: "#fff", fontWeight: 800 }}>No Events Found</h3>
+                   <p style={{ color: "#666", fontSize: 14 }}>The telemetry for this ride is within normal operational limits.</p>
+                </div>
+              )}
             </div>
           )}
 

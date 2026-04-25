@@ -10,13 +10,15 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  ShieldAlert
+  ShieldAlert,
+  UploadCloud
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Master App", icon: LayoutDashboard, section: "VCH SYSTEMS" },
   { href: "/dyno", label: "Dyno Suite", icon: Activity, section: "DYNO SUITE" },
   { href: "/road", label: "Road Suite", icon: Route, section: "ROAD SUITE" },
+  { href: "/data-engine", label: "Data Engine", icon: UploadCloud, section: "DATA MANAGEMENT" },
   { href: "/admin", label: "Admin Zone", icon: ShieldAlert, section: "ADMINISTRATION" },
 ];
 

@@ -34,6 +34,12 @@ export default function RoadSidebar({
   setTimeRange,
   exportAllThermals,
   maxTime = 0,
+  routeFilter = "All Routes",
+  setRouteFilter,
+  dateFilter = "All Dates",
+  setDateFilter,
+  uniqueRoutes = [],
+  uniqueDates = []
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [missionOpen, setMissionOpen] = useState(true);
@@ -114,7 +120,40 @@ export default function RoadSidebar({
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "visible", padding: "40px 16px 20px" }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "visible", padding: "20px 16px" }}>
+        {!collapsed && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: 24 }}>
+            <button
+              onClick={() => router.push("/")}
+              style={{
+                width: "100%", padding: "10px 12px", borderRadius: 10,
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 10,
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
+            >
+              <Home size={16} /> Dyno VCH Suite
+            </button>
+            <button
+              onClick={() => router.push("/data-engine")}
+              style={{
+                width: "100%", padding: "10px 12px", borderRadius: 10,
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 10,
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
+            >
+              <Activity size={16} /> Data Engine (Upload)
+            </button>
+          </div>
+        )}
+
         {!collapsed && (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             
@@ -129,15 +168,21 @@ export default function RoadSidebar({
                     <div style={sectionSubHeader}>1. Data Browser</div>
                     <div style={{ marginBottom: 16 }}>
                       <label style={labelStyle}><ClipboardList size={14} /> Filter Date:</label>
-                      <div style={{ ...selectStyle, background: "rgba(67,179,174,0.1)", color: "#43B3AE", border: "1px solid rgba(67,179,174,0.2)", height: 40, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        All Dates <span style={{ fontSize: 10 }}>●</span>
-                      </div>
+                      <StreamlitSelect 
+                        value={dateFilter} 
+                        onChange={setDateFilter} 
+                        options={uniqueDates} 
+                        placeholder="All Dates" 
+                      />
                     </div>
                     <div>
                       <label style={labelStyle}><Route size={14} /> Filter Route:</label>
-                      <div style={{ ...selectStyle, background: "rgba(67,179,174,0.1)", color: "#43B3AE", border: "1px solid rgba(67,179,174,0.2)", height: 40, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        All Routes <span style={{ fontSize: 10 }}>●</span>
-                      </div>
+                      <StreamlitSelect 
+                        value={routeFilter} 
+                        onChange={setRouteFilter} 
+                        options={uniqueRoutes} 
+                        placeholder="All Routes" 
+                      />
                     </div>
                   </div>
 

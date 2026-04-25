@@ -13,6 +13,7 @@ import psutil  # New: For Admin Panel system health
 import re      # New: For smarter date parsing
 import numpy as np # For NaN/Inf handling
 import math
+import db_bridge  # New: Centralized database bridge
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -21,6 +22,9 @@ logger = logging.getLogger(__name__)
 # Import backend modules
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "dyno_backend"))
 import dyno_db_manager as dyno_engine
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "road_backend"))
+import db_manager as road_engine
 
 app = FastAPI(title="VCH Master Dashboard API", description="High Performance Data Pipeline")
 
@@ -31,6 +35,8 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DYNO_DB = os.path.join(ROOT_DIR, "dyno_backend", "raptee_dyno.db")
 ROAD_DB = os.path.join(ROOT_DIR, "road_backend", "raptee_rides.db")
+ROAD_RAW = os.path.join(ROOT_DIR, "road_backend", "Raw_Data")
+ROAD_PROCESSED = os.path.join(ROOT_DIR, "road_backend", "Processed_Rides")
 
 logger.info(f"Root directory: {ROOT_DIR}")
 logger.info(f"Dyno DB path: {DYNO_DB} (exists: {os.path.exists(DYNO_DB)})")
@@ -77,39 +83,36 @@ def get_master_overview():
         dyno_count, road_count, golden_count = 0, 0, 0
 
         # 1. ⚡ ULTRA-FAST DYNO SQL QUERY
-        if os.path.exists(DYNO_DB):
-            conn = sqlite3.connect(DYNO_DB)
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM dyno_summaries")
-            dyno_count = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM dyno_summaries WHERE Type LIKE '%Golden%'")
-            golden_count = cursor.fetchone()[0]
-            cursor.execute("SELECT Test_Name, Type FROM dyno_summaries ORDER BY Test_Name DESC LIMIT 5")
-            for row in cursor.fetchall():
-                raw_name = row[0]
+        if db_bridge.DATABASE_URL or os.path.exists(DYNO_DB):
+            df_dyno = db_bridge.query_to_df("SELECT COUNT(*) as count FROM dyno_summaries", db_path=DYNO_DB)
+            dyno_count = int(df_dyno["count"].iloc[0]) if not df_dyno.empty else 0
+            
+            df_golden = db_bridge.query_to_df("SELECT COUNT(*) as count FROM dyno_summaries WHERE Type LIKE '%Golden%'", db_path=DYNO_DB)
+            golden_count = int(df_golden["count"].iloc[0]) if not df_golden.empty else 0
+            
+            df_recent = db_bridge.query_to_df("SELECT Test_Name, Type FROM dyno_summaries ORDER BY Test_Name DESC LIMIT 5", db_path=DYNO_DB)
+            for _, row in df_recent.iterrows():
+                raw_name = row["Test_Name"]
                 date_match = re.search(r'(\d{2}_\d{2}_\d{4}|\d{4}_\d{2}_\d{2})', raw_name)
                 recent_activity.append({
-                    "id": raw_name, "suite": "Dyno", "type": row[1],
+                    "id": raw_name, "suite": "Dyno", "type": row["Type"],
                     "date": date_match.group(0).replace('_', '/') if date_match else "Recent"
                 })
-            conn.close()
 
         # 2. ⚡ ULTRA-FAST ROAD SQL QUERY
-        if os.path.exists(ROAD_DB):
-            conn = sqlite3.connect(ROAD_DB)
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM ride_summaries")
-            road_count = cursor.fetchone()[0]
-            cursor.execute("SELECT Ride_Name, Drive_Score FROM ride_summaries ORDER BY Ride_Name DESC LIMIT 5")
-            for row in cursor.fetchall():
-                raw_name = row[0]
+        if db_bridge.DATABASE_URL or os.path.exists(ROAD_DB):
+            df_road_count = db_bridge.query_to_df("SELECT COUNT(*) as count FROM ride_summaries", db_path=ROAD_DB)
+            road_count = int(df_road_count["count"].iloc[0]) if not df_road_count.empty else 0
+            
+            df_recent_road = db_bridge.query_to_df("SELECT Ride_Name, Drive_Score FROM ride_summaries ORDER BY Ride_Name DESC LIMIT 5", db_path=ROAD_DB)
+            for _, row in df_recent_road.iterrows():
+                raw_name = row["Ride_Name"]
                 date_match = re.search(r'(\d{2}_\d{2}_\d{4}|\d{4}_\d{2}_\d{2})', raw_name)
                 recent_activity.append({
                     "id": raw_name, "suite": "Road", 
-                    "type": f"Score: {row[1] if row[1] is not None else 'N/A'}",
+                    "type": f"Score: {row['Drive_Score'] if row['Drive_Score'] is not None else 'N/A'}",
                     "date": date_match.group(0).replace('_', '/') if date_match else "Recent"
                 })
-            conn.close()
 
         recent_activity.sort(key=lambda x: x["date"], reverse=True)
         return {
@@ -143,21 +146,17 @@ def get_fleet():
 
 @app.get("/api/dyno/summaries")
 def get_dyno_summaries():
-    if not os.path.exists(DYNO_DB):
+    if not db_bridge.DATABASE_URL and not os.path.exists(DYNO_DB):
         return []
-    conn = sqlite3.connect(DYNO_DB)
-    df = pd.read_sql_query("SELECT * FROM dyno_summaries", conn)
-    conn.close()
+    df = db_bridge.query_to_df("SELECT * FROM dyno_summaries", db_path=DYNO_DB)
     return sanitize_records(df)
 
 @app.get("/api/dyno/telemetry/{test_name}")
 def get_dyno_telemetry(test_name: str):
-    if not os.path.exists(DYNO_DB): return {"error": "Database not found"}
-    conn = sqlite3.connect(DYNO_DB)
-    row = pd.read_sql_query("SELECT Processed_CSV_Path FROM dyno_summaries WHERE Test_Name = ?", conn, params=(test_name,))
-    conn.close()
-    if row.empty: return {"error": f"Test '{test_name}' not found"}
-    csv_path = row.iloc[0]["Processed_CSV_Path"]
+    if not db_bridge.DATABASE_URL and not os.path.exists(DYNO_DB): return {"error": "Database not found"}
+    df_row = db_bridge.query_to_df("SELECT Processed_CSV_Path FROM dyno_summaries WHERE Test_Name = ?", params=(test_name,), db_path=DYNO_DB)
+    if df_row.empty: return {"error": f"Test '{test_name}' not found"}
+    csv_path = df_row.iloc[0]["Processed_CSV_Path"]
     p_path = csv_path.replace('.csv', '.parquet')
     df = pd.read_parquet(p_path) if os.path.exists(p_path) else pd.read_csv(csv_path)
     return sanitize_data(df)
@@ -165,21 +164,13 @@ def get_dyno_telemetry(test_name: str):
 @app.get("/api/dyno/envelope/{channel}")
 def get_dyno_envelope(channel: str):
     """Get golden baseline envelope for a specific channel (IGBT, Motor, HighCell, AFE)"""
-    if not os.path.exists(DYNO_DB):
+    if not db_bridge.DATABASE_URL and not os.path.exists(DYNO_DB):
         return {"error": "Database not found"}
     
     table_name = f"envelope_{channel}"
     try:
-        conn = sqlite3.connect(DYNO_DB)
-        # Check if the envelope table exists
-        cursor = conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-        if not cursor.fetchone():
-            conn.close()
-            return {"error": f"Envelope table '{table_name}' not found in database"}
-        
-        df = pd.read_sql_query(f'SELECT * FROM "{table_name}"', conn)
-        conn.close()
+        # Note: we are using the bridge's query_to_df which handles the connection
+        df = db_bridge.query_to_df(f'SELECT * FROM "{table_name}"', db_path=DYNO_DB)
         return sanitize_data(df)
     except Exception as e:
         return {"error": f"Failed to load envelope for {channel}: {str(e)}"}
@@ -199,10 +190,8 @@ def get_dyno_raw_telemetry(test_name: str):
         
     if not raw_path:
         # Fallback to check via DB Processed_CSV_Path and replace processed with appropriate suffix if it was saved locally
-        if os.path.exists(DYNO_DB):
-            conn = sqlite3.connect(DYNO_DB)
-            row = pd.read_sql_query("SELECT Processed_CSV_Path FROM dyno_summaries WHERE Test_Name = ?", conn, params=(test_name,))
-            conn.close()
+        if db_bridge.DATABASE_URL or os.path.exists(DYNO_DB):
+            row = db_bridge.query_to_df("SELECT Processed_CSV_Path FROM dyno_summaries WHERE Test_Name = ?", params=(test_name,), db_path=DYNO_DB)
             if not row.empty and row.iloc[0]["Processed_CSV_Path"]:
                 # Sometimes a raw CSV is generated next to Processed
                 p = row.iloc[0]["Processed_CSV_Path"].replace("_Processed", "_Raw")
@@ -227,13 +216,11 @@ def get_dyno_fleet():
 def get_road_summaries():
     """Get all road ride summaries"""
     logger.info("Road summaries endpoint called")
-    if not os.path.exists(ROAD_DB):
+    if not db_bridge.DATABASE_URL and not os.path.exists(ROAD_DB):
         logger.warning(f"Road DB not found at {ROAD_DB}")
         return []
     try:
-        conn = sqlite3.connect(ROAD_DB)
-        df = pd.read_sql_query("SELECT * FROM ride_summaries", conn)
-        conn.close()
+        df = db_bridge.query_to_df("SELECT * FROM ride_summaries", db_path=ROAD_DB)
         logger.info(f"Returning {len(df)} road summaries")
         return sanitize_records(df)
     except Exception as e:
@@ -251,9 +238,7 @@ def get_road_telemetry(ride_name: str):
     try:
         import urllib.parse
         decoded_name = urllib.parse.unquote(ride_name)
-        conn = sqlite3.connect(ROAD_DB)
-        row = pd.read_sql_query("SELECT Processed_CSV_Path FROM ride_summaries WHERE Ride_Name = ?", conn, params=(decoded_name,))
-        conn.close()
+        row = db_bridge.query_to_df("SELECT Processed_CSV_Path FROM ride_summaries WHERE Ride_Name = ?", params=(decoded_name,), db_path=ROAD_DB)
         
         if row.empty:
             logger.warning(f"Ride not found: {decoded_name}")
@@ -286,13 +271,88 @@ def get_road_telemetry(ride_name: str):
 @app.get("/api/road/events/{ride_name}")
 def get_road_events(ride_name: str):
     """Get events for a specific ride"""
-    if not os.path.exists(ROAD_DB):
+    if not db_bridge.DATABASE_URL and not os.path.exists(ROAD_DB):
         return []
     try:
-        conn = sqlite3.connect(ROAD_DB)
-        df = pd.read_sql_query("SELECT * FROM ride_events WHERE Ride_Name = ?", conn, params=(ride_name,))
-        conn.close()
+        df = db_bridge.query_to_df("SELECT * FROM ride_events WHERE Ride_Name = ?", params=(ride_name,), db_path=ROAD_DB)
         return df.to_dict(orient="records")
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/road/upload")
+async def upload_road_data(
+    file: UploadFile = File(...),
+    rider: str = Form("System Test"),
+    temp: str = Form("25"),
+    location: str = Form("Chennai"),
+    route: str = Form("Office Full Push")
+):
+    """Upload a new road ride XLSX file."""
+    os.makedirs(ROAD_RAW, exist_ok=True)
+    file_path = os.path.join(ROAD_RAW, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # Store metadata for processing
+    metadata_file = file_path + ".meta"
+    import json
+    with open(metadata_file, "w") as f:
+        json.dump({"rider": rider, "temp": temp, "location": location, "route": route}, f)
+        
+    return {"status": "success", "message": f"Uploaded {file.filename} with metadata."}
+
+@app.post("/api/road/process")
+async def process_road_data():
+    """Trigger the road ML processing engine."""
+    try:
+        manager = road_engine.DatabaseManager(db_name=ROAD_DB, processed_folder=ROAD_PROCESSED)
+        # Capture logs
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        
+        # Process files
+        # Note: We need to handle metadata from .meta files if they exist
+        result = manager.process_new_files(ROAD_RAW)
+        
+        logs = sys.stdout.getvalue()
+        sys.stdout = old_stdout
+        return {"status": "success", "result": result, "logs": logs}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/road/delete_ride")
+async def delete_road_ride(payload: dict):
+    """Delete a specific ride and its files."""
+    ride_name = payload.get("ride_name")
+    if not ride_name: return {"error": "No ride name provided"}
+    
+    try:
+        # Get paths from DB before deleting
+        row = db_bridge.query_to_df("SELECT Processed_CSV_Path FROM ride_summaries WHERE Ride_Name = ?", params=(ride_name,), db_path=ROAD_DB)
+        if not row.empty and row.iloc[0]["Processed_CSV_Path"]:
+            csv_path = row.iloc[0]["Processed_CSV_Path"]
+            if os.path.exists(csv_path): os.remove(csv_path)
+            p_path = csv_path.replace('.csv', '.parquet')
+            if os.path.exists(p_path): os.remove(p_path)
+            
+        # Delete from DB
+        db_bridge.execute_sql("DELETE FROM ride_summaries WHERE Ride_Name = ?", params=(ride_name,), db_path=ROAD_DB)
+        db_bridge.execute_sql("DELETE FROM ride_events WHERE Ride_Name = ?", params=(ride_name,), db_path=ROAD_DB)
+        
+        return {"status": "success", "message": f"Deleted ride '{ride_name}'"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@app.post("/api/road/reset")
+async def reset_road_db():
+    """Wipe the road database and folders."""
+    try:
+        if os.path.exists(ROAD_DB): os.remove(ROAD_DB)
+        if os.path.exists(ROAD_RAW): shutil.rmtree(ROAD_RAW)
+        if os.path.exists(ROAD_PROCESSED): shutil.rmtree(ROAD_PROCESSED)
+        os.makedirs(ROAD_RAW, exist_ok=True)
+        os.makedirs(ROAD_PROCESSED, exist_ok=True)
+        return {"status": "success", "message": "Road database and folders reset."}
     except Exception as e:
         return {"error": str(e)}
 

@@ -6,7 +6,7 @@ import Sidebar from "./components/Sidebar";
 import {
   Rocket, Settings, Route, Monitor,
   ShieldCheck, Trash2, Plus, X, Activity,
-  Users as UsersIcon,
+  Users as UsersIcon, UploadCloud
 } from "lucide-react";
 
 const USERS_KEY = "vch-users";
@@ -161,7 +161,7 @@ return (
           </div>
 
           {/* Nav Cards - Side by Side */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 80 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24, marginBottom: 80 }}>
             {/* Dyno Suite Card */}
             <div className="nav-card" style={{ "--card-accent-border": "rgba(67,179,174,0.28)" }}>
               <div style={{ position: "absolute", top: 20, right: 24 }}>
@@ -221,6 +221,37 @@ return (
 
               <Link href="/road" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 24px", borderRadius: 12, background: "rgba(171,99,250,0.12)", border: "1px solid rgba(171,99,250,0.3)", color: "#ab63fa", fontWeight: 800, fontSize: 14, textDecoration: "none", transition: "all 0.25s" }}>
                 <Activity size={18} /> Launch Road Engine
+              </Link>
+            </div>
+
+            {/* Data Engine Card */}
+            <div className="nav-card" style={{ "--card-accent-border": "rgba(255,138,91,0.24)" }}>
+              <div style={{ position: "absolute", top: 20, right: 24 }}>
+                <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, padding: "5px 10px", borderRadius: 8, background: "rgba(255,138,91,0.15)", border: "1px solid rgba(255,138,91,0.4)", color: "#ff8a5b" }}>
+                  Management
+                </span>
+              </div>
+
+              <div style={{ fontSize: 44, marginBottom: 16 }}>🚀</div>
+              <div style={{ fontSize: 26, fontWeight: 800, marginBottom: 14, color: "#fff" }}>Data Engine</div>
+              <div style={{ color: "rgba(160,160,171,0.8)", fontSize: 15, lineHeight: 1.6, marginBottom: 20 }}>
+                Centralized data management system. Handle raw file uploads, processing pipelines, and metadata enrichment for both Dyno and Road sessions.
+              </div>
+
+              <ul style={{ color: "rgba(160,160,171,0.7)", fontSize: 14, marginTop: 16, marginBottom: 24, listStyle: "none", padding: 0 }}>
+                <li style={{ marginBottom: 10, paddingLeft: 16, borderLeft: "2px solid #333" }}>
+                  <strong style={{ color: "#ccc" }}>Multi-Suite Support:</strong> Seamless toggle between Dyno/Road.
+                </li>
+                <li style={{ marginBottom: 10, paddingLeft: 16, borderLeft: "2px solid #333" }}>
+                  <strong style={{ color: "#ccc" }}>Metadata Tagging:</strong> Enrich road tests with Rider/Route info.
+                </li>
+                <li style={{ marginBottom: 10, paddingLeft: 16, borderLeft: "2px solid #333" }}>
+                  <strong style={{ color: "#ccc" }}>System Reset:</strong> Developer tools for database maintenance.
+                </li>
+              </ul>
+
+              <Link href="/data-engine" style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "14px 24px", borderRadius: 12, background: "rgba(255,138,91,0.12)", border: "1px solid rgba(255,138,91,0.3)", color: "#ff8a5b", fontWeight: 800, fontSize: 14, textDecoration: "none", transition: "all 0.25s" }}>
+                <UploadCloud size={18} /> Open Data Engine
               </Link>
             </div>
           </div>

@@ -171,30 +171,44 @@ export default function DynoSidebar({
           <button
             onClick={() => router.push("/")}
             style={{
-              width: "100%", padding: "8px 12px", borderRadius: 8,
+              width: "100%", padding: "10px 12px", borderRadius: 10,
               background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
               color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 10,
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
           >
-            <Home size={15} /> Main Dashboard
+            <Home size={16} /> Dyno VCH Suite
           </button>
           <button
             onClick={() => router.push("/road")}
             style={{
-              width: "100%", padding: "8px 12px", borderRadius: 8,
+              width: "100%", padding: "10px 12px", borderRadius: 10,
               background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
               color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 8,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 10,
               transition: "all 0.2s ease",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
           >
-            <Route size={15} /> Road Suite
+            <Route size={16} /> Road Suite
+          </button>
+          <button
+            onClick={() => router.push("/data-engine")}
+            style={{
+              width: "100%", padding: "10px 12px", borderRadius: 10,
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+              color: "#B4B4C0", fontSize: 13, fontWeight: 700, fontFamily: "inherit",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 10,
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
+          >
+            <RefreshCw size={16} /> Data Engine (Upload)
           </button>
         </div>
       )}

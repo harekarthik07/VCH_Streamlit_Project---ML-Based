@@ -2,6 +2,7 @@ import sys
 import os
 import streamlit as st
 import sqlite3
+import db_bridge
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
@@ -286,9 +287,7 @@ if app_mode == "🛠️ Data Engine":
             st.success("✅ Access Granted: Developer Mode Unlocked")
             
             try:
-                conn = sqlite3.connect(DB_PATH)
-                sum_df = pd.read_sql_query("SELECT Ride_Name, Processed_CSV_Path FROM ride_summaries", conn)
-                conn.close()
+                sum_df = db_bridge.query_to_df("SELECT Ride_Name, Processed_CSV_Path FROM ride_summaries", db_path=DB_PATH)
                 all_processed_tests = sum_df["Ride_Name"].tolist()
             except:
                 all_processed_tests = []
@@ -299,12 +298,8 @@ if app_mode == "🛠️ Data Engine":
             if st.button("🗑️ Delete Selected Ride"):
                 if not sum_df.empty and del_test:
                     try:
-                        conn = sqlite3.connect(DB_PATH)
-                        cursor = conn.cursor()
-                        cursor.execute("DELETE FROM ride_summaries WHERE Ride_Name=?", (str(del_test),))
-                        cursor.execute("DELETE FROM ride_events WHERE Ride_Name=?", (str(del_test),))
-                        conn.commit()
-                        conn.close()
+                        db_bridge.execute_sql("DELETE FROM ride_summaries WHERE Ride_Name=?", params=(str(del_test),), db_path=DB_PATH)
+                        db_bridge.execute_sql("DELETE FROM ride_events WHERE Ride_Name=?", params=(str(del_test),), db_path=DB_PATH)
                         
                         file_path = sum_df[sum_df["Ride_Name"] == del_test]["Processed_CSV_Path"].iloc[0]
                         if file_path and os.path.exists(file_path): os.remove(file_path)
@@ -333,12 +328,10 @@ if app_mode == "🛠️ Data Engine":
 elif app_mode == "📊 Monitor Dashboard":
     @st.cache_data(max_entries=3, ttl=1800)
     def load_ride_database():
-        if not os.path.exists(DB_PATH): return pd.DataFrame(), pd.DataFrame()
+        if not db_bridge.DATABASE_URL and not os.path.exists(DB_PATH): return pd.DataFrame(), pd.DataFrame()
         try:
-            conn = sqlite3.connect(DB_PATH)
-            df = pd.read_sql_query("SELECT * FROM ride_summaries", conn)
-            df_ev = pd.read_sql_query("SELECT * FROM ride_events", conn)
-            conn.close()
+            df = db_bridge.query_to_df("SELECT * FROM ride_summaries", db_path=DB_PATH)
+            df_ev = db_bridge.query_to_df("SELECT * FROM ride_events", db_path=DB_PATH)
             return df, df_ev
         except: return pd.DataFrame(), pd.DataFrame()
 

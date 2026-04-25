@@ -11,3 +11,4 @@ plotly
 docxtpl
 streamlit-option_menu
 python-dotenv
+psycopg2-binary

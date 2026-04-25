@@ -4,6 +4,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import sqlite3
+import db_bridge
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -204,10 +205,8 @@ def update_db_summary(file_name, raw_stats, df, csv_path, test_type="Evaluation"
         **eval_results
     }
     
-    conn = sqlite3.connect(DB_PATH)
     new_row_df = pd.DataFrame([summary_row])
-    new_row_df.to_sql("dyno_summaries", conn, if_exists="append", index=False)
-    conn.close()
+    db_bridge.df_to_db(new_row_df, "dyno_summaries", db_path=DB_PATH)
 
 def build_golden_envelope():
     print("\nBuilding Master Envelope using ONLY Hardcoded Golden Bikes...")
@@ -227,8 +226,6 @@ def build_golden_envelope():
     components = {"IGBT": {"dTdt": "IGBT_dTdt", "dT": "IGBT_dT"}, "Motor": {"dTdt": "Motor_dTdt", "dT": "Motor_dT"}, "HighCell": {"dTdt": "HighCell_dTdt", "dT": "HighCell_dT"}, "AFE": {"dTdt": "AFE_Mean_dTdt", "dT": "AFE_Mean_dT"}}
     stats_for_eval = {} 
     
-    conn = sqlite3.connect(DB_PATH)
-
     for comp_name, metrics in components.items():
         grouped = combined.groupby("Time (s)")
         col_time = grouped.mean().index
@@ -252,9 +249,7 @@ def build_golden_envelope():
                 stats_for_eval[col_name][f"Upper_{pct}Pct"] = pd.Series(up_val, index=col_time)
                 stats_for_eval[col_name][f"Lower_{pct}Pct"] = pd.Series(low_val, index=col_time)
 
-        out_df.to_sql(f"envelope_{comp_name}", conn, if_exists="replace", index=False)
-
-    conn.close()
+        db_bridge.df_to_db(out_df, f"envelope_{comp_name}", db_path=DB_PATH, if_exists="replace")
     with open(BASELINE_STATS_FILE, "wb") as f: pickle.dump(stats_for_eval, f)
     print("✅ Master Golden Envelope successfully built and saved to SQL!")
 
@@ -306,11 +301,8 @@ def run_processing_cycle():
         is_golden = any(gold in file_name for gold in GOLDEN_BIKES)
         
         try:
-            conn = sqlite3.connect(DB_PATH)
-            conn.execute("DELETE FROM dyno_summaries WHERE Test_Name = ?", (file_name.replace(".xlsx", ""),))
-            conn.commit()
-            conn.close()
-        except sqlite3.OperationalError:
+            db_bridge.execute_sql("DELETE FROM dyno_summaries WHERE Test_Name = ?", params=(file_name.replace(".xlsx", ""),), db_path=DB_PATH)
+        except Exception:
             pass
 
         if is_golden:

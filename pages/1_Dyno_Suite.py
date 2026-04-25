@@ -2,6 +2,7 @@ import sys
 import os
 import streamlit as st
 import sqlite3
+import db_bridge
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -296,9 +297,7 @@ if app_mode == "Data Engine":
         col_d1, col_d2 = st.columns(2)
         
         try:
-            conn = sqlite3.connect(DB_PATH)
-            sum_df = pd.read_sql_query("SELECT Test_Name, Processed_CSV_Path FROM dyno_summaries", conn)
-            conn.close()
+            sum_df = db_bridge.query_to_df("SELECT Test_Name, Processed_CSV_Path FROM dyno_summaries", db_path=DB_PATH)
             all_processed_tests = sum_df["Test_Name"].tolist()
         except:
             all_processed_tests = []
@@ -309,11 +308,7 @@ if app_mode == "Data Engine":
             del_test = st.selectbox("Select Test to Delete:", all_processed_tests, key="del_test_sel")
             if st.button("🗑️ Delete Selected Test"):
                 if not sum_df.empty:
-                    conn = sqlite3.connect(DB_PATH)
-                    cursor = conn.cursor()
-                    cursor.execute("DELETE FROM dyno_summaries WHERE Test_Name=?", (del_test,))
-                    conn.commit()
-                    conn.close()
+                    db_bridge.execute_sql("DELETE FROM dyno_summaries WHERE Test_Name=?", params=(del_test,), db_path=DB_PATH)
                     
                     file_path = sum_df[sum_df["Test_Name"] == del_test]["Processed_CSV_Path"].iloc[0]
                     if os.path.exists(file_path): os.remove(file_path)
@@ -362,23 +357,19 @@ if app_mode == "Data Engine":
 elif app_mode == "Monitor Dashboard":
     @st.cache_data(max_entries=3, ttl=1800)
     def load_db_summary():
-        if not os.path.exists(DB_PATH): return pd.DataFrame()
+        if not db_bridge.DATABASE_URL and not os.path.exists(DB_PATH): return pd.DataFrame()
         try:
-            conn = sqlite3.connect(DB_PATH)
-            df = pd.read_sql_query("SELECT * FROM dyno_summaries", conn)
-            conn.close()
-            return df
+            return db_bridge.query_to_df("SELECT * FROM dyno_summaries", db_path=DB_PATH)
         except: return pd.DataFrame()
 
     @st.cache_data(max_entries=3, ttl=1800)
     def load_envelope_data():
-        if not os.path.exists(DB_PATH): return None
-        conn = sqlite3.connect(DB_PATH)
+        if not db_bridge.DATABASE_URL and not os.path.exists(DB_PATH): return None
         env_data = {}
         for ch in ["IGBT", "Motor", "HighCell", "AFE"]:
-            try: env_data[ch] = pd.read_sql_query(f"SELECT * FROM envelope_{ch}", conn)
+            try: 
+                env_data[ch] = db_bridge.query_to_df(f"SELECT * FROM envelope_{ch}", db_path=DB_PATH)
             except: pass
-        conn.close()
         return env_data if env_data else None
 
     @st.cache_data(max_entries=3, ttl=1800)
