@@ -1,146 +1,116 @@
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+import pandas as pd
 
-class DriveScoreHybrid:
-    def __init__(self):
-        self.model = RandomForestRegressor(n_estimators=50, random_state=42)
-        self._train_initial_model()
-        
-        # MATLAB-style weights (per drive mode: 0=Comfort, 1=Power, 2=Sprint)
-        self.w_thr = np.array([0.4, 0.5, 0.6])
-        self.w_v = np.array([0.4, 0.5, 0.6])
-        self.w_rgn = np.array([
-            [0.4, 0.3, 0.2],
-            [0.3, 0.2, 0.1],
-            [0.2, 0.1, 0.05]
-        ])
-        self.w_bs = 0.4
-        self.v_ref = 60.0  # Reference velocity (km/h)
-        self.thr_ref = 0.5  # Reference throttle
-        
-    def _train_initial_model(self):
-        np.random.seed(42)
-        X_train = np.random.rand(500, 5)
-        X_train[:, 0] *= 60
-        X_train[:, 1] *= 20
-        X_train[:, 2] *= 100
-        X_train[:, 3] *= 80
-        X_train[:, 4] *= 5
+# ---------- Weight constants (MATLAB reference) ----------
+W_THR = np.array([0.4, 0.5, 0.6])   # throttle weight per drive mode (0=Comfort,1=Power,2=Sprint)
+W_V   = np.array([0.4, 0.5, 0.6])   # velocity weight per drive mode
+W_RGN = np.array([                   # [rgn_lvl-1 (row), rd_mode (col)]
+    [0.4, 0.3, 0.2],
+    [0.3, 0.2, 0.1],
+    [0.2, 0.1, 0.05]
+])
+W_BS  = 0.4
+V_THR = 60.0   # km/h
 
-        y_train = []
-        for row in X_train:
-            t_idx = min((row[0] / 40.0) * 100, 100)
-            a_idx = min((row[1] / 15.0) * 100, 100)
-            s_idx = row[2]
-            w_idx = min((row[3] / 50.0) * 100, 100)
-            score = (0.35 * t_idx) + (0.25 * a_idx) + (0.20 * s_idx) + (0.20 * w_idx)
-            y_train.append(score)
-
-        self.model.fit(X_train, y_train)
-
-    def _get_col(self, df, *names):
-        """Find column by trying multiple possible names (including prefixed ones)"""
+def _get_col(df, *names):
+    for name in names:
+        if name in df.columns:
+            return name
+    for col in df.columns:
         for name in names:
-            if name in df.columns:
-                return name
-        for col in df.columns:
-            col_lower = col.lower()
-            for name in names:
-                if name.lower() in col_lower:
-                    return col
-        return None
+            if name.lower() in col.lower():
+                return col
+    return None
 
-    def calculate_penalties(self, df):
-        """Vectorized penalty calculation - handles missing/prefixed columns, bad data"""
-        n = len(df)
-        if n == 0:
-            return {"p_thr_max": 0, "p_v_max": 0, "p_rgn_max": 0, "p_bs_max": 0, 
-                    "p_thr_mean": 0, "p_v_mean": 0, "bs_count": 0, "penalty_total": 0}
-        
-        rd_mode_col = self._get_col(df, 'Drive_Mode')
-        thr_col = self._get_col(df, 'Throttle')
-        v_col = self._get_col(df, 'Front_Speed [kph]')
-        rgn_col = self._get_col(df, 'Regen_Level')
-        bs_col = self._get_col(df, 'BrakeSw', 'Brake_Switch')
-        
-        rd_mode = np.zeros(n, dtype=int)
-        if rd_mode_col:
-            try:
-                rd_mode = pd.to_numeric(df[rd_mode_col], errors='coerce').fillna(0).astype(int).values
-            except:
-                pass
-        
-        thr = np.zeros(n)
-        if thr_col:
-            try:
-                thr = pd.to_numeric(df[thr_col], errors='coerce').fillna(0).clip(lower=0).values
-            except:
-                pass
-        
-        v = np.zeros(n)
-        if v_col:
-            try:
-                v = pd.to_numeric(df[v_col], errors='coerce').fillna(0).clip(lower=0).values
-            except:
-                pass
-        
-        rgn = np.zeros(n, dtype=int)
-        if rgn_col:
-            try:
-                rgn = pd.to_numeric(df[rgn_col], errors='coerce').fillna(0).astype(int).values
-            except:
-                pass
-        
-        bs = np.zeros(n, dtype=int)
-        if bs_col:
-            try:
-                bs_raw = pd.to_numeric(df[bs_col], errors='coerce').fillna(0)
-                bs = bs_raw.astype(int).values
-            except:
-                pass
-        
-        # Vectorized throttle penalty
-        p_thr = np.where(thr > self.thr_ref, 
-                        np.minimum(100, 100 * self.w_thr[rd_mode] * (thr / self.thr_ref)),
-                        np.roll(np.where(thr > self.thr_ref, 
-                                        np.minimum(100, 100 * self.w_thr[rd_mode] * (thr / self.thr_ref)), 
-                                        0), 1))
-        p_thr[0] = 0
-        
-        p_v = np.where(v > self.v_ref,
-                      np.minimum(100, 100 * self.w_v[rd_mode] * ((v - self.v_ref) / self.v_ref) ** 2),
-                      0)
-        
-        p_rgn = np.minimum(100, 100 * self.w_rgn[rd_mode.clip(max=2), rgn.clip(max=2)])
-        
-        p_bs = self.w_bs * 100 * bs
-        
-        bs_count = int(np.sum((bs[1:] == 1) & (bs[:-1] == 0)))
-        
-        return {
-            "p_thr_max": float(np.max(p_thr)),
-            "p_v_max": float(np.max(p_v)),
-            "p_rgn_max": float(np.max(p_rgn)),
-            "p_bs_max": float(np.max(p_bs)),
-            "p_thr_mean": float(np.mean(p_thr)),
-            "p_v_mean": float(np.mean(p_v)),
-            "bs_count": bs_count,
-            "penalty_total": float(np.max(p_thr) + np.max(p_v) + np.max(p_rgn) + np.max(p_bs))
-        }
+def compute_drive_score(df: pd.DataFrame) -> dict:
+    """
+    Vectorised deterministic Drive Score engine.
+    Direct translation of MATLAB reference logic — no ML, no black box.
 
-    def predict_score(self, features, penalties=None):
-        """features: [avg_torque, accel_freq_per_min, pct_sprint, overall_wh_km, spd_osc]
-           penalties: dict from calculate_penalties() - optional adjustment"""
-        base_score = round(self.model.predict([features])[0], 1)
-        
-        if penalties is None:
-            return base_score
-        
-        # Hybrid: ML base score adjusted by penalty factors
-        penalty_factor = 1.0 - (penalties.get("penalty_total", 0) / 400.0)
-        penalty_factor = np.clip(penalty_factor, 0.3, 1.0)
-        
-        final_score = base_score * penalty_factor
-        return round(final_score, 1)
+    Penalty equations:
+        p_thr : 100 * w_thr[mode] * (thr/0.5)   when thr > 0.5, else ffill
+        p_v   : 100 * w_v[mode]  * max(0,(v-60)/60)^2
+        p_rgn : 100 * w_rgn[rgn-1, mode]         when 1<=rgn<=3 and mode<=2
+        p_bs  : 100 * w_bs * (0.5*bs_events/T + 0.5*bs_time/T)
+        p_inst = p_thr + p_v - p_rgn + p_bs
+        dr_score = 100 - mean(clip(p_inst, 0, inf))
+    """
+    n = len(df)
+    if n == 0:
+        return {"Drive_Score": 100.0, "Ride_Class": "Efficient",
+                "Penalty_Throttle": 0.0, "Penalty_Velocity": 0.0,
+                "Penalty_Regen": 0.0, "Penalty_Brake": 0.0, "Brake_Switch_Count": 0}
 
-ml_engine = DriveScoreHybrid()
+    def _arr(df, *names, dtype=float, default=0):
+        c = _get_col(df, *names)
+        if c is None:
+            return np.full(n, default, dtype=dtype)
+        return pd.to_numeric(df[c], errors='coerce').fillna(default).values.astype(dtype)
+
+    rd_mode = np.clip(_arr(df, 'Drive_Mode', dtype=int), 0, 3)
+    thr     = np.clip(_arr(df, 'Throttle'),             0, None)
+    v       = np.clip(_arr(df, 'Front_Speed [kph]'),    0, None)
+    rgn     = np.clip(_arr(df, 'Regen_Level', dtype=int), 0, 3)
+    bs      = np.clip(_arr(df, 'BrakeSw', 'Brake_Switch', dtype=int), 0, 1)
+
+    t_col = _get_col(df, 'Time')
+    if t_col is not None:
+        t_arr  = pd.to_numeric(df[t_col], errors='coerce').fillna(0).values.astype(float)
+        dt_arr = np.concatenate(([0.0], np.diff(t_arr)))
+    else:
+        dt_arr = np.ones(n, dtype=float)
+    t_total = max(float(np.sum(dt_arr)), 0.01)
+
+    mode_safe = np.clip(rd_mode, 0, 2)   # mode 3 (Park/Neutral) → 0 penalty
+
+    # ── Throttle penalty — ffill "hold previous" via pandas ──────────────
+    active = (thr > 0.5) & (rd_mode <= 2)
+    p_thr_raw = np.where(active,
+                         np.minimum(100.0, 100.0 * W_THR[mode_safe] * (thr / 0.5)),
+                         np.nan)
+    p_thr = pd.Series(p_thr_raw).ffill().fillna(0.0).values
+
+    # ── Velocity penalty ─────────────────────────────────────────────────
+    p_v = np.where(rd_mode <= 2,
+                   np.minimum(100.0, 100.0 * W_V[mode_safe] * np.maximum(0.0, (v - V_THR) / V_THR) ** 2),
+                   0.0)
+
+    # ── Regen penalty (negative = reduces total penalty) ─────────────────
+    rgn_idx  = np.clip(rgn - 1, 0, 2)
+    valid_rgn = (rgn >= 1) & (rgn <= 3) & (rd_mode <= 2)
+    p_rgn = np.where(valid_rgn,
+                     np.minimum(100.0, 100.0 * W_RGN[rgn_idx, mode_safe]),
+                     0.0)
+
+    # ── Brake penalty — scalar accumulated over ride ──────────────────────
+    bs_events  = int(np.sum((bs[1:] == 1) & (bs[:-1] == 0)))
+    bs_time    = float(np.sum(dt_arr[bs == 1]))
+    p_bs_ride  = min(100.0, 100.0 * W_BS * (0.5 * (bs_events / t_total) + 0.5 * (bs_time / t_total)))
+
+    # ── Instantaneous total penalty ───────────────────────────────────────
+    p_inst = p_thr + p_v - p_rgn + p_bs_ride
+
+    # ── Ride-level score ──────────────────────────────────────────────────
+    p_mean      = float(np.mean(np.clip(p_inst, 0.0, None)))
+    drive_score = round(max(0.0, min(100.0, 100.0 - p_mean)), 1)
+
+    if   drive_score >= 70: ride_class = "Efficient"
+    elif drive_score >= 40: ride_class = "Road Mixed"
+    else:                   ride_class = "Office Push"
+
+    return {
+        "Drive_Score":        drive_score,
+        "Ride_Class":         ride_class,
+        "Penalty_Throttle":   round(float(np.mean(p_thr)),  2),
+        "Penalty_Velocity":   round(float(np.mean(p_v)),    2),
+        "Penalty_Regen":      round(float(np.mean(p_rgn)),  2),
+        "Penalty_Brake":      round(p_bs_ride,               2),
+        "Brake_Switch_Count": bs_events,
+    }
+
+# Shim — keeps thermal_ride.py import working without changes
+class DriveScoreEngine:
+    def compute(self, df):
+        return compute_drive_score(df)
+
+ml_engine = DriveScoreEngine()

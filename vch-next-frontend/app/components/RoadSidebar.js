@@ -179,7 +179,7 @@ export default function RoadSidebar({
                       />
                     </div>
                     <div>
-                      <label style={labelStyle}><Route size={14} /> Filter Route:</label>
+                      <label style={labelStyle}><Route size={14} /> Filter by Route:</label>
                       <StreamlitSelect 
                         value={routeFilter} 
                         onChange={setRouteFilter} 

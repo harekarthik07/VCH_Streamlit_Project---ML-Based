@@ -421,12 +421,12 @@ elif app_mode == "📊 Monitor Dashboard":
         <div style="border-left: 1px solid var(--card-border); height: 30px;"></div>
         <div style="text-align: center;"><div style="color: var(--text-title); font-size: 11px; text-transform: uppercase; font-weight: 700;">Distance / Time</div><div style="color: var(--text-main); font-weight: bold; font-size: 14px;">📍 {dist} km | ⏱️ {int(total_duration)} s</div></div>
         <div style="border-left: 1px solid var(--card-border); height: 30px;"></div>
-        <div style="text-align: center;"><div style="color: var(--text-title); font-size: 11px; text-transform: uppercase; font-weight: 700;">ML Drive Score</div><div style="color: {score_color}; font-weight: bold; font-size: 14px;">🤖 {drive_score} ({ride_class})</div></div>
+        <div style="text-align: center;"><div style="color: var(--text-title); font-size: 11px; text-transform: uppercase; font-weight: 700;">Drive Score</div><div style="color: {score_color}; font-weight: bold; font-size: 14px;">🎯 {drive_score} ({ride_class})</div></div>
     </div>
     """, unsafe_allow_html=True)
 
     if "Channel 1" in channel_view: tab_main, tab_delta, tab_custom = st.tabs(["📊 Primary Dashboard", "📈 Cumulative Rise (ΔT)", "🗺️ Dynamic 3D Plotter"])
-    elif "Channel 5" in channel_view: tab_ml, = st.tabs(["🤖 ML Predictive Analytics"])
+    elif "Channel 5" in channel_view: tab_ml, = st.tabs(["📊 Driver Diagnostics"])
     elif "Channel 6" in channel_view: tab_events, = st.tabs(["🚨 Automated Event Detection"])
     elif "Channel 7" in channel_view: tab_repo, = st.tabs(["📂 Master Test Repository"])
     else: tab_main, tab_custom = st.tabs(["📊 Primary Dashboard", "🗺️ Dynamic 3D Plotter"])
@@ -849,17 +849,17 @@ elif app_mode == "📊 Monitor Dashboard":
 
     if "Channel 5" in channel_view:
         with tab_ml:
-            st.subheader("🤖 Driver Diagnostics: Ride Aggression")
+            st.subheader("📊 Driver Diagnostics: Drive Score Breakdown")
             col_g1, col_g2 = st.columns([1, 1.5])
-            
+
             with col_g1:
                 fig_gauge = go.Figure(go.Indicator(
-                    mode = "gauge+number", value = drive_score, domain = {'x': [0, 1], 'y': [0, 1]},
-                    title = {'text': f"<b>Predicted Aggression</b><br><span style='color:gray;font-size:0.8em'>RandomForest Inference</span>", 'font': {"size": 18}},
-                    gauge = {
+                    mode="gauge+number", value=drive_score, domain={'x': [0, 1], 'y': [0, 1]},
+                    title={'text': f"<b>Drive Score</b><br><span style='color:gray;font-size:0.8em'>Deterministic Penalty Model</span>", 'font': {"size": 18}},
+                    gauge={
                         'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
                         'bar': {'color': "rgba(0,0,0,0)"}, 'bgcolor': "white",
-                        'steps': [{'range': [0, 30], 'color': "#00cc96"}, {'range': [30, 60], 'color': "#FFD700"}, {'range': [60, 100], 'color': "#FF4B4B"}],
+                        'steps': [{'range': [0, 40], 'color': "#FF4B4B"}, {'range': [40, 70], 'color': "#FFD700"}, {'range': [70, 100], 'color': "#00cc96"}],
                         'threshold': {'line': {'color': "white", 'width': 4}, 'thickness': 0.75, 'value': drive_score}
                     }
                 ))
@@ -867,26 +867,27 @@ elif app_mode == "📊 Monitor Dashboard":
                 st.plotly_chart(fig_gauge, use_container_width=True)
 
             with col_g2:
-                t_val = min((ride_kpis.get('Avg_Torque_Nm', 0) / 40.0) * 100, 100)
-                a_val = min((ride_kpis.get('Accel_Freq', 0) / 15.0) * 100, 100)
-                s_val = ride_kpis.get('Pct_Sprint', 0)
-                w_val = min((ride_kpis.get('Overall_Wh_km', 0) / 50.0) * 100, 100)
-                o_val = min((ride_kpis.get('Speed_Osc_Index', 0) / 3.0) * 100, 100)
-                categories = ['Torque Usage', 'Acceleration Freq', 'Sprint Mode %', 'Energy Wh/km', 'Speed Oscillation']
+                p_thr = ride_kpis.get('Penalty_Throttle', 0)
+                p_v   = ride_kpis.get('Penalty_Velocity', 0)
+                p_rgn = ride_kpis.get('Penalty_Regen', 0)
+                p_bs  = ride_kpis.get('Penalty_Brake', 0)
+                categories = ['Throttle Penalty', 'Velocity Penalty', 'Regen Benefit', 'Brake Penalty']
                 fig_radar = go.Figure()
-                fig_radar.add_trace(go.Scatterpolar(r=[t_val, a_val, s_val, w_val, o_val], theta=categories, fill='toself', name='Ride Feature Vector', line_color=score_color, fillcolor=score_color, opacity=0.6))
-                
+                fig_radar.add_trace(go.Scatterpolar(
+                    r=[p_thr, p_v, p_rgn, p_bs], theta=categories,
+                    fill='toself', name='Penalty Breakdown',
+                    line_color=score_color, fillcolor=score_color, opacity=0.6
+                ))
                 fig_radar.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=False, height=350, margin=dict(t=30, b=30))
                 st.plotly_chart(fig_radar, use_container_width=True)
 
             st.divider()
-            st.markdown("#### 📊 Extracted Feature Vector (Raw)")
-            a1, a2, a3, a4, a5 = st.columns(5)
-            a1.metric("Average Torque", f"{ride_kpis.get('Avg_Torque_Nm', 0)} Nm")
-            a2.metric("Torque Bursts (>50Nm)", f"{ride_kpis.get('Peak_Torque_Bursts', 0)}")
-            a3.metric("Accel Frequency", f"{ride_kpis.get('Accel_Freq', 0)}")
-            a4.metric("Speed Oscillation", f"{ride_kpis.get('Speed_Osc_Index', 0)}")
-            a5.metric("% Time in Sprint", f"{ride_kpis.get('Pct_Sprint', 0)} %")
+            st.markdown("#### 📐 Penalty Breakdown (Mean per timestep)")
+            a1, a2, a3, a4 = st.columns(4)
+            a1.metric("Throttle Penalty", f"{p_thr:.2f}")
+            a2.metric("Velocity Penalty", f"{p_v:.2f}")
+            a3.metric("Regen Benefit",    f"{p_rgn:.2f}")
+            a4.metric("Brake Penalty",    f"{p_bs:.2f}")
 
     if "Channel 6" in channel_view:
         with tab_events:
@@ -928,7 +929,7 @@ elif app_mode == "📊 Monitor Dashboard":
                     "Test Name": row["Ride_Name"],
                     "Distance (km)": round(float(row["Total_Distance_km"]), 2),
                     "Efficiency (Wh/km)": round(float(row["Overall_Wh_km"]), 1),
-                    "ML Drive Score": round(float(row.get("Drive_Score", 0)), 1),
+                    "Drive Score": round(float(row.get("Drive_Score", 0)), 1),
                     "Ride Class": str(row.get("Ride_Class", "Unknown")),
                     "Max Motor (°C)": round(m_mot, 1),
                     "Max IGBT (°C)": round(m_igbt, 1),

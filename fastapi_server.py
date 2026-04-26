@@ -221,7 +221,18 @@ def get_road_summaries():
         return []
     try:
         df = db_bridge.query_to_df("SELECT * FROM ride_summaries", db_path=ROAD_DB)
-        logger.info(f"Returning {len(df)} road summaries")
+        
+        # Dynamically inject Route column based on filename conventions
+        def get_route(name):
+            name_lower = name.lower()
+            if "route-office" in name_lower: return "Office Full Push"
+            if "route-road" in name_lower: return "Road Full Push"
+            return "Custom/Unknown"
+        
+        if not df.empty:
+            df['Route'] = df['Ride_Name'].apply(get_route)
+            
+        logger.info(f"Returning {len(df)} road summaries with dynamic routes")
         return sanitize_records(df)
     except Exception as e:
         logger.error(f"Error getting road summaries: {e}")

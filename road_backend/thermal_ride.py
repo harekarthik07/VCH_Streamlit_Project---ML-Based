@@ -2,8 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 
-# 🎯 CROSS-REFERENCE THE NEW ML ENGINE
-from ml_model import ml_engine
+from ml_model import compute_drive_score
 
 class ThermalRide:
     def __init__(self, file_path: str):
@@ -242,17 +241,10 @@ class ThermalRide:
         accel_freq_per_min = accel_freq / total_mins if total_mins > 0 else 0
         spd_osc = df['Accel [kph/s]'].std()
 
-        feature_vector = [float(avg_torque), float(accel_freq_per_min), float(pct_sprint), float(overall_wh_km), float(spd_osc)]
-        
-        # Calculate MATLAB-style penalties from raw telemetry
-        penalty_dict = ml_engine.calculate_penalties(df)
-        
-        # Hybrid score: ML base adjusted by penalties
-        drive_score = float(ml_engine.predict_score(feature_vector, penalty_dict))
-
-        if drive_score <= 30: ride_class = "Efficient"
-        elif drive_score <= 60: ride_class = "Road Mixed"
-        else: ride_class = "Office Push"
+        # Deterministic penalty-based score (MATLAB reference)
+        score_dict = compute_drive_score(df)
+        drive_score = score_dict["Drive_Score"]
+        ride_class  = score_dict["Ride_Class"]
 
         self.ride_metrics = {
             "Total_Distance_km": float(round(total_distance, 2)), 
@@ -279,13 +271,13 @@ class ThermalRide:
             "Accel_Freq": int(accel_freq), 
             "Speed_Osc_Index": float(round(spd_osc, 2)), 
             "Torque_Burst_Idx": float(round(torque_burst_idx, 1)),
-            "Drive_Score": float(drive_score), 
-            "Ride_Class": str(ride_class),
-            "Penalty_Throttle": penalty_dict.get("p_thr_max", 0),
-            "Penalty_Velocity": penalty_dict.get("p_v_max", 0),
-            "Penalty_Regen": penalty_dict.get("p_rgn_max", 0),
-            "Penalty_Brake": penalty_dict.get("p_bs_max", 0),
-            "Brake_Switch_Count": penalty_dict.get("bs_count", 0)
+            "Drive_Score":        score_dict["Drive_Score"],
+            "Ride_Class":         score_dict["Ride_Class"],
+            "Penalty_Throttle":   score_dict["Penalty_Throttle"],
+            "Penalty_Velocity":   score_dict["Penalty_Velocity"],
+            "Penalty_Regen":      score_dict["Penalty_Regen"],
+            "Penalty_Brake":      score_dict["Penalty_Brake"],
+            "Brake_Switch_Count": score_dict["Brake_Switch_Count"]
         }
         
         events = []

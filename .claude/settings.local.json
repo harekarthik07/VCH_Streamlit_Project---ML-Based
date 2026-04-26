@@ -5,7 +5,16 @@
       "Bash(while read:*)",
       "Bash(do wc:*)",
       "Bash(done)",
-      "Bash(find '/d/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/.claude/worktrees/condescending-fermi' -type f \\\\\\(-name *.db -o -name .gitignore \\\\\\))"
+      "Bash(find '/d/Hare Karthik/Dashboard/Streamlit/VCH_Streamlit_Project - ML Based/.claude/worktrees/condescending-fermi' -type f \\\\\\(-name *.db -o -name .gitignore \\\\\\))",
+      "Bash(python batch_update.py)",
+      "Bash(python -c \"import sqlite3; conn=sqlite3.connect\\(''raptee_rides.db''\\); print\\([d[1] for d in conn.execute\\(''PRAGMA table_info\\(ride_summaries\\)''\\).fetchall\\(\\)]\\); conn.close\\(\\)\")",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(python -X utf8 batch_update.py)",
+      "Bash(curl -s http://localhost:8001/api/road/summaries)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":8001\")",
+      "Bash(python -c \":*)",
+      "Bash(npx next:*)"
     ]
   }
 }

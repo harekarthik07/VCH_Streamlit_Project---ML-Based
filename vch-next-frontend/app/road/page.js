@@ -78,6 +78,7 @@ export default function RoadSuitePage() {
   const [roadDevUnlocked, setRoadDevUnlocked] = useState(false);
   const [roadDelRide, setRoadDelRide] = useState("");
   const [isHovering, setIsHovering] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: "Ride_Name", direction: "desc" });
   
   const roadLogRef = React.useRef(null);
   const roadFileInputRef = React.useRef(null);
@@ -89,6 +90,13 @@ export default function RoadSuitePage() {
   useEffect(() => {
     loadRides();
   }, []);
+
+  // Auto-select first ride when filter changes and current ride is filtered out
+  useEffect(() => {
+    if (filteredRides.length > 0 && !filteredRides.some(r => r.Ride_Name === selectedRide)) {
+      setSelectedRide(filteredRides[0].Ride_Name);
+    }
+  }, [routeFilter, dateFilter]);
 
   useEffect(() => {
     if (selectedRide) loadRideData(selectedRide);
@@ -163,15 +171,45 @@ export default function RoadSuitePage() {
 
   const filteredRides = rides.filter(ride => {
     const matchRoute = routeFilter === "All Routes" || ride.Route === routeFilter;
-    // For date, we'd need to parse the ride name or have a Date column. 
-    // Usually ride name has date: 2025_04_24-...
-    const rideDate = ride.Ride_Name.split('-')[0].replace(/_/g, '/');
-    const matchDate = dateFilter === "All Dates" || rideDate.includes(dateFilter);
+    const rideDate = ride.Ride_Name.substring(0, 10); // DD_MM_YYYY — matches Streamlit str[:10]
+    const matchDate = dateFilter === "All Dates" || rideDate === dateFilter;
     return matchRoute && matchDate;
   });
 
-  const uniqueRoutes = ["All Routes", ...new Set(rides.map(r => r.Route).filter(Boolean))];
-  const uniqueDates = ["All Dates", ...new Set(rides.map(r => r.Ride_Name.split('-')[0].replace(/_/g, '/')).filter(Boolean))];
+  const sortedFilteredRides = [...filteredRides].sort((a, b) => {
+    const valA = a[sortConfig.key];
+    const valB = b[sortConfig.key];
+    
+    if (valA === valB) return 0;
+    
+    let comparison = 0;
+    if (typeof valA === 'string') {
+      comparison = valA.localeCompare(valB);
+    } else {
+      comparison = (valA || 0) > (valB || 0) ? 1 : -1;
+    }
+    
+    return sortConfig.direction === "asc" ? comparison : -comparison;
+  });
+
+  const uniqueRoutes = ["All Routes", ...new Set(rides.map(r => r.Route).filter(Boolean))].sort((a, b) => {
+    if (a === "All Routes") return -1;
+    if (b === "All Routes") return 1;
+    return a.localeCompare(b);
+  });
+  
+  const uniqueDates = ["All Dates", ...new Set(rides.map(r => r.Ride_Name.substring(0, 10)).filter(Boolean))].sort((a, b) => {
+    if (a === "All Dates") return -1;
+    if (b === "All Dates") return 1;
+    return b.localeCompare(a); // Newest first
+  });
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === "desc" ? "asc" : "desc"
+    }));
+  };
 
   const loadRideData = (rideName) => {
     setLoadingData(true);
@@ -697,9 +735,9 @@ export default function RoadSuitePage() {
                     icon: "📍"
                   },
                   {
-                    label: "ML Drive Score",
+                    label: "Drive Score",
                     value: `${selectedRideData.Drive_Score != null ? parseFloat(selectedRideData.Drive_Score).toFixed(1) : "0.0"} (${selectedRideData.Ride_Class || "Unknown"})`,
-                    color: "#43B3AE",
+                    color: parseFloat(selectedRideData.Drive_Score) >= 70 ? "#00CC96" : parseFloat(selectedRideData.Drive_Score) >= 40 ? "#FFD700" : "#FF4B4B",
                     icon: "🎯"
                   },
                 ].map((item, idx, arr) => (
@@ -2275,7 +2313,7 @@ export default function RoadSuitePage() {
                   textAlign: "center",
                   boxShadow: "0 15px 35px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)"
                 }}>
-                   <h3 style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 20 }}>Predicted Aggression Index</h3>
+                   <h3 style={{ fontSize: 18, fontWeight: 900, color: "#fff", marginBottom: 20 }}>Drive Score</h3>
                    <Plot
                     data={[{
                       type: "indicator",
@@ -2287,9 +2325,9 @@ export default function RoadSuitePage() {
                         bar: { color: "rgba(255,255,255,0.2)" },
                         bgcolor: "rgba(255,255,255,0.05)",
                         steps: [
-                          { range: [0, 30], color: "#00CC96" },
-                          { range: [30, 60], color: "#FFD700" },
-                          { range: [60, 100], color: "#FF4B4B" }
+                          { range: [0, 40],  color: "#FF4B4B" },
+                          { range: [40, 70], color: "#FFD700" },
+                          { range: [70, 100], color: "#00CC96" }
                         ],
                         threshold: {
                           line: { color: "#fff", width: 4 },
@@ -2298,15 +2336,15 @@ export default function RoadSuitePage() {
                         }
                       }
                     }]}
-                    layout={{ 
-                      autosize: true, height: 320, 
-                      paper_bgcolor: "rgba(0,0,0,0)", 
-                      margin: { t: 30, b: 30, l: 30, r: 30 } 
+                    layout={{
+                      autosize: true, height: 320,
+                      paper_bgcolor: "rgba(0,0,0,0)",
+                      margin: { t: 30, b: 30, l: 30, r: 30 }
                     }}
                     config={{ displayModeBar: true }}
                     style={{ width: "100%", height: 320 }}
                   />
-                  <div style={{ color: "#fff", fontSize: 13, fontWeight: 800, marginTop: 12, letterSpacing: "0.5px" }}>ML Inference: RandomForest Classifier</div>
+                  <div style={{ color: "#fff", fontSize: 13, fontWeight: 800, marginTop: 12, letterSpacing: "0.5px" }}>Deterministic Penalty Model</div>
                 </div>
 
                 <div style={{ 
@@ -2317,22 +2355,21 @@ export default function RoadSuitePage() {
                   padding: 24,
                   boxShadow: "0 15px 35px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)"
                 }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 20 }}>Ride Feature Vector DNA</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: "#fff", marginBottom: 20 }}>Penalty Breakdown</h3>
                   <Plot
                     data={[{
                       type: "scatterpolar",
                       r: [
-                        Math.min(((selectedRideData.Avg_Torque_Nm || 0) / 40) * 100, 100),
-                        Math.min(((selectedRideData.Accel_Freq || 0) / 15) * 100, 100),
-                        selectedRideData.Pct_Sprint || 0,
-                        Math.min(((selectedRideData.Overall_Wh_km || 0) / 50) * 100, 100),
-                        Math.min(((selectedRideData.Speed_Osc_Index || 0) / 3) * 100, 100)
+                        selectedRideData.Penalty_Throttle || 0,
+                        selectedRideData.Penalty_Velocity || 0,
+                        selectedRideData.Penalty_Regen    || 0,
+                        selectedRideData.Penalty_Brake    || 0
                       ],
-                      theta: ['Torque Usage', 'Accel Freq', 'Sprint %', 'Energy Index', 'Oscillation'],
+                      theta: ['Throttle Penalty', 'Velocity Penalty', 'Regen Benefit', 'Brake Penalty'],
                       fill: 'toself',
-                      name: 'Ride Feature Vector',
-                      fillcolor: selectedRideData.Drive_Score > 60 ? "rgba(255,75,75,0.5)" : "rgba(67,179,174,0.5)",
-                      line: { color: selectedRideData.Drive_Score > 60 ? "#FF4B4B" : "#43B3AE", width: 2 }
+                      name: 'Penalty Breakdown',
+                      fillcolor: (selectedRideData.Drive_Score || 0) < 40 ? "rgba(255,75,75,0.5)" : (selectedRideData.Drive_Score || 0) < 70 ? "rgba(255,215,0,0.5)" : "rgba(67,179,174,0.5)",
+                      line: { color: (selectedRideData.Drive_Score || 0) < 40 ? "#FF4B4B" : (selectedRideData.Drive_Score || 0) < 70 ? "#FFD700" : "#43B3AE", width: 2 }
                     }]}
                     layout={{
                       autosize: true, height: 320,
@@ -2350,13 +2387,12 @@ export default function RoadSuitePage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                 {[
-                  { label: "Avg Torque", val: `${selectedRideData.Avg_Torque_Nm || 0} Nm`, icon: <Activity size={12} /> },
-                  { label: "Torque Bursts", val: selectedRideData.Peak_Torque_Bursts || 0, icon: <Zap size={12} /> },
-                  { label: "Accel Freq", val: selectedRideData.Accel_Freq?.toFixed(1) || 0, icon: <TrendingUp size={12} /> },
-                  { label: "Oscillation", val: selectedRideData.Speed_Osc_Index?.toFixed(2) || 0, icon: <Repeat size={12} /> },
-                  { label: "Sprint %", val: `${selectedRideData.Pct_Sprint?.toFixed(1) || 0} %`, icon: <Zap size={12} /> }
+                  { label: "Throttle Penalty", val: (selectedRideData.Penalty_Throttle || 0).toFixed(2), icon: <Activity size={12} />, color: "#FF4B4B" },
+                  { label: "Velocity Penalty", val: (selectedRideData.Penalty_Velocity || 0).toFixed(2), icon: <TrendingUp size={12} />, color: "#FFD700" },
+                  { label: "Regen Benefit",    val: (selectedRideData.Penalty_Regen    || 0).toFixed(2), icon: <Repeat size={12} />,   color: "#00CC96" },
+                  { label: "Brake Penalty",    val: (selectedRideData.Penalty_Brake    || 0).toFixed(2), icon: <Zap size={12} />,      color: "#FF4B4B" }
                 ].map((item, i) => (
                   <div key={i} style={{ 
                     background: "rgba(255,255,255,0.03)", 
@@ -2369,7 +2405,7 @@ export default function RoadSuitePage() {
                     <div style={{ fontSize: 10, textTransform: "uppercase", color: "#A0A0AB", fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                       {item.icon} {item.label}
                     </div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>{item.val}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: item.color || "#fff" }}>{item.val}</div>
                   </div>
                 ))}
               </div>
@@ -2396,7 +2432,7 @@ export default function RoadSuitePage() {
                   </div>
                   <div>
                     <h2 style={{ fontSize: 24, fontWeight: 900, color: "#fff" }}>Automated Event Detection</h2>
-                    <p style={{ fontSize: 13, color: "#888" }}>ML-powered anomaly detection for {selectedRide || "selected ride"}</p>
+                    <p style={{ fontSize: 13, color: "#888" }}>Automated anomaly detection for {selectedRide || "selected ride"}</p>
                   </div>
                 </div>
                 <div style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(67,179,174,0.08)", border: "1px solid rgba(67,179,174,0.2)", fontSize: 12, color: "#43B3AE", fontWeight: 700 }}>
@@ -2485,18 +2521,34 @@ export default function RoadSuitePage() {
                   <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 8px" }}>
                     <thead>
                       <tr>
-                        <th style={{ textAlign: "left", padding: "12px 24px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Ride Name</th>
-                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Dist (km)</th>
-                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Wh/km</th>
-                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>ML Score</th>
-                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Class</th>
-                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Motor Max</th>
-                        <th style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>IGBT Max</th>
-                        <th style={{ textAlign: "right", padding: "12px 24px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800 }}>Pack Max</th>
+                        <th onClick={() => handleSort("Ride_Name")} style={{ textAlign: "left", padding: "12px 24px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          Ride Name {sortConfig.key === "Ride_Name" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th onClick={() => handleSort("Total_Distance_km")} style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          Dist (km) {sortConfig.key === "Total_Distance_km" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th onClick={() => handleSort("Overall_Wh_km")} style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          Wh/km {sortConfig.key === "Overall_Wh_km" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th onClick={() => handleSort("Drive_Score")} style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          Drive Score {sortConfig.key === "Drive_Score" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th onClick={() => handleSort("Ride_Class")} style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          Class {sortConfig.key === "Ride_Class" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th onClick={() => handleSort("Max_Motor_Temp_C")} style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          Motor Max {sortConfig.key === "Max_Motor_Temp_C" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th onClick={() => handleSort("Max_IGBT_Temp_C")} style={{ textAlign: "center", padding: "12px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          IGBT Max {sortConfig.key === "Max_IGBT_Temp_C" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th onClick={() => handleSort("Max_Pack_Temp_C")} style={{ textAlign: "right", padding: "12px 24px", color: "#666", fontSize: 11, textTransform: "uppercase", fontWeight: 800, cursor: "pointer" }}>
+                          Pack Max {sortConfig.key === "Max_Pack_Temp_C" && (sortConfig.direction === "asc" ? "↑" : "↓")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {rides.map((ride, i) => (
+                      {sortedFilteredRides.map((ride, i) => (
                         <tr key={i} onClick={() => setSelectedRide(ride.Ride_Name)} style={{ background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "0.2s" }} className="repo-row-hover">
                           <td style={{ padding: "16px 24px", borderRadius: "12px 0 0 12px", borderLeft: "2px solid rgba(255,255,255,0.05)" }}>
                             <div style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>{ride.Ride_Name}</div>
