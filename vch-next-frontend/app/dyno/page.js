@@ -132,6 +132,66 @@ export default function DynoPage() {
   const deFileInputRef = useRef(null);
   const deLogRef = useRef(null);
 
+  // PLM Hardware Registry state
+  const [plmTab, setPlmTab] = useState("bulk");
+  const [plmFile, setPlmFile] = useState(null);
+  const [plmIsHovering, setPlmIsHovering] = useState(false);
+  const [plmStatus, setPlmStatus] = useState(null); // {ok, msg}
+  const [plmUploading, setPlmUploading] = useState(false);
+  const plmFileInputRef = useRef(null);
+  // Manual entry state
+  const [plmBikeNo, setPlmBikeNo] = useState(19);
+  const [plmFields, setPlmFields] = useState({ vin:"", battery_box_id:"", motor_id:"", aux_battery_id:"", left_module_id:"", right_module_id:"", bms_id:"", status:"Offline" });
+  const [plmSaving, setPlmSaving] = useState(false);
+
+  // When bike number changes, pre-fill from fleet data
+  useEffect(() => {
+    const key = `BIKE-${plmBikeNo}`;
+    const existing = fleetData[key] || {};
+    setPlmFields({
+      vin:             existing.vin             || "",
+      battery_box_id:  existing.battery_box_id  || "",
+      motor_id:        existing.motor_id        || "",
+      aux_battery_id:  existing.aux_battery_id  || "",
+      left_module_id:  existing.left_module_id  || "",
+      right_module_id: existing.right_module_id || "",
+      bms_id:          existing.bms_id          || "",
+      status:          existing.status          || "Offline",
+    });
+  }, [plmBikeNo, fleetData]);
+
+  const plmHandleFileDrop = (files) => {
+    if (files && files[0]) setPlmFile(files[0]);
+  };
+
+  const plmUploadManifest = async () => {
+    if (!plmFile) return;
+    setPlmUploading(true); setPlmStatus(null);
+    try {
+      const fd = new FormData(); fd.append("file", plmFile);
+      const res = await axios.post(`${API}/api/bike/upload_manifest`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      setPlmStatus({ ok: true, msg: res.data.message });
+      setPlmFile(null);
+      const fr = await axios.get(`${API}/api/fleet`);
+      setFleetData(fr.data || {});
+    } catch (e) {
+      setPlmStatus({ ok: false, msg: e.response?.data?.detail || e.message });
+    } finally { setPlmUploading(false); }
+  };
+
+  const plmSaveManual = async () => {
+    setPlmSaving(true); setPlmStatus(null);
+    try {
+      const payload = { bike_no: plmBikeNo, ...plmFields };
+      const res = await axios.post(`${API}/api/bike/manual_update`, payload);
+      setPlmStatus({ ok: true, msg: `Saved ${res.data.updated_fields.length} field(s) for BIKE-${plmBikeNo}` });
+      const fr = await axios.get(`${API}/api/fleet`);
+      setFleetData(fr.data || {});
+    } catch (e) {
+      setPlmStatus({ ok: false, msg: e.response?.data?.detail || e.message });
+    } finally { setPlmSaving(false); }
+  };
+
   useEffect(() => { if (deLogRef.current) deLogRef.current.scrollTop = deLogRef.current.scrollHeight; }, [deLogs]);
 
   const deLoadProcessedTests = async () => {
@@ -169,7 +229,11 @@ export default function DynoPage() {
       const res = await axios.post(`${API}/api/dyno/process`);
       if (res.data.logs) setDeLogs(prev => prev + res.data.logs + "\n");
       if (res.data.error) deAppendLog(`[ERROR]: ${res.data.error}`);
-      else deAppendLog(`✅ Processing complete. Synchronized ${res.data.result?.Processed || 0} files.`);
+      else {
+        deAppendLog(`✅ Processing complete. Synchronized ${res.data.result?.Processed || 0} files.`);
+        // 🔄 Auto-refresh UI data after processing
+        loadData();
+      }
     } catch (e) { deAppendLog(`[FATAL]: Cannot connect to Engine Backend. (${e.message})`); }
     setDeIsProcessing(false);
   };
@@ -215,14 +279,16 @@ export default function DynoPage() {
 
   const loadData = () => {
     setLoading(true);
-    axios.get(`${API}/api/dyno/summaries`).then((r) => {
-      const sums = Array.isArray(r.data) ? r.data : [];
+    Promise.all([
+      axios.get(`${API}/api/dyno/summaries`).catch(() => ({ data: [] })),
+      axios.get(`${API}/api/dyno/fleet`).catch(() => ({ data: {} })),
+    ]).then(([sumRes, fleetRes]) => {
+      const sums = Array.isArray(sumRes.data) ? sumRes.data : [];
       setSummaries(sums);
       if (sums.length > 0 && !selectedTest) setSelectedTest(sums[0].Test_Name);
+      setFleetData(fleetRes.data || {});
       setLoading(false);
-    }).catch(() => setLoading(false));
-
-    axios.get(`${API}/api/dyno/fleet`).then(r => setFleetData(r.data || {}));
+    });
   };
   useEffect(() => { loadData(); }, []);
 
@@ -994,7 +1060,7 @@ export default function DynoPage() {
             })()}
 
             {activeTab === "test_repository" && (() => {
-               const GOLDEN_BIKES_REPO = ["2025_10_22-07-BK", "2025_10_09-14-BK", "2025_10_25-09-BK", "2025_10_20-15-BK", "2025_10_19-17-BK", "2025_10_25-04-BK"];
+               const GOLDEN_BIKES_REPO = ["2025_10_22-07-BK", "2025_10_09-14-BK", "2025_10_25-09-BK (Nw-BB)", "2025_10_20-15-BK", "2025_10_19-17-BK", "2025_10_25-04-BK (Nw-BB)"];
                const isT = qcEnvMethod === "Tolerance (%)";
                const tKey = isT ? `_${qcTolerance}Pct` : "_2Sigma";
 
@@ -1005,7 +1071,8 @@ export default function DynoPage() {
 
                const getEnvRow = (ch) => {
                  const env = envelopes[ch]; if (!env || !env["Time (s)"]) return null;
-                 const idx = env["Time (s)"].findIndex(t => Number(t) === qcTimeS);
+                 // Use Number() on both sides to avoid 120 !== 120.0 type mismatch
+                 const idx = env["Time (s)"].findIndex(t => Number(t) === Number(qcTimeS));
                  if (idx < 0) return null;
                  const row = {}; Object.keys(env).forEach(k => { row[k] = env[k][idx]; }); return row;
                };
@@ -1020,24 +1087,27 @@ export default function DynoPage() {
                  if (showDtdt) visibleCols.push(`${ch} dTdt`);
                  if (showDt)   visibleCols.push(`${ch} dT`);
                });
-               if (showPower) visibleCols.push("Power (kW)");
-               visibleCols.push("Conclusion");
+               if (showPower) visibleCols.push("Power Rating (kW)");
+               visibleCols.push("Final Conclusion");
 
                const repoResults = (summaries || []).map(row => {
                  const testName  = row.Test_Name || "";
                  const bikeType  = row.Type || "Evaluation";
                  const bikePower = Number(row.Power_Avg_120s || 0);
-                 const result    = { "Test Name": testName, "Type": bikeType, "Power (kW)": bikePower };
+                 const result    = { "Test Name": testName, "Type": bikeType, "Power Rating (kW)": bikePower };
 
+                 // Use snapshot values at qcTimeS (60/120/180s) — matches Streamlit's merge_asof lookup
                  ["IGBT","Motor","HighCell","AFE"].forEach(ch => {
-                   const dtdtKey = `${ch}_dTdt_Max`;
-                   const dtKey   = `${ch}_dT_Max`;
-                   result[`${ch} dTdt`] = Number(row[dtdtKey] || 0);
-                   result[`${ch} dT`]   = Number(row[dtKey]   || 0);
+                   const dtdtKey = `${ch}_dTdt_${qcTimeS}s`;
+                   const dtKey   = `${ch}_dT_${qcTimeS}s`;
+                   result[`${ch} dTdt`] = Number(row[dtdtKey] ?? row[`${ch}_dTdt_Max`] ?? 0);
+                   result[`${ch} dT`]   = Number(row[dtKey]   ?? row[`${ch}_dT_Max`]   ?? 0);
                  });
 
                  const failures = [];
-                 if (qcMetric.length > 0 && !qcMetric.includes("Power Based")) {
+                 // Streamlit parity: only skip dT/dTdt block when "Power Based" is the SOLE selection
+                 const onlyPowerBased = qcMetric.length === 1 && qcMetric[0] === "Power Based";
+                 if (qcMetric.length > 0 && !onlyPowerBased) {
                    ["IGBT","Motor","HighCell","AFE"].forEach(ch => {
                      if (!qcTarget.includes("All Data") && !qcTarget.includes(ch)) return;
                      const envRow = getEnvRow(ch); if (!envRow) return;
@@ -1057,10 +1127,10 @@ export default function DynoPage() {
                  }
 
                  if (bikeType === "Golden Baseline") {
-                   result["Conclusion"] = "PASS (Golden Base)";
+                   result["Final Conclusion"] = "PASS (Golden Base)";
                    result._pass = true;
                  } else {
-                   result["Conclusion"] = failures.length ? `FAIL (${failures[0]})` : "PASS";
+                   result["Final Conclusion"] = failures.length ? `FAIL (${failures.join("; ")})` : "PASS";
                    result._pass = failures.length === 0;
                  }
                  return result;
@@ -1086,7 +1156,7 @@ export default function DynoPage() {
                          : rows.map((r,i) => (
                            <tr key={i} style={{background: i%2===0 ? "transparent" : "rgba(255,255,255,0.015)"}}>
                              {visibleCols.map(col => {
-                               if (col === "Conclusion") return <td key={col} style={{...tdS, color: r._pass ? "#43B3AE" : "#FF4B4B", fontWeight:700, whiteSpace:"normal", maxWidth:340}}>{r[col]}</td>;
+                               if (col === "Final Conclusion") return <td key={col} style={{...tdS, color: r._pass ? "#43B3AE" : "#FF4B4B", fontWeight:700, whiteSpace:"normal", maxWidth:340}}>{r[col]}</td>;
                                if (col === "Test Name") return <td key={col} style={{...tdS, fontFamily:"monospace", fontSize:11}}>{r[col]}</td>;
                                if (col === "Type")      return <td key={col} style={{...tdS, color:"var(--text-sub)"}}>{r[col]}</td>;
                                const v = r[col];
@@ -1268,12 +1338,17 @@ export default function DynoPage() {
                 return {
                   icon: passed ? "✅" : "❌",
                   title: passed ? "PASS" : "FAIL",
-                  detail: passed ? "" : `Failed Rules: ${failures[0]}`,
+                  detail: passed ? "" : `Failed Rules: ${failures.join(", ")}`,
                   color: passed ? "#43B3AE" : "#FF4B4B",
                   background: passed ? "rgba(67,179,174,0.15)" : "rgba(255,75,75,0.15)",
                   borderLeft: passed ? "4px solid #43B3AE" : "4px solid #FF4B4B"
                 };
               })();
+
+              // --- helpers ---
+              const STATUS_COLOR = { "Active": "#43B3AE", "In-Service": "#FFA15A", "Offline": "#8A8A93", "Retired": "#FF4B4B" };
+              const HW_FIELDS = ["battery_box_id","motor_id","left_module_id","right_module_id","bms_id","aux_battery_id","vin"];
+              const getCompleteness = (d) => HW_FIELDS.filter(f => d[f] && d[f] !== "N/A" && d[f] !== "UNASSIGNED" && d[f] !== "NVA5P1.PTP0011").length;
 
               if (!selectedBike) {
                 return (
@@ -1286,19 +1361,29 @@ export default function DynoPage() {
                       {visibleBikes.map((bikeId) => {
                         const bikeNum = bikeId.split("-")[1]?.replace(/^0+/, "");
                         const testsDone = summaries.filter((s) => getBikeNo(s.Test_Name) === bikeNum).length;
+                        const bData = fleetData[bikeId] || {};
+                        const filled = getCompleteness(bData);
+                        const subtitle = bData.vin && bData.vin !== "NVA5P1.PTP0011" ? bData.vin : bData.battery_box_id || "—";
+                        const hasGap = filled < HW_FIELDS.length;
                         return (
                           <div key={bikeId}>
-                            <div className="fleet-card">
-                              <div className="fleet-icon"><Bike size={32} /></div>
-                              <div className="fleet-vin">{fleetData[bikeId]?.vin || "UNKNOWN_VIN"}</div>
-                              <div className="fleet-id">{bikeId} • {testsDone} Dyno Tests</div>
+                            <div className="fleet-card" style={{ position: "relative" }}>
+                              {/* Missing data warning */}
+                              {hasGap && <div style={{ position: "absolute", top: 12, left: 12, color: "#FFA15A", fontSize: 11 }} title={`${filled}/${HW_FIELDS.length} fields populated`}>⚠️</div>}
+                              <div className="fleet-icon" style={{ marginTop: hasGap ? 8 : 0 }}><Bike size={32} /></div>
+                              <div className="fleet-vin">{bikeId}</div>
+                              <div className="fleet-id" style={{ fontSize: 11, marginBottom: 4, fontFamily: "monospace" }}>{subtitle}</div>
+                              {/* Completeness bar */}
+                              <div style={{ height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 2, marginBottom: 6, overflow: "hidden" }}>
+                                <div style={{ height: "100%", width: `${(filled / HW_FIELDS.length) * 100}%`, background: filled === HW_FIELDS.length ? "#43B3AE" : "#FFA15A", borderRadius: 2, transition: "width 0.4s" }} />
+                              </div>
+                              <div className="fleet-id">{testsDone} Dyno Tests • {filled}/{HW_FIELDS.length} fields</div>
+
                             </div>
                             <button
                               onClick={() => {
                                 setSelectedBike(bikeId);
-                                const firstTest = summaries
-                                  .filter((s) => getBikeNo(s.Test_Name) === bikeNum)
-                                  .sort((a, b) => String(b.Test_Name).localeCompare(String(a.Test_Name)))[0];
+                                const firstTest = summaries.filter((s) => getBikeNo(s.Test_Name) === bikeNum).sort((a, b) => String(b.Test_Name).localeCompare(String(a.Test_Name)))[0];
                                 if (firstTest) setHistoricalTest(firstTest.Test_Name);
                                 else setHistoricalTest("");
                               }}
@@ -1314,22 +1399,91 @@ export default function DynoPage() {
                 );
               }
 
+              // --- Detail view ---
+              const filled = getCompleteness(selectedFleet);
+              const filledPct = Math.round((filled / HW_FIELDS.length) * 100);
+
+              // Pass/fail history for all bike tests
+              const verdictHistory = bikeTests.map(t => {
+                const bp = Number(t.Power_Avg_120s || 0);
+                const goldenPwrs = summaries.filter(r => GOLDEN_BIKES.some(g => r.Test_Name?.includes(g))).map(r => Number(r.Power_Avg_120s || 0)).filter(p => p >= 19 && p <= 20.5);
+                const mgp = goldenPwrs.length ? goldenPwrs.reduce((a,b)=>a+b,0)/goldenPwrs.length : 19.5;
+                const pwrOk = bp >= mgp * 0.9 && bp <= mgp * 1.1;
+                const isGolden = String(t.Type||"").includes("Golden");
+                return { name: t.Test_Name, pass: isGolden || pwrOk, golden: isGolden };
+              }).sort((a,b) => String(a.name).localeCompare(String(b.name)));
+
               return (
                 <div>
                   <button onClick={() => setSelectedBike(null)} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "#43B3AE", cursor: "pointer", marginBottom: 16, fontWeight: 700 }}><ChevronLeft size={16} /> Back to Fleet</button>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 20 }}><h2 style={{ fontSize: 28, fontWeight: 900, color: "#FFF" }}>{selectedFleet.vin || "UNKNOWN_VIN"}</h2><span style={{ color: "var(--text-sub)", fontSize: 18 }}>| {selectedBike}</span></div>
+
+                  {/* Header */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16, flexWrap: "wrap" }}>
+                    <h2 style={{ fontSize: 28, fontWeight: 900, color: "#FFF", margin: 0 }}>{selectedBike}</h2>
+                    {/* Inline edit button — jumps to Data Engine Manual Entry pre-filled */}
+                    <button onClick={() => { setPlmBikeNo(Number(selectedBike.split("-")[1])); setPlmTab("manual"); setActiveTab("data_engine"); }}
+                      style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, color: "var(--text-sub)", fontSize: 12, cursor: "pointer", fontWeight: 600 }}>
+                      ✏️ Edit Hardware
+                    </button>
+                  </div>
+                  {selectedFleet.vin && selectedFleet.vin !== "NVA5P1.PTP0011" && (
+                    <div style={{ fontSize: 13, color: "#43B3AE", marginBottom: 12, fontFamily: "monospace" }}>VIN: {selectedFleet.vin}</div>
+                  )}
+
+                  {/* Completeness score — #5 */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "10px 16px" }}>
+                    <div style={{ fontSize: 12, color: "var(--text-sub)", fontWeight: 700, whiteSpace: "nowrap" }}>Hardware Profile</div>
+                    <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: `${filledPct}%`, background: filledPct === 100 ? "#43B3AE" : "#FFA15A", borderRadius: 3, transition: "width 0.4s" }} />
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: filledPct === 100 ? "#43B3AE" : "#FFA15A", whiteSpace: "nowrap" }}>{filled}/{HW_FIELDS.length} fields · {filledPct}%</div>
+                  </div>
+
+                  {/* Hardware fields */}
                   <div style={{ fontSize: 16, fontWeight: 800, color: "#FFF", marginBottom: 16 }}>Hardware Registry Details</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16, marginBottom: 30 }}>
-                    <div className="hw-box" style={{ background: "rgba(67,179,174,0.05)", border: "1px solid rgba(67,179,174,0.15)" }}><div className="hw-label" style={{ color: "#43B3AE" }}>Tests Evaluated</div><div className="hw-value" style={{ color: "#fff" }}>{bikeTests.length}</div></div>
-                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Motor ID</div><div className="hw-value">{selectedFleet.motor_id || "N/A"}</div></div>
-                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Battery Box ID</div><div className="hw-value">{selectedFleet.battery_box_id || "N/A"}</div></div>
-                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Left Module ID</div><div className="hw-value">{selectedFleet.left_module_id || "N/A"}</div></div>
-                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">Right Module ID</div><div className="hw-value">{selectedFleet.right_module_id || "N/A"}</div></div>
-                    <div className="hw-box" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}><div className="hw-label">BMS Firmware ID</div><div className="hw-value">{selectedFleet.bms_id || "N/A"}</div></div>
+                    {[
+                      { label: "Tests Evaluated", value: bikeTests.length, accent: true },
+                      { label: "Battery Box ID",  value: selectedFleet.battery_box_id },
+                      { label: "Left Module ID",  value: selectedFleet.left_module_id },
+                      { label: "Right Module ID", value: selectedFleet.right_module_id },
+                      { label: "BMS ID",          value: selectedFleet.bms_id },
+                      { label: "Motor ID",        value: selectedFleet.motor_id },
+                      { label: "Aux Battery ID",  value: selectedFleet.aux_battery_id },
+                      ...(selectedFleet.powertrain_id ? [{ label: "Powertrain ID", value: selectedFleet.powertrain_id }] : []),
+                    ].map(({ label, value, accent }) => (
+                      <div key={label} className="hw-box" style={{ background: accent ? "rgba(67,179,174,0.05)" : "rgba(255,255,255,0.03)", border: `1px solid ${accent ? "rgba(67,179,174,0.15)" : "rgba(255,255,255,0.08)"}`, position: "relative", cursor: value && value !== "N/A" ? "pointer" : "default" }}
+                        title={value && value !== "N/A" ? "Click to copy" : ""}
+                        onClick={() => { if (value && value !== "N/A") navigator.clipboard?.writeText(String(value)); }}>
+                        <div className="hw-label" style={accent ? { color: "#43B3AE" } : {}}>{label}</div>
+                        <div className="hw-value" style={{ color: value && value !== "N/A" ? "#fff" : "#555" }}>{value || "N/A"}</div>
+                      </div>
+                    ))}
                   </div>
+
+                  {/* Pass/Fail history timeline — #12 */}
+                  {verdictHistory.length > 0 && (
+                    <div style={{ marginBottom: 30 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "#FFF", marginBottom: 10 }}>Test History</div>
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {verdictHistory.map(v => (
+                          <div key={v.name}
+                            onClick={() => setHistoricalTest(v.name)}
+                            title={v.name}
+                            style={{ padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                              background: v.golden ? "rgba(255,215,0,0.12)" : v.pass ? "rgba(67,179,174,0.12)" : "rgba(255,75,75,0.12)",
+                              border: `1px solid ${v.golden ? "#FFD70055" : v.pass ? "#43B3AE55" : "#FF4B4B55"}`,
+                              color: v.golden ? "#FFD700" : v.pass ? "#43B3AE" : "#FF4B4B",
+                              outline: historicalTest === v.name ? `2px solid ${v.golden ? "#FFD700" : v.pass ? "#43B3AE" : "#FF4B4B"}` : "none" }}>
+                            {v.golden ? "👑" : v.pass ? "✅" : "❌"} {v.name.split("-").slice(-1)[0]}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 30, position: "relative", zIndex: 10 }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: "#FFF", marginBottom: 16 }}>Historical Test Inspection</div>
-                    
                     {bikeTests.length === 0 ? (
                       <div style={{ padding: "20px", color: "var(--text-sub)", background: "rgba(255,255,255,0.02)", borderRadius: 8, border: "1px dashed rgba(255,255,255,0.1)" }}>
                         ⚠️ No historical tests logged for {selectedBike}
@@ -1341,18 +1495,32 @@ export default function DynoPage() {
                         </div>
                         {historicalTelemetry && (() => {
                             const keys = Object.keys(historicalTelemetry);
-                            const htCol = keys.find(c => c === "highest_temp (oC)") || keys.find(c => c.toLowerCase().includes("highcell")) || keys.find(c => c.toLowerCase().includes("highest")) || "HighCell_Temp";
-                            const igbtCol = keys.find(c => c.toLowerCase().includes("igbt")) || "IGBT_Temp";
+                            const htCol  = keys.find(c => c === "highest_temp (oC)") || keys.find(c => c.toLowerCase().includes("highcell")) || "HighCell_Temp";
+                            const igbtCol  = keys.find(c => c.toLowerCase().includes("igbt"))  || "IGBT_Temp";
                             const motorCol = keys.find(c => c.toLowerCase().includes("motor")) || "Motor_Temp";
+                            const afeCol   = keys.find(c => c.toLowerCase().includes("afe_mean") || c.toLowerCase().includes("afe_temp")) || keys.find(c => c.toLowerCase().includes("afe"));
+                            const timeArr  = historicalTelemetry["Time (s)"] || [];
+                            // Snapshot marker shapes at 60/120/180s
+                            const snapshotShapes = [60, 120, 180].map(t => ({
+                              type: "line", x0: t, x1: t, y0: 0, y1: 1, yref: "paper",
+                              line: { color: "rgba(255,161,90,0.4)", width: 1, dash: "dot" }
+                            }));
+                            const snapshotAnnotations = [60, 120, 180].map(t => ({
+                              x: t, y: 1, yref: "paper", text: `${t}s`, showarrow: false,
+                              font: { size: 9, color: "#FFA15A" }, xanchor: "center", yanchor: "bottom"
+                            }));
                             return (
-                                <div className="metric-card" style={{ padding: 16, marginBottom: 20 }}>
-                                  <div style={{ fontWeight: 700, marginBottom: 12 }}>Thermal Profile — {historicalTest}</div>
-                                  <Plot data={[
-                                    historicalTelemetry[htCol] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry[htCol], name: "HighCell (Primary)", line: { color: "#FF4B4B", width: 2 } } : null,
-                                    historicalTelemetry[igbtCol] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry[igbtCol], name: "IGBT (Secondary)", yaxis: "y2", line: { color: "#43B3AE", width: 2 } } : null,
-                                    historicalTelemetry[motorCol] ? { x: historicalTelemetry["Time (s)"], y: historicalTelemetry[motorCol], name: "Motor (Secondary)", yaxis: "y2", line: { color: "cyan", width: 2 } } : null
-                                  ].filter(Boolean)} layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 500, hovermode: "x unified", margin: { t: 10, b: 10, l: 10, r: 10 }, legend: { orientation: "h", y: 1.02, x: 1, xanchor: "right", yanchor: "bottom" }, xaxis: { title: "Time (s)", showgrid: false, zeroline: false }, yaxis: { title: "HighCell Temp (°C)", showgrid: true, gridcolor: "rgba(128,128,128,0.2)", zeroline: false }, yaxis2: { title: "Powertrain Temp (°C)", overlaying: "y", side: "right", showgrid: false, zeroline: false } }} config={{ responsive: true, displaylogo: false }} style={{ width: "100%" }} />
-                                </div>
+                              <div className="metric-card" style={{ padding: 16, marginBottom: 20 }}>
+                                <div style={{ fontWeight: 700, marginBottom: 12 }}>Thermal Profile — {historicalTest}</div>
+                                <Plot data={[
+                                  historicalTelemetry[htCol]   ? { x: timeArr, y: historicalTelemetry[htCol],   name: "HighCell",  line: { color: "#FF4B4B", width: 2 } } : null,
+                                  historicalTelemetry[igbtCol]  ? { x: timeArr, y: historicalTelemetry[igbtCol],  name: "IGBT",      yaxis: "y2", line: { color: "#43B3AE", width: 2 } } : null,
+                                  historicalTelemetry[motorCol] ? { x: timeArr, y: historicalTelemetry[motorCol], name: "Motor",     yaxis: "y2", line: { color: "cyan", width: 2 } } : null,
+                                  afeCol && historicalTelemetry[afeCol] ? { x: timeArr, y: historicalTelemetry[afeCol], name: "AFE", yaxis: "y2", line: { color: "#FFA15A", width: 1.5, dash: "dot" } } : null,
+                                ].filter(Boolean)}
+                                layout={{ ...DARK_TOOLTIP, paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#A0A0AB", size: 10 }, height: 500, hovermode: "x unified", margin: { t: 30, b: 10, l: 10, r: 10 }, legend: { orientation: "h", y: 1.02, x: 1, xanchor: "right", yanchor: "bottom" }, shapes: snapshotShapes, annotations: snapshotAnnotations, xaxis: { title: "Time (s)", showgrid: false, zeroline: false }, yaxis: { title: "HighCell Temp (°C)", showgrid: true, gridcolor: "rgba(128,128,128,0.2)", zeroline: false }, yaxis2: { title: "Powertrain Temp (°C)", overlaying: "y", side: "right", showgrid: false, zeroline: false } }}
+                                config={{ responsive: true, displaylogo: false }} style={{ width: "100%" }} />
+                              </div>
                             );
                         })()}
                         {qcVerdict && <div><div style={{ fontWeight: 800, color: "#FFF", marginBottom: 10 }}>QC Verdict (120s @ 20% Tolerance)</div><div style={{ background: qcVerdict.background, borderLeft: qcVerdict.borderLeft, padding: 15, borderRadius: 8 }}><div style={{ color: qcVerdict.color, fontSize: "1.2rem", fontWeight: 800 }}>{qcVerdict.icon} {qcVerdict.title}</div>{qcVerdict.detail && <div style={{ fontSize: "0.9rem", color: "#A0A0AB", marginTop: 4 }}>{qcVerdict.detail}</div>}</div></div>}
@@ -1449,6 +1617,114 @@ export default function DynoPage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* PLM Hardware Registry */}
+            <div style={{ marginTop: 40, borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 30 }}>
+              <h3 style={{ fontSize: 18, color: "#fff", display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span style={{ background: "#55AAFF", color: "#000", width: 24, height: 24, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold" }}>3</span>
+                PLM Hardware Registry
+              </h3>
+              <div style={{ fontSize: 12, color: "var(--text-sub)", marginBottom: 16 }}>Update the Digital Twin registry. Existing fields are never overwritten with blank values.</div>
+
+              {/* Tab switcher */}
+              <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: 4, width: "fit-content" }}>
+                {[["bulk","📂 Bulk Upload"],["manual","✏️ Manual Entry"]].map(([id, label]) => (
+                  <button key={id} onClick={() => { setPlmTab(id); setPlmStatus(null); }}
+                    style={{ padding: "7px 18px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600,
+                      background: plmTab === id ? "#55AAFF" : "transparent",
+                      color: plmTab === id ? "#000" : "var(--text-sub)" }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {plmStatus && (
+                <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 16, fontSize: 13, fontWeight: 600,
+                  background: plmStatus.ok ? "rgba(67,179,174,0.1)" : "rgba(255,75,75,0.1)",
+                  border: `1px solid ${plmStatus.ok ? "rgba(67,179,174,0.3)" : "rgba(255,75,75,0.3)"}`,
+                  color: plmStatus.ok ? "#43B3AE" : "#FF4B4B" }}>
+                  {plmStatus.ok ? "✅" : "❌"} {plmStatus.msg}
+                </div>
+              )}
+
+              {plmTab === "bulk" && (
+                <div style={{ maxWidth: 560 }}>
+                  <div style={{ fontSize: 13, color: "var(--text-sub)", marginBottom: 8 }}>Drop hardware manifest (.csv or .xlsx)</div>
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setPlmIsHovering(true); }}
+                    onDragLeave={() => setPlmIsHovering(false)}
+                    onDrop={(e) => { e.preventDefault(); setPlmIsHovering(false); plmHandleFileDrop(e.dataTransfer.files); }}
+                    style={{ border: plmIsHovering ? "2px dashed #55AAFF" : "1px dashed rgba(255,255,255,0.2)", background: plmIsHovering ? "rgba(85,170,255,0.05)" : "var(--card-bg)", borderRadius: 12, padding: "28px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all 0.2s", marginBottom: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                      <UploadCloud size={28} color={plmIsHovering ? "#55AAFF" : "var(--text-title)"} />
+                      <div>
+                        <div style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>{plmFile ? plmFile.name : "Drag and drop file here"}</div>
+                        <div style={{ color: "var(--text-sub)", fontSize: 12 }}>Accepts .csv or .xlsx</div>
+                      </div>
+                    </div>
+                    <button onClick={() => plmFileInputRef.current?.click()} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "7px 14px", borderRadius: 6, cursor: "pointer", fontSize: 12 }}>Browse</button>
+                    <input type="file" accept=".csv,.xlsx" ref={plmFileInputRef} style={{ display: "none" }} onChange={(e) => plmHandleFileDrop(e.target.files)} />
+                  </div>
+                  <button onClick={plmUploadManifest} disabled={!plmFile || plmUploading}
+                    style={{ padding: "10px 24px", background: plmFile ? "linear-gradient(90deg,#55AAFF,#3B8FE0)" : "rgba(255,255,255,0.06)", border: "none", borderRadius: 8, color: plmFile ? "#000" : "var(--text-sub)", fontWeight: 700, fontSize: 13, cursor: plmFile ? "pointer" : "not-allowed" }}>
+                    {plmUploading ? "Merging..." : "📥 Merge into Registry"}
+                  </button>
+                </div>
+              )}
+
+              {plmTab === "manual" && (() => {
+                const existingKey = `BIKE-${plmBikeNo}`;
+                const isExisting = !!fleetData[existingKey];
+                const FIELD_DEFS = [
+                  { key: "vin",             label: "VIN",             placeholder: "P5KTAAACA6MP00019" },
+                  { key: "battery_box_id",  label: "Battery Box ID",  placeholder: "BB5k2601A00001" },
+                  { key: "motor_id",        label: "Motor ID",        placeholder: "NVA5P1.PTP0011/A2504200000064" },
+                  { key: "aux_battery_id",  label: "Aux Battery ID",  placeholder: "BAH0211Y319886" },
+                  { key: "left_module_id",  label: "Left Module ID",  placeholder: "LH251100001" },
+                  { key: "right_module_id", label: "Right Module ID", placeholder: "RH251100001" },
+                  { key: "bms_id",          label: "BMS ID",          placeholder: "BMS260100001" },
+                ];
+                const inputStyle = { width: "100%", padding: "9px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 7, color: "#fff", fontSize: 13, boxSizing: "border-box" };
+                const labelStyle = { fontSize: 11, color: "var(--text-sub)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4, display: "block" };
+                return (
+                  <div style={{ maxWidth: 700 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
+                      <div>
+                        <label style={labelStyle}>Bike Number</label>
+                        <input type="number" min={1} max={999} value={plmBikeNo}
+                          onChange={(e) => setPlmBikeNo(Number(e.target.value))}
+                          style={{ ...inputStyle, width: 120 }} />
+                      </div>
+                      <div style={{ marginTop: 18, fontSize: 13, color: isExisting ? "#43B3AE" : "#FFA15A", fontWeight: 600 }}>
+                        {isExisting ? `✅ BIKE-${plmBikeNo} (existing)` : `⚡ BIKE-${plmBikeNo} (new bike)`}
+                      </div>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 20px", marginBottom: 16 }}>
+                      {FIELD_DEFS.map(({ key, label, placeholder }) => (
+                        <div key={key}>
+                          <label style={labelStyle}>{label}</label>
+                          <input type="text" value={plmFields[key]} placeholder={placeholder}
+                            onChange={(e) => setPlmFields(p => ({ ...p, [key]: e.target.value }))}
+                            style={inputStyle} />
+                        </div>
+                      ))}
+                      <div>
+                        <label style={labelStyle}>Status</label>
+                        <select value={plmFields.status} onChange={(e) => setPlmFields(p => ({ ...p, status: e.target.value }))}
+                          style={{ ...inputStyle, cursor: "pointer" }}>
+                          {["Active","Offline","In-Service","Retired"].map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-sub)", marginBottom: 12 }}>Leave any field blank to keep existing value.</div>
+                    <button onClick={plmSaveManual} disabled={plmSaving}
+                      style={{ padding: "10px 24px", background: "linear-gradient(90deg,#55AAFF,#3B8FE0)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, fontSize: 13, cursor: plmSaving ? "not-allowed" : "pointer", opacity: plmSaving ? 0.7 : 1 }}>
+                      {plmSaving ? "Saving..." : "💾 Save to Registry"}
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Developer Access */}

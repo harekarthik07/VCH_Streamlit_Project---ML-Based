@@ -14,7 +14,12 @@
       "Bash(netstat -ano)",
       "Bash(findstr \":8001\")",
       "Bash(python -c \":*)",
-      "Bash(npx next:*)"
+      "Bash(npx next:*)",
+      "Bash(pip install:*)",
+      "Bash(python -c \"import orjson; print\\(''orjson OK'', orjson.__version__\\)\")",
+      "Bash(python -m pip install orjson -q)",
+      "Read(//d C:/Users/KarthikS/**)",
+      "Bash(python3:*)"
     ]
   }
 }

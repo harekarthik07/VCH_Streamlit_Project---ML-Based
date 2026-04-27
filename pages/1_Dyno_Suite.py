@@ -287,6 +287,78 @@ if app_mode == "Data Engine":
             st.text_area("Live Terminal Output:", value=logs, height=250)
         else: st.info("No logs generated yet. Hit Process to capture the terminal output.")
 
+    # 📋 PLM HARDWARE REGISTRY UPLOAD
+    st.markdown("---")
+    st.subheader("3️⃣ PLM Hardware Registry Upload")
+
+    plm_tab_bulk, plm_tab_manual = st.tabs(["📂 Bulk Upload (File)", "✏️ Manual Entry (Single Bike)"])
+
+    with plm_tab_bulk:
+        st.caption("Upload a hardware manifest (.csv or .xlsx) to update the Digital Twin registry. Existing fields are never overwritten with empty values.")
+        hw_file = st.file_uploader("Drop hardware manifest here", type=["csv", "xlsx"], key="hw_registry_uploader")
+        if hw_file is not None:
+            if st.button("📥 Merge into Registry", type="primary", key="hw_bulk_merge"):
+                ok, msg, count = bike_engine.update_hardware_registry(hw_file, hw_file.name)
+                if ok:
+                    st.toast(f"✅ {msg}", icon="🏍️")
+                    st.success(msg)
+                    time.sleep(1.0)
+                    st.rerun()
+                else:
+                    st.error(f"❌ {msg}")
+
+    with plm_tab_manual:
+        st.caption("Manually add or update hardware details for a single bike. Only filled fields are written — blank fields are ignored.")
+        registry_now = bike_engine.load_bike_registry()
+        all_bike_nos = sorted([int(k.split("-")[1]) for k in registry_now.keys() if k.split("-")[1].isdigit()])
+
+        m_col1, m_col2 = st.columns([1, 2])
+        with m_col1:
+            manual_bike_no = st.number_input("Bike Number", min_value=1, max_value=999, step=1, value=all_bike_nos[0] if all_bike_nos else 19, key="manual_bike_no")
+            existing = registry_now.get(f"BIKE-{int(manual_bike_no)}", {})
+            st.caption(f"Registry key: **BIKE-{int(manual_bike_no)}** {'(existing)' if existing else '(new bike)'}")
+
+        with m_col2:
+            st.markdown("**Hardware Serial Numbers** *(leave blank to keep existing)*")
+            f_col1, f_col2 = st.columns(2)
+            with f_col1:
+                m_vin       = st.text_input("VIN",              value=existing.get("vin", ""),              key="m_vin",   placeholder="P5KTAAACA6MP00019")
+                m_bb        = st.text_input("Battery Box ID",   value=existing.get("battery_box_id", ""),   key="m_bb",    placeholder="BB5k2601A00001")
+                m_motor     = st.text_input("Motor ID",         value=existing.get("motor_id", ""),         key="m_motor", placeholder="NVA5P1.PTP0011/A2504200000064")
+                m_aux       = st.text_input("Aux Battery ID",   value=existing.get("aux_battery_id", ""),   key="m_aux",   placeholder="BAH0211Y319886")
+            with f_col2:
+                m_lh        = st.text_input("Left Module ID",   value=existing.get("left_module_id", ""),   key="m_lh",    placeholder="LH251100001")
+                m_rh        = st.text_input("Right Module ID",  value=existing.get("right_module_id", ""),  key="m_rh",    placeholder="RH251100001")
+                m_bms       = st.text_input("BMS ID",           value=existing.get("bms_id", ""),           key="m_bms",   placeholder="BMS260100001")
+                m_status    = st.selectbox("Status",            options=["Active", "Offline", "In-Service", "Retired"],
+                                           index=["Active","Offline","In-Service","Retired"].index(existing.get("status","Offline")) if existing.get("status","Offline") in ["Active","Offline","In-Service","Retired"] else 1,
+                                           key="m_status")
+
+        if st.button("💾 Save to Registry", type="primary", key="hw_manual_save"):
+            bike_id = f"BIKE-{int(manual_bike_no)}"
+            updates = {"status": m_status}
+            for field, val in [("vin", m_vin), ("battery_box_id", m_bb), ("motor_id", m_motor),
+                                ("aux_battery_id", m_aux), ("left_module_id", m_lh),
+                                ("right_module_id", m_rh), ("bms_id", m_bms)]:
+                if val.strip():
+                    updates[field] = val.strip()
+
+            import shutil as _shutil
+            from datetime import datetime as _dt
+            _reg = bike_engine.load_bike_registry()
+            ts = _dt.now().strftime("%Y%m%d_%H%M%S")
+            _backup = bike_engine.BIKE_REGISTRY_FILE.replace(".json", f"_backup_{ts}.json")
+            if os.path.exists(bike_engine.BIKE_REGISTRY_FILE):
+                _shutil.copy2(bike_engine.BIKE_REGISTRY_FILE, _backup)
+            if bike_id not in _reg:
+                _reg[bike_id] = {"tests_done": 0}
+            _reg[bike_id].update(updates)
+            bike_engine.save_bike_registry(_reg)
+            st.toast(f"✅ {bike_id} updated successfully!", icon="🏍️")
+            st.success(f"Saved {len(updates)} field(s) for **{bike_id}**.")
+            time.sleep(1.0)
+            st.rerun()
+
     # 🌟 DEVELOPER ACCESS PANEL
     st.markdown("---")
     st.subheader("🔐 Developer Access: Test Management")
@@ -1141,17 +1213,20 @@ elif app_mode == "Monitor Dashboard":
             box_style = "background: rgba(255, 255, 255, 0.03); border-left: 3px solid #00cc96; padding: 15px; border-radius: 4px; margin-bottom: 15px;"
             tit_style = "color: #A0A0AB; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;"
             val_style = "color: #FFF; font-size: 1.1rem; font-weight: 500;"
-            
+
             with md_c1:
                 st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Tests Evaluated</div><div style='{val_style}'>{dynamic_tests_done}</div></div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Motor ID</div><div style='{val_style}'>{b_data.get('motor_id', 'N/A')}</div></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>VIN</div><div style='{val_style}'>{b_data.get('vin', 'N/A')}</div></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Status</div><div style='{val_style}'>{b_data.get('status', 'N/A')}</div></div>", unsafe_allow_html=True)
             with md_c2:
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Motor ID</div><div style='{val_style}'>{b_data.get('motor_id', 'N/A')}</div></div>", unsafe_allow_html=True)
                 st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Battery Box ID</div><div style='{val_style}'>{b_data.get('battery_box_id', 'N/A')}</div></div>", unsafe_allow_html=True)
             with md_c3:
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Aux Battery ID</div><div style='{val_style}'>{b_data.get('aux_battery_id', 'N/A')}</div></div>", unsafe_allow_html=True)
                 st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Left Module ID</div><div style='{val_style}'>{b_data.get('left_module_id', 'N/A')}</div></div>", unsafe_allow_html=True)
             with md_c4:
                 st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>Right Module ID</div><div style='{val_style}'>{b_data.get('right_module_id', 'N/A')}</div></div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>BMS Firmware ID</div><div style='{val_style}'>{b_data.get('bms_id', 'N/A')}</div></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='{box_style}'><div style='{tit_style}'>BMS ID</div><div style='{val_style}'>{b_data.get('bms_id', 'N/A')}</div></div>", unsafe_allow_html=True)
 
             st.markdown("---")
             st.markdown("#### 🔍 Historical Test Inspection")

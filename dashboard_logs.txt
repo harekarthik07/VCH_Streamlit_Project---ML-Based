@@ -1,0 +1,8 @@
+
+> vch-next-frontend@0.1.0 prod
+> concurrently "next start -H 0.0.0.0" "python ../fastapi_server.py"
+
+[0] ▲ Next.js 16.2.2
+[0] - Local:         http://localhost:3000
+[0] - Network:       http://0.0.0.0:3000
+[0] ✓ Ready in 130ms

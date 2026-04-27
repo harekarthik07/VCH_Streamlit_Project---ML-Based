@@ -1,5 +1,5 @@
-from fastapi import FastAPI, File, UploadFile, Form
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import os
@@ -13,6 +13,7 @@ import psutil  # New: For Admin Panel system health
 import re      # New: For smarter date parsing
 import numpy as np # For NaN/Inf handling
 import math
+import orjson
 import db_bridge  # New: Centralized database bridge
 
 # Setup logging
@@ -62,14 +63,14 @@ def health_check():
     }
 
 def sanitize_data(df):
-    """Sanitize DataFrame for JSON compliance: Replace NaN/Inf with None (null in JSON)."""
-    # Replace NaN, Inf, -Inf with None
+    """Sanitize DataFrame for JSON compliance, serialised via orjson (5-10x faster)."""
     clean_df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
-    return {col: [v if not (isinstance(v, float) and (math.isnan(v) or math.isinf(v))) else None for v in clean_df[col].tolist()] for col in clean_df.columns}
+    return Response(orjson.dumps(clean_df.to_dict(orient="list")), media_type="application/json")
 
 def sanitize_records(df):
-    """Sanitize DataFrame records for JSON compliance."""
-    return df.replace({np.nan: None, np.inf: None, -np.inf: None}).to_dict(orient="records")
+    """Sanitize DataFrame records for JSON compliance, serialised via orjson."""
+    records = df.replace({np.nan: None, np.inf: None, -np.inf: None}).to_dict(orient="records")
+    return Response(orjson.dumps(records), media_type="application/json")
 
 # ====================================================================
 # 🏠 NEW: MASTER DASHBOARD & ADMIN ENDPOINTS
@@ -144,12 +145,104 @@ def get_fleet():
     from bike_backend.bike_db_manager import load_bike_registry
     return load_bike_registry()
 
+@app.post("/api/bike/upload_manifest")
+async def upload_bike_manifest(file: UploadFile = File(...)):
+    from bike_backend.bike_db_manager import update_hardware_registry
+    import io
+    content = await file.read()
+    ok, msg, count = update_hardware_registry(io.BytesIO(content), file.filename)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    return {"ok": True, "message": msg, "updated": count}
+
+@app.post("/api/bike/manual_update")
+async def manual_bike_update(payload: dict):
+    from bike_backend.bike_db_manager import load_bike_registry, save_bike_registry, BIKE_REGISTRY_FILE
+    import shutil
+    from datetime import datetime
+    bike_no = payload.get("bike_no")
+    if not bike_no:
+        raise HTTPException(status_code=400, detail="bike_no is required")
+    bike_id = f"BIKE-{int(bike_no)}"
+    fields = {k: v for k, v in payload.items() if k != "bike_no" and v and str(v).strip()}
+    if os.path.exists(BIKE_REGISTRY_FILE):
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        shutil.copy2(BIKE_REGISTRY_FILE, BIKE_REGISTRY_FILE.replace(".json", f"_backup_{ts}.json"))
+    reg = load_bike_registry()
+    if bike_id not in reg:
+        reg[bike_id] = {"tests_done": 0, "status": "Offline"}
+    reg[bike_id].update(fields)
+    save_bike_registry(reg)
+    return {"ok": True, "bike_id": bike_id, "updated_fields": list(fields.keys())}
+
 @app.get("/api/dyno/summaries")
-def get_dyno_summaries():
+def get_dyno_summaries(response: Response):
     if not db_bridge.DATABASE_URL and not os.path.exists(DYNO_DB):
         return []
-    df = db_bridge.query_to_df("SELECT * FROM dyno_summaries", db_path=DYNO_DB)
+    df = db_bridge.query_to_df("SELECT * FROM dyno_summaries ORDER BY Test_Name DESC", db_path=DYNO_DB)
+    response.headers["Cache-Control"] = "max-age=30"
     return sanitize_records(df)
+
+@app.get("/api/dyno/processed_tests")
+def get_processed_tests():
+    """Get list of tests for the Data Engine deletion/promotion tools."""
+    if not db_bridge.DATABASE_URL and not os.path.exists(DYNO_DB):
+        return []
+    df = db_bridge.query_to_df("SELECT Test_Name FROM dyno_summaries ORDER BY Test_Name DESC", db_path=DYNO_DB)
+    return df.to_dict(orient="records")
+
+@app.post("/api/dyno/upload")
+async def upload_dyno_data(file: UploadFile = File(...), mode: str = Form("Evaluation (Test)")):
+    """Upload a new dyno XLSX file."""
+    base_dir = os.path.join(ROOT_DIR, "dyno_backend")
+    target_folder = os.path.join(base_dir, "baseline_raw") if "Baseline" in mode else os.path.join(base_dir, "evaluation_raw")
+    os.makedirs(target_folder, exist_ok=True)
+    
+    file_path = os.path.join(target_folder, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    return {"status": "success", "message": f"Uploaded {file.filename} to {mode}."}
+
+@app.post("/api/dyno/process")
+async def process_dyno_data():
+    """Trigger the dyno ML/QC processing engine."""
+    try:
+        # Capture logs
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+        
+        # Process files
+        result = dyno_engine.run_processing_cycle()
+        
+        logs = sys.stdout.getvalue()
+        sys.stdout = old_stdout
+        return {"status": "success", "result": result, "logs": logs}
+    except Exception as e:
+        if 'old_stdout' in locals(): sys.stdout = old_stdout
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/dyno/reset")
+async def reset_dyno_db():
+    """Wipe the dyno database and folders."""
+    try:
+        if os.path.exists(DYNO_DB): os.remove(DYNO_DB)
+        # Clear raw and processed folders
+        base_dir = os.path.join(ROOT_DIR, "dyno_backend")
+        for folder in ["baseline_raw", "evaluation_raw", "Processed_Dyno"]:
+            path = os.path.join(base_dir, folder)
+            if os.path.exists(path): shutil.rmtree(path)
+            os.makedirs(path, exist_ok=True)
+        
+        # Reset registry
+        registry_path = os.path.join(base_dir, "dyno_registry.json")
+        if os.path.exists(registry_path):
+            with open(registry_path, "w") as f:
+                json.dump({"processed_files": []}, f)
+                
+        return {"status": "success", "message": "Dyno database and folders reset."}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/api/dyno/telemetry/{test_name}")
 def get_dyno_telemetry(test_name: str):
@@ -213,7 +306,7 @@ def get_dyno_fleet():
 # ====================================================================
 
 @app.get("/api/road/summaries")
-def get_road_summaries():
+def get_road_summaries(response: Response):
     """Get all road ride summaries"""
     logger.info("Road summaries endpoint called")
     if not db_bridge.DATABASE_URL and not os.path.exists(ROAD_DB):
@@ -221,17 +314,18 @@ def get_road_summaries():
         return []
     try:
         df = db_bridge.query_to_df("SELECT * FROM ride_summaries", db_path=ROAD_DB)
-        
+
         # Dynamically inject Route column based on filename conventions
         def get_route(name):
             name_lower = name.lower()
             if "route-office" in name_lower: return "Office Full Push"
             if "route-road" in name_lower: return "Road Full Push"
             return "Custom/Unknown"
-        
+
         if not df.empty:
             df['Route'] = df['Ride_Name'].apply(get_route)
-            
+
+        response.headers["Cache-Control"] = "max-age=30"
         logger.info(f"Returning {len(df)} road summaries with dynamic routes")
         return sanitize_records(df)
     except Exception as e:

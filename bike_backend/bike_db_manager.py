@@ -1,6 +1,8 @@
 import os
 import json
+import shutil
 import pandas as pd
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BIKE_REGISTRY_FILE = os.path.join(BASE_DIR, "bike_registry.json")
@@ -84,6 +86,129 @@ def ingest_csv_to_registry(csv_path=DEFAULT_CSV_PATH):
         save_bike_registry(registry)
         return True
     return False
+
+def update_hardware_registry(file_buffer, filename):
+    """
+    Reads an uploaded hardware manifest (.csv or .xlsx) and smart-merges
+    into bike_registry.json. Never overwrites existing data with empty values.
+    Creates a timestamped backup before writing.
+
+    Returns (success: bool, message: str, updated_count: int)
+    """
+    # --- Read file ---
+    try:
+        if filename.lower().endswith(".xlsx"):
+            df = pd.read_excel(file_buffer, engine="openpyxl")
+        else:
+            df = pd.read_csv(file_buffer, encoding="ISO-8859-1")
+    except Exception as e:
+        return False, f"Failed to read file: {e}", 0
+
+    df.columns = [str(c).strip() for c in df.columns]
+
+    # --- Column name aliases ---
+    COL_MAP = {
+        "bike_no":        ["Bike no", "Bike_ID", "Bike Number"],
+        "vin":            ["Vin Number", "VIN", "Vehicle VIN", "Real VIN", "Chassis Number"],
+        "powertrain_id":  ["Powertrain ID", "PTP ID"],
+        "aux_battery_id": ["Aux Battery ID", "Aux_ID"],
+        "battery_box_id": ["Battery Box ID", "BB_ID"],
+        "motor_id":       ["Motor ID", "Unnamed: 7"],
+        "left_module_id": ["Left Module ID"],
+        "right_module_id":["Right Module ID"],
+        "bms_id":         ["BMS ID"],
+    }
+
+    def find_col(aliases):
+        for alias in aliases:
+            if alias in df.columns:
+                return alias
+        return None
+
+    col_refs = {field: find_col(aliases) for field, aliases in COL_MAP.items()}
+
+    if col_refs["bike_no"] is None:
+        return False, "Could not find a Bike ID column (tried: 'Bike no', 'Bike_ID', 'Bike Number').", 0
+
+    # --- Backup registry before writing ---
+    if os.path.exists(BIKE_REGISTRY_FILE):
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = BIKE_REGISTRY_FILE.replace(".json", f"_backup_{ts}.json")
+        shutil.copy2(BIKE_REGISTRY_FILE, backup_path)
+
+    registry = load_bike_registry()
+    updated_count = 0
+
+    for _, row in df.iterrows():
+        # Resolve bike number → BIKE-XX key
+        raw_bike_no = row.get(col_refs["bike_no"])
+        try:
+            bike_no = int(float(str(raw_bike_no).strip()))
+        except (ValueError, TypeError):
+            continue
+        if bike_no == 0:
+            continue
+
+        bike_id = f"BIKE-{bike_no}"
+
+        # Initialise new bikes
+        if bike_id not in registry:
+            registry[bike_id] = {"tests_done": 0, "status": "Offline"}
+
+        def extract(field):
+            """Return cleaned string value, or None if blank/missing."""
+            col = col_refs.get(field)
+            if col is None:
+                return None
+            val = row.get(col)
+            if val is None or (isinstance(val, float) and pd.isna(val)):
+                return None
+            val = str(val).strip()
+            return val if val else None
+
+        updates = {}
+
+        # VIN
+        vin = extract("vin")
+        if vin:
+            updates["vin"] = vin
+
+        # Powertrain ID
+        ptp = extract("powertrain_id")
+        if ptp:
+            updates["powertrain_id"] = ptp
+
+        # Aux Battery
+        aux = extract("aux_battery_id")
+        if aux:
+            updates["aux_battery_id"] = aux
+
+        # Battery Box
+        bb = extract("battery_box_id")
+        if bb:
+            updates["battery_box_id"] = bb
+
+        # Motor ID — strip leading "{bike_no}-" prefix if present
+        motor = extract("motor_id")
+        if motor:
+            prefix = f"{bike_no}-"
+            if motor.startswith(prefix):
+                motor = motor[len(prefix):]
+            updates["motor_id"] = motor
+
+        # Modules & BMS
+        for field in ("left_module_id", "right_module_id", "bms_id"):
+            val = extract(field)
+            if val:
+                updates[field] = val
+
+        if updates:
+            registry[bike_id].update(updates)
+            updated_count += 1
+
+    save_bike_registry(registry)
+    return True, f"Successfully merged {updated_count} bike record(s).", updated_count
+
 
 def update_bike_info(bike_id, new_data):
     """Updates a specific bike's metadata via API calls."""

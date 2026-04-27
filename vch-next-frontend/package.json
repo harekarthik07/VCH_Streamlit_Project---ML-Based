@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "dev:network": "next dev -H 0.0.0.0",
+    "dev:all": "concurrently \"next dev\" \"python ../fastapi_server.py\"",
     "build": "next build",
     "start": "next start",
+    "prod": "concurrently \"next start -H 0.0.0.0\" \"python ../fastapi_server.py\"",
     "lint": "eslint"
   },
   "dependencies": {
@@ -21,6 +23,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
     "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
     "postcss": "^8.5.9",

@@ -4,6 +4,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import sqlite3
+import re
 import db_bridge
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -80,6 +81,22 @@ def process_raw_file(path):
         df[cell_col] = pd.to_numeric(df[cell_col], errors='coerce').fillna(0)
         df = df.rename(columns={cell_col: "Highest_Cell_No"})
         
+    # 🌟 NEW: Extract VIN if present in the Excel (e.g. metadata rows)
+    vin = None
+    vin_pattern = r'[A-HJ-NPR-Z0-9]{17}'
+    # Search in all cells of the first 20 rows
+    for row in df.head(20).values:
+        for cell in row:
+            if isinstance(cell, str):
+                match = re.search(vin_pattern, cell)
+                if match:
+                    vin = match.group()
+                    break
+        if vin: break
+    
+    if vin:
+        df.attrs["extracted_vin"] = vin
+
     return df
 
 def limit_time_window(df, max_time=240): return df[df["Time (s)"] <= max_time].reset_index(drop=True)
@@ -103,6 +120,9 @@ def extract_raw_stats(df):
 
         if ch == "HighCell" and "Highest_Cell_No" in df.columns:
             raw_stats["HighCell_Peak_Cell_No"] = int(df.loc[max_idx, "Highest_Cell_No"])
+            
+    if "extracted_vin" in df.attrs:
+        raw_stats["VIN_Extracted"] = df.attrs["extracted_vin"]
             
     df_120 = df[df["Time (s)"] <= 120]
     pwr_col = next((c for c in df.columns if "power" in str(c).lower()), None)
@@ -185,12 +205,34 @@ def save_individual_csv(df, file_name):
     df.to_parquet(save_path, index=False, engine='pyarrow')
     return save_path
 
+SNAPSHOT_TIMES = [60, 120, 180]
+SNAPSHOT_COL_MAP = {
+    "IGBT":     {"dTdt": "IGBT_dTdt",     "dT": "IGBT_dT"},
+    "Motor":    {"dTdt": "Motor_dTdt",    "dT": "Motor_dT"},
+    "HighCell": {"dTdt": "HighCell_dTdt", "dT": "HighCell_dT"},
+    "AFE":      {"dTdt": "AFE_Mean_dTdt", "dT": "AFE_Mean_dT"},
+}
+
+def extract_snapshot_stats(df):
+    """Extract dTdt and dT values at each snapshot time (60/120/180s) via merge_asof.
+    Produces identical values to Streamlit's merge_asof lookup in tab_repo."""
+    snap = {}
+    for t in SNAPSHOT_TIMES:
+        target = pd.DataFrame({"Time (s)": [float(t)]})
+        row = pd.merge_asof(target, df.sort_values("Time (s)"), on="Time (s)", direction="nearest")
+        for ch, cols in SNAPSHOT_COL_MAP.items():
+            dtdt_val = float(row[cols["dTdt"]].values[0]) if cols["dTdt"] in row.columns else 0.0
+            dt_val   = float(row[cols["dT"]].values[0])   if cols["dT"]   in row.columns else 0.0
+            snap[f"{ch}_dTdt_{t}s"] = round(dtdt_val, 3)
+            snap[f"{ch}_dT_{t}s"]   = round(dt_val,   2)
+    return snap
+
 def update_db_summary(file_name, raw_stats, df, csv_path, test_type="Evaluation", eval_results=None):
     if eval_results is None:
         eval_results = {"Result_2Sigma": "NA", "Result_5Pct": "NA", "Result_10Pct": "NA", "Result_15Pct": "NA", "Result_20Pct": "NA"}
 
     summary_row = {
-        "Test_Name": file_name.replace(".xlsx", ""), 
+        "Test_Name": file_name.replace(".xlsx", ""),
         "Type": test_type,
         "Processed_CSV_Path": csv_path,
         **raw_stats,
@@ -202,9 +244,10 @@ def update_db_summary(file_name, raw_stats, df, csv_path, test_type="Evaluation"
         "Motor_dT_Max": round(df["Motor_dT"].max(), 2),
         "HighCell_dT_Max": round(df["HighCell_dT"].max(), 2),
         "AFE_dT_Max": round(df["AFE_Mean_dT"].max(), 2),
+        **extract_snapshot_stats(df),
         **eval_results
     }
-    
+
     new_row_df = pd.DataFrame([summary_row])
     db_bridge.df_to_db(new_row_df, "dyno_summaries", db_path=DB_PATH)
 
@@ -311,6 +354,22 @@ def run_processing_cycle():
         else:
             update_db_summary(file_name, raw_stats, df, csv_path, test_type="Evaluation", eval_results=evaluate_test(df))
             
+        # 🌟 NEW: Sync extracted VIN to Hardware Registry
+        if "VIN_Extracted" in raw_stats:
+            try:
+                bike_no_match = re.search(r'BK[_-]?(\d+)', file_name, re.IGNORECASE) or re.search(r'(\d+)[_-]?BK', file_name, re.IGNORECASE)
+                if bike_no_match:
+                    bike_no = int(bike_no_match.group(1))
+                    bike_id = f"BIKE-{bike_no}"
+                    # Import here to avoid circular dependencies
+                    import sys
+                    sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "bike_backend"))
+                    from bike_db_manager import update_bike_info
+                    update_bike_info(bike_id, {"vin": raw_stats["VIN_Extracted"]})
+                    print(f"✅ Auto-updated VIN for {bike_id}: {raw_stats['VIN_Extracted']}")
+            except Exception as e:
+                print(f"⚠️ Failed to update registry VIN: {e}")
+
         registry["processed_files"].append(file_name)
 
     if golden_files_processed:

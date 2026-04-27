@@ -102,10 +102,11 @@ export default function RoadSidebar({
       }}
     >
       {/* Brand Header */}
-      <div style={{ padding: "24px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }} onClick={() => router.push("/")}>
+      <div style={{ padding: collapsed ? "24px 0" : "24px 16px", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", borderBottom: "1px solid rgba(255,255,255,0.08)", position: "relative" }}>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", paddingRight: collapsed ? 0 : 40 }} onClick={() => router.push("/")}>
           <div style={{ 
-            width: 48, height: 32, borderRadius: 6, 
+            width: collapsed ? 50 : 80, height: collapsed ? 34 : 50, borderRadius: 8, 
             background: "#fff", 
             display: "flex", alignItems: "center", justifyContent: "center",
             overflow: "hidden",
@@ -117,8 +118,21 @@ export default function RoadSidebar({
               style={{ width: "100%", height: "100%", objectFit: "contain" }} 
             />
           </div>
-          {!collapsed && <span style={{ color: "#fff", fontWeight: 900, fontSize: 16, letterSpacing: -0.5 }}>VCH ROAD <span style={{ color: "#43B3AE" }}>SUITE</span></span>}
+          {!collapsed && <span style={{ color: "#fff", fontWeight: 900, fontSize: 22, letterSpacing: -0.5 }}>VCH ROAD <span style={{ color: "#43B3AE" }}>SUITE</span></span>}
         </div>
+
+        {/* Toggle Button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }}
+          style={{
+            position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+            color: "#fff", borderRadius: 8, padding: 6, cursor: "pointer", display: "flex", alignItems: "center",
+            zIndex: 10
+          }}
+        >
+          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
       </div>
 
       <div style={{ flex: 1, overflowY: "auto", overflowX: "visible", padding: "20px 16px" }}>
@@ -136,7 +150,7 @@ export default function RoadSidebar({
               onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
             >
-              <Home size={16} /> Dyno VCH Suite
+              <Home size={16} /> Home
             </button>
             <button
               onClick={() => setActiveChannel("data_engine")}

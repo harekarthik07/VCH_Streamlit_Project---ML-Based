@@ -121,51 +121,46 @@ export default function DynoSidebar({
         minWidth: collapsed ? 72 : 320,
         maxWidth: collapsed ? 72 : 320,
         flexShrink: 0,
-        transition: "width 0.28s ease, min-width 0.28s ease, max-width 0.28s ease",
+        transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         position: "relative",
         overflowX: "hidden",
-        background: "linear-gradient(180deg, rgba(18,20,27,0.98), rgba(12,14,19,0.98))",
-        borderRight: "1px solid rgba(255,255,255,0.06)"
+        background: "#201e24",
+        borderRight: "1px solid rgba(255,255,255,0.08)"
       }}
     >
-      <button
-        onClick={() => setCollapsed((value) => !value)}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        style={{
-          position: "absolute",
-          top: 14,
-          right: 12,
-          width: 34,
-          height: 34,
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.1)",
-          background: "rgba(255,255,255,0.04)",
-          color: "#d7dbe5",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          zIndex: 2
-        }}
-      >
-        {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-      </button>
-      {/* Brand */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: collapsed ? 10 : 20, paddingRight: 40 }}>
-        <Zap size={18} style={{ color: "#43B3AE" }} />
-        {!collapsed && (
-          <span style={{ color: "#43B3AE", fontSize: 14, fontWeight: 900, letterSpacing: 2 }}>
-            VCH SYSTEMS
-          </span>
-        )}
-      </div>
-
-      {/* Title */}
-      {!collapsed && (
-        <div style={{ fontSize: 16, fontWeight: 900, color: "#fff", marginBottom: 16 }}>
-          Dyno VCH Suite
+      {/* Brand Header */}
+      <div style={{ padding: collapsed ? "24px 0" : "24px 16px", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", borderBottom: "1px solid rgba(255,255,255,0.08)", position: "relative" }}>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", paddingRight: collapsed ? 0 : 40 }} onClick={() => router.push("/")}>
+          <div style={{ 
+            width: collapsed ? 50 : 80, height: collapsed ? 34 : 50, borderRadius: 8, 
+            background: "#fff", 
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden",
+            padding: "2px"
+          }}>
+            <img 
+              src="/raptee_logo.png" 
+              alt="Raptee Logo" 
+              style={{ width: "100%", height: "100%", objectFit: "contain" }} 
+            />
+          </div>
+          {!collapsed && <span style={{ color: "#fff", fontWeight: 900, fontSize: 22, letterSpacing: -0.5 }}>VCH DYNO <span style={{ color: "#43B3AE" }}>SUITE</span></span>}
         </div>
-      )}
+
+        {/* Toggle Button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }}
+          style={{
+            position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+            color: "#fff", borderRadius: 8, padding: 6, cursor: "pointer", display: "flex", alignItems: "center",
+            zIndex: 10
+          }}
+        >
+          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+        </button>
+      </div>
 
       {/* Navigation Links */}
       {!collapsed && (
@@ -182,7 +177,7 @@ export default function DynoSidebar({
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#B4B4C0"; }}
           >
-            <Home size={16} /> Dyno VCH Suite
+            <Home size={16} /> Home
           </button>
           <button
             onClick={() => router.push("/road")}
@@ -433,31 +428,34 @@ export default function DynoSidebar({
       )}
 
       {collapsed && (
-        <div style={{ marginTop: 18, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
           {[Home, Route, RefreshCw, FolderOpen, Settings].map((Icon, index) => (
             <button
               key={index}
               onClick={() => {
                 if (index === 0) router.push("/");
                 if (index === 1) router.push("/road");
-                if (index === 2) { onRefresh(); setCollapsed(false); }
+                if (index === 2) { onRefresh(); }
                 if (index === 3) { setMissionOpen(true); setCollapsed(false); }
                 if (index === 4) { setConfigOpen(true); setCollapsed(false); }
               }}
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "rgba(255,255,255,0.04)",
-                color: "#d5dae4",
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.03)",
+                color: "#A0A0AB",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: "pointer"
+                cursor: "pointer",
+                transition: "all 0.2s"
               }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "#FFF"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#A0A0AB"; }}
             >
-              <Icon size={16} />
+              <Icon size={18} />
             </button>
           ))}
         </div>

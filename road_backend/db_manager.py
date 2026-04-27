@@ -63,7 +63,7 @@ class DatabaseManager:
                 
                 db_bridge.execute_sql('''
                     INSERT INTO ride_summaries VALUES (
-                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
                 ''', params=(
                     file_name, k['Total_Distance_km'], k['Total_Energy_Wh'], k['Overall_Wh_km'],
@@ -84,5 +84,3 @@ class DatabaseManager:
                         INSERT INTO ride_events VALUES (?, ?, ?, ?, ?, ?)
                     ''', params=(file_name, ev["Event_Type"], ev["Start_Time"], ev["End_Time"], ev["Max_Value"], ev["Description"]), db_path=self.db_name)
             except Exception as e: print(f"Failed to process {file_name}: {e}")
-
-        conn.close()

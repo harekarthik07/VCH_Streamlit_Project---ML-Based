@@ -116,7 +116,7 @@ export default function MasterDashboard() {
 
   const isAdmin = authState.role === "admin";
 
-return (
+  return (
     <div className="app-container">
       <Sidebar />
 
@@ -124,14 +124,7 @@ return (
         <div className="fade-in">
           {/* Logo & Title Section */}
           <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 24 }}>
-            <div style={{
-              width: 160, height: 48,
-              background: "linear-gradient(135deg, #fff 0%, #ccc 100%)",
-              borderRadius: 10, display: "flex", alignItems: "center",
-              justifyContent: "center",
-            }}>
-              <span style={{ fontWeight: 900, fontSize: 22, color: "#111", letterSpacing: 1 }}>RAPTEE</span>
-            </div>
+            <img src="/raptee_logo.png" alt="Raptee Logo" style={{ height: 48, objectFit: "contain" }} />
             <div>
               <div style={{ fontSize: 13, color: "rgba(160,160,171,0.5)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>
                 Thermal Suite

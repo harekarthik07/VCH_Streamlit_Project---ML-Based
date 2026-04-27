@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Master App", icon: LayoutDashboard, section: "VCH SYSTEMS" },
+  { href: "/", label: "Home", icon: LayoutDashboard, section: "VCH SYSTEMS" },
   { href: "/dyno", label: "Dyno Suite", icon: Activity, section: "DYNO SUITE" },
   { href: "/road", label: "Road Suite", icon: Route, section: "ROAD SUITE" },
   { href: "/admin", label: "Admin Zone", icon: ShieldAlert, section: "ADMINISTRATION" },
@@ -55,10 +55,10 @@ export default function Sidebar() {
         width: collapsed ? 80 : 260,
         minHeight: "100vh",
         flexShrink: 0,
-        backgroundColor: "#0b0c10",
+        backgroundColor: "#201e24",
         borderRight: "1px solid rgba(255, 255, 255, 0.08)",
-        padding: "30px 20px",
-        transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        padding: "0",
+        transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         display: "flex",
         flexDirection: "column",
         position: "relative",
@@ -66,32 +66,38 @@ export default function Sidebar() {
         boxSizing: "border-box"
       }}
     >
-      {/* Brand */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 34,
-          whiteSpace: "nowrap",
-        }}
-      >
-        <Zap
-          size={18}
-          style={{ color: "#00CC96", flexShrink: 0 }}
-        />
-        {!collapsed && (
-          <span
-            style={{
-              color: "#00CC96",
-              fontSize: "1rem",
-              fontWeight: 800,
-              letterSpacing: "0.12em",
-            }}
-          >
-            VCH SYSTEMS
-          </span>
-        )}
+      {/* Brand Header */}
+      <div style={{ padding: collapsed ? "24px 0" : "24px 16px", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", borderBottom: "1px solid rgba(255,255,255,0.08)", position: "relative", marginBottom: 20 }}>
+        
+        <div style={{ display: "flex", alignItems: "center", gap: 12, paddingRight: collapsed ? 0 : 40 }}>
+          <div style={{ 
+            width: collapsed ? 50 : 80, height: collapsed ? 34 : 50, borderRadius: 8, 
+            background: "#fff", 
+            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden",
+            padding: "2px"
+          }}>
+            <img 
+              src="/raptee_logo.png" 
+              alt="Raptee Logo" 
+              style={{ width: "100%", height: "100%", objectFit: "contain" }} 
+            />
+          </div>
+          {!collapsed && <span style={{ color: "#fff", fontWeight: 900, fontSize: 22, letterSpacing: -0.5 }}>VCH MASTER <span style={{ color: "#43B3AE" }}>APP</span></span>}
+        </div>
+
+        {/* Toggle Button */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setCollapsed(!collapsed); }}
+          style={{
+            position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+            color: "#fff", borderRadius: 8, padding: 6, cursor: "pointer", display: "flex", alignItems: "center",
+            zIndex: 10
+          }}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
 
       <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 12 }}>
@@ -168,74 +174,74 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {!collapsed && (
-        <div style={{ color: "#A0A0AB", fontSize: 13, marginBottom: 12 }}>
-          Logged in as: <span style={{ color: "#00CC96", fontWeight: 700 }}>{isMounted ? username : "admin"}</span>
+      {collapsed && (
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+          {NAV_ITEMS.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={index}
+                onClick={() => router.push(item.href)}
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 10,
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "rgba(255,255,255,0.03)",
+                  color: "#B4B4C0",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  transition: "all 0.2s"
+                }}
+              >
+                <Icon size={18} />
+              </button>
+            );
+          })}
         </div>
       )}
 
-      <button
-        onClick={handleLogout}
-        style={{
-          width: "fit-content",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: collapsed ? "8px" : "9px 14px",
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.12)",
-          background: "rgba(255,255,255,0.02)",
-          color: "#ebeef5",
-          cursor: "pointer",
-          marginBottom: 56,
-          transition: "all 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(255,75,75,0.1)";
-          e.currentTarget.style.borderColor = "rgba(255,75,75,0.3)";
-          e.currentTarget.style.color = "#FF4B4B";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.02)";
-          e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-          e.currentTarget.style.color = "#ebeef5";
-        }}
-      >
-        <LogOut size={15} />
-        {!collapsed && "Logout"}
-      </button>
+      {/* User & Logout */}
+      <div style={{ padding: "20px", marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        {!collapsed && (
+          <div style={{ color: "#A0A0AB", fontSize: 13, marginBottom: 12 }}>
+            Logged in as: <span style={{ color: "#43B3AE", fontWeight: 700 }}>{isMounted ? username : "admin"}</span>
+          </div>
+        )}
 
-      {/* Collapse Toggle */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        style={{
-          position: "absolute",
-          bottom: 20,
-          right: collapsed ? "50%" : 16,
-          transform: collapsed ? "translateX(50%)" : "none",
-          background: "rgba(45, 45, 51, 0.6)",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-          borderRadius: 8,
-          padding: "6px 8px",
-          cursor: "pointer",
-          color: "#B4B4C0",
-          display: "flex",
-          alignItems: "center",
-          transition: "all 0.3s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = "rgba(0,204,150,0.1)";
-          e.currentTarget.style.borderColor = "#00CC96";
-          e.currentTarget.style.color = "#00CC96";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(45, 45, 51, 0.6)";
-          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-          e.currentTarget.style.color = "#B4B4C0";
-        }}
-      >
-        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-      </button>
+        <button
+          onClick={handleLogout}
+          style={{
+            width: collapsed ? "40px" : "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
+            gap: 10,
+            padding: "10px",
+            borderRadius: 10,
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "rgba(255,255,255,0.02)",
+            color: "#B4B4C0",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255,75,75,0.1)";
+            e.currentTarget.style.borderColor = "rgba(255,75,75,0.3)";
+            e.currentTarget.style.color = "#FF4B4B";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255,255,255,0.02)";
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+            e.currentTarget.style.color = "#B4B4C0";
+          }}
+        >
+          <LogOut size={16} />
+          {!collapsed && "Sign Out"}
+        </button>
+      </div>
     </aside>
   );
 }
